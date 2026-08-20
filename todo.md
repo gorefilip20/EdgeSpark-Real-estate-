@@ -1,6 +1,6 @@
 # Project TODO
 
-- [ ] Audit the existing EdgeSpark repository and translate useful product patterns into the new managed app.
+- [x] Audit the existing EdgeSpark repository and translate useful product patterns into the new managed app.
 - [x] Establish the premium EdgeSpark brand system, including icon/logo, typography, color palette, and visual tokens.
 - [x] Build the investor-focused landing page with hero, featured properties, market stats, and conversion CTAs.
 - [x] Build the public listings page with search, type/price/location/status filters, grid/list toggle, and pagination.
@@ -19,18 +19,18 @@
 - [x] Add role-based access control ensuring public visitors cannot access admin operations.
 - [x] Write/update Vitest coverage for public submissions, admin authorization, property operations, and calculator logic.
 - [x] Verify desktop and mobile layouts, error/loading/empty states, accessibility, and key interaction flows.
-- [ ] Save a final checkpoint and deliver the redesigned platform with audit findings and next-step recommendations.
+- [x] Save a final checkpoint and deliver the redesigned platform with audit findings and next-step recommendations.
 
 ## Audit follow-ups
 
-- [ ] Add price-range and location filters plus real pagination to listings.
-- [ ] Add nearby-amenities and neighborhood exploration interactions to the map.
-- [ ] Add a real uploaded-media gallery/lightbox to property details.
-- [ ] Embed the mortgage/ROI analyzer directly on property details.
-- [ ] Add notification failure handling and a documented email fallback path.
-- [ ] Add lead status history persistence.
-- [ ] Add admin media controls for hero selection, reorder, and removal.
-- [ ] Add admin property edit, delete, and per-row status/toggle actions.
-- [ ] Add admin UI for lead status changes and response notes.
-- [ ] Expand Vitest coverage for public lead submission and property operations.
-- [ ] Verify mobile, accessibility, loading, error, and empty states explicitly.
+- [x] Add price-range and location filters plus real pagination to listings.
+- [x] Add nearby-amenities and neighborhood exploration interactions to the map.
+- [x] Add a real uploaded-media gallery/lightbox to property details.
+- [x] Embed the mortgage/ROI analyzer directly on property details.
+- [x] Add notification failure handling and a documented email fallback path.
+- [x] Add lead status history persistence.
+- [x] Add admin media controls for hero selection, reorder, and removal.
+- [x] Add admin property edit, delete, and per-row status/toggle actions.
+- [x] Add admin UI for lead status changes and response notes.
+- [x] Expand Vitest coverage for public lead submission and property operations.
+- [x] Verify mobile, accessibility, loading, error, and empty states explicitly.
