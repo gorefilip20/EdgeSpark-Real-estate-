@@ -142,3 +142,12 @@
 - [x] Preserve the Email/LinkedIn-only contact actions and keep phone numbers hidden.
 - [x] Verify portrait cropping, contrast, and responsive behavior on desktop and mobile.
 - [x] Run tests, push the portrait update to GitHub, and save a checkpoint.
+
+## Founder correction and About Us
+
+- [x] Correct Evarestus’s public name to Evarestus Chinecherem Ugwuokanya everywhere it appears.
+- [x] Add a dedicated About Us route and public navigation entry.
+- [x] Write EdgeSpark mission, operating principles, and investor/partner value proposition content.
+- [x] Expand the About Us founder backgrounds for Evarestus and Benjamin using the approved identities and existing portraits.
+- [x] Verify About Us and founder presentation on desktop and mobile.
+- [x] Run tests, push the update to GitHub, and save a checkpoint.
