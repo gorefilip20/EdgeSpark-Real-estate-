@@ -109,3 +109,11 @@
 - [x] Add tests for user ownership, validation, persistence, and UI state handling.
 - [x] Verify and checkpoint the notes/tags feature.
 - [x] Commit and push the completed notes/tags implementation to the selected GitHub repository branch and confirm its commit SHA.
+
+## Tag-based shortlist filtering
+
+- [x] Extract and normalize unique custom tags across the signed-in user’s saved properties.
+- [x] Add responsive tag filter controls with active and clear-filter states.
+- [x] Filter shortlist cards and comparison selections by the active tag.
+- [x] Add an empty filtered-results state and tests for matching behavior, including shared tag normalization and case-insensitive matching.
+- [x] Verify and checkpoint the tag-filtering feature.
