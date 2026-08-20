@@ -159,4 +159,71 @@
 - [x] Verify partnership form validation and successful persistence of name, email, phone, company, investment range, role, and message.
 - [x] Verify the protected admin workspace displays partnership applications and their full recorded details.
 - [x] Add or update tests for search submission and partnership lead persistence/visibility.
-- [ ] Verify responsive states, push the update to GitHub, and save a checkpoint.
+- [x] Verify responsive states, push the update to GitHub, and save a checkpoint.
+
+## Search result and WhatsApp correction
+
+- [x] Fix listings search so submitted state, property type, availability, price, and keyword filters return matching available properties.
+- [x] Add Nigerian state, local government area, and street discovery guidance/options for property location searches.
+- [x] Ensure empty or unmatched search states explain how to broaden the location query.
+- [x] Route developer WhatsApp actions to +234 814 199 7159 using an HTML WhatsApp link with a prefilled inquiry message.
+- [x] Add focused tests for location filtering and WhatsApp URL generation.
+- [x] Verify mobile and desktop search/contact flows and save a final checkpoint.
+
+## Rent/buy filters and listing sharing
+
+- [x] Add a rent/buy transaction dropdown next to the property search.
+- [x] Add minimum and maximum price filters that submit with the search criteria.
+- [x] Apply transaction and price-range filters to database and fallback property results.
+- [x] Add a Share on WhatsApp action to every property card with the listing title, location, and URL.
+- [x] Add focused tests for transaction/price filtering and listing share URL generation.
+- [x] Verify mobile and desktop property discovery and save a final checkpoint.
+
+## Share confirmation toast
+
+- [x] Show a lightweight visual confirmation toast after a property Share on WhatsApp click.
+- [x] Preserve the listing-specific WhatsApp share URL and avoid nested-link navigation.
+- [x] Verify the toast/share interaction on mobile and desktop, run tests, and save a checkpoint.
+
+## Share fallback and property-detail sharing
+
+- [x] Add a shared WhatsApp-or-clipboard share helper with a safe clipboard fallback.
+- [x] Show a Copied confirmation toast when WhatsApp cannot be opened or clipboard sharing is used.
+- [x] Add Share on WhatsApp and visual confirmation toasts to individual property detail pages.
+- [x] Add focused tests for fallback outcomes and detail-page share URL generation.
+- [x] Verify card and detail sharing on mobile and desktop, run tests, and save a checkpoint.
+
+## Visible copy-link controls
+
+- [x] Add a visible Copy link button beside WhatsApp share on every property card.
+- [x] Add a visible Copy link button beside WhatsApp share on individual property detail pages.
+- [x] Reuse clipboard confirmation and show a clear Copied toast.
+- [x] Verify mobile and desktop sharing layouts, run tests, and save a checkpoint.
+
+## Editable pricing, galleries, and daily showcase
+
+- [x] Make guide price editable in the protected admin property create/edit workflow.
+- [x] Verify price updates persist and render consistently on cards, detail pages, search results, and calculators.
+- [x] Expand seeded/demo listings with approximately four additional managed property images across houses and land.
+- [x] Add a richer multi-image gallery with thumbnail or alternate-image viewing on property cards/detail pages where appropriate.
+- [x] Add a daily rotating public showcase that changes the featured house and land imagery deterministically by date.
+- [x] Investigate and resolve the two visible mobile errors from the supplied preview.
+- [x] Add focused tests for editable price persistence, gallery selection, and daily rotation.
+- [x] Verify mobile and desktop admin/public flows and save a final checkpoint.
+
+## Full admin editor, scheduled gallery approval, and media management
+
+- [x] Add full admin property editing for title, location, status, type, description, transaction type, price, and publishing flags.
+- [x] Add media delete, reorder, and hero-image selection mutations and controls.
+- [x] Add a gallery-set approval model and protected admin controls for draft, approved, and rejected sets.
+- [x] Add a Heartbeat-compatible scheduled daily gallery endpoint and admin schedule controls without in-process timers.
+- [x] Verify scheduled callbacks are cron-authenticated, idempotent, and safe for unpublished content.
+- [x] Add focused tests for property update contracts, media ordering/hero behavior, and gallery approval transitions.
+- [x] Verify public/admin separation and responsive admin flows, then save a final checkpoint.
+
+## Drag-and-drop media ordering and GitHub sync
+
+- [x] Add accessible drag-and-drop reordering for property media in the protected admin panel.
+- [x] Preserve keyboard/button fallback and save the reordered media IDs through the existing mutation.
+- [x] Add focused tests for deterministic reorder payload construction and persistence contract.
+- [x] Verify admin media ordering on mobile and desktop, run checks, push to the requested GitHub branch, and save a checkpoint.
