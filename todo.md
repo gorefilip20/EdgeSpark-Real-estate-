@@ -134,3 +134,11 @@
 - [x] Add visible Email and LinkedIn action labels without displaying the underlying addresses or URLs.
 - [x] Make Email open the user’s email app and LinkedIn open the intended founder profile destinations.
 - [x] Verify responsive founder cards and contact-link behavior, then checkpoint the update.
+
+## Founder portraits
+
+- [x] Add the supplied actual portrait images for Evarestus and Benjamin to managed project storage.
+- [x] Connect the portrait URLs to the corresponding founder cards with accessible alt text.
+- [x] Preserve the Email/LinkedIn-only contact actions and keep phone numbers hidden.
+- [x] Verify portrait cropping, contrast, and responsive behavior on desktop and mobile.
+- [x] Run tests, push the portrait update to GitHub, and save a checkpoint.
