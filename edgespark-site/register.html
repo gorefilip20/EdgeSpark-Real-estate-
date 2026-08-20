@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/components/forms.css">
+<link rel="stylesheet" href="css/components/auth.css">
+<style>
+.name-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.password-wrapper{position:relative}
+.password-wrapper input{padding-right:3rem}
+.toggle-pw{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-muted,#A8A29E);padding:4px;display:flex}
+.toggle-pw:hover{color:var(--fg-secondary,#57534E)}
+.form-input.invalid{border-color:#DC2626}
+.form-input.valid{border-color:var(--success,#16A34A)}
+.validation-msg{font-size:.75rem;margin-top:.25rem;min-height:1rem}
+.validation-msg.error{color:#DC2626}
+.validation-msg.success{color:var(--success,#16A34A)}
+.terms-row{display:flex;align-items:flex-start;gap:.5rem;margin:var(--space-4,1rem) 0}
+.terms-row input{width:16px;height:16px;accent-color:var(--primary,#C9A24B);margin-top:2px;flex-shrink:0}
+.terms-row label{font-size:.8rem;color:var(--fg-secondary,#57534E);line-height:1.5;cursor:pointer}
+.terms-row a{color:var(--primary,#C9A24B);font-weight:500}
+.strength-label{font-size:.75rem;color:var(--fg-muted,#A8A29E);margin-top:.25rem}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin-right:.5rem;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.name-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="auth-layout">
+  <!-- Brand panel (desktop) -->
+  <div class="auth-brand-panel">
+    <div class="auth-brand-content">
+      <span class="type-overline">Start Investing</span>
+      <h2>Real estate investing, made transparent.</h2>
+      <p>Create your EdgeSpark account to browse verified deals, express interest, and track your investment journey — all with full transparency.</p>
+      <div class="auth-brand-stats">
+        <div>
+          <div class="auth-brand-stat-value">2–4 mo</div>
+          <div class="auth-brand-stat-label">Average deal cycle</div>
+        </div>
+        <div>
+          <div class="auth-brand-stat-value">37%+</div>
+          <div class="auth-brand-stat-label">Target return</div>
+        </div>
+        <div>
+          <div class="auth-brand-stat-value">100%</div>
+          <div class="auth-brand-stat-label">Title-verified</div>
+        </div>
+        <div>
+          <div class="auth-brand-stat-value">60–80%</div>
+          <div class="auth-brand-stat-label">Investor share</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-wrapper">
+      <div class="auth-header">
+        <a href="/" class="brand">
+          <span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span>
+          <span class="brand-text">
+            <span class="brand-name">EdgeSpark</span>
+          </span>
+        </a>
+        <h1>Create your account</h1>
+        <p>Join EdgeSpark to access verified investment opportunities.</p>
+      </div>
+
+      <div class="auth-error" id="registerError"></div>
+
+      <form class="auth-form" id="registerForm">
+        <div class="name-row">
+          <div class="form-group">
+            <label class="form-label" for="regFirstName">First Name</label>
+            <input class="form-input" type="text" id="regFirstName" required placeholder="First name" autocomplete="given-name">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regLastName">Last Name</label>
+            <input class="form-input" type="text" id="regLastName" required placeholder="Last name" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regEmail">Email Address</label>
+          <input class="form-input" type="email" id="regEmail" required placeholder="you@email.com" autocomplete="email">
+          <div class="validation-msg" id="emailValidation"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPhone">Phone (optional)</label>
+          <input class="form-input" type="tel" id="regPhone" placeholder="+234 ..." autocomplete="tel">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPassword">Password</label>
+          <div class="password-wrapper">
+            <input class="form-input" type="password" id="regPassword" required placeholder="Minimum 8 characters" minlength="8" autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePassword('regPassword',this)" aria-label="Show password">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="password-strength" id="passwordStrength">
+            <div class="password-strength-bar"></div>
+            <div class="password-strength-bar"></div>
+            <div class="password-strength-bar"></div>
+            <div class="password-strength-bar"></div>
+          </div>
+          <div class="strength-label" id="strengthLabel">Use 8+ characters with a mix of letters, numbers, and symbols.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="regPasswordConfirm">Confirm Password</label>
+          <div class="password-wrapper">
+            <input class="form-input" type="password" id="regPasswordConfirm" required placeholder="Re-enter your password" autocomplete="new-password">
+            <button type="button" class="toggle-pw" onclick="togglePassword('regPasswordConfirm',this)" aria-label="Show password">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="validation-msg" id="confirmValidation"></div>
+        </div>
+        <div class="terms-row">
+          <input type="checkbox" id="termsCheck" required>
+          <label for="termsCheck">I agree to the EdgeSpark <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="justify-content:center" id="registerBtn">
+          Create Account
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/api/public/page/login">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePassword(id,btn){
+  const inp=document.getElementById(id);
+  const showing=inp.type==='text';
+  inp.type=showing?'password':'text';
+  btn.innerHTML=showing?
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>':
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+}
+
+const passwordInput=document.getElementById('regPassword');
+const strengthBars=document.querySelectorAll('.password-strength-bar');
+const strengthLabels=['Weak','Fair','Good','Strong'];
+
+passwordInput?.addEventListener('input',()=>{
+  const val=passwordInput.value;
+  let strength=0;
+  if(val.length>=8)strength++;
+  if(/[A-Z]/.test(val))strength++;
+  if(/[0-9]/.test(val))strength++;
+  if(/[^A-Za-z0-9]/.test(val))strength++;
+  strengthBars.forEach((bar,i)=>{
+    bar.classList.toggle('active',i<strength);
+    bar.classList.toggle('strong',strength>=3&&i<strength);
+  });
+  document.getElementById('strengthLabel').textContent=val.length?strengthLabels[Math.max(0,strength-1)]:'Use 8+ characters with a mix of letters, numbers, and symbols.';
+});
+
+document.getElementById('regEmail')?.addEventListener('blur',function(){
+  const v=this.value.trim();
+  const msg=document.getElementById('emailValidation');
+  if(!v){msg.textContent='';this.classList.remove('valid','invalid');return;}
+  const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  this.classList.toggle('valid',valid);
+  this.classList.toggle('invalid',!valid);
+  msg.textContent=valid?'':'Please enter a valid email address';
+  msg.className='validation-msg '+(valid?'success':'error');
+});
+
+document.getElementById('regPasswordConfirm')?.addEventListener('input',function(){
+  const pw=document.getElementById('regPassword').value;
+  const match=this.value===pw;
+  const msg=document.getElementById('confirmValidation');
+  if(!this.value){msg.textContent='';this.classList.remove('valid','invalid');return;}
+  this.classList.toggle('valid',match);
+  this.classList.toggle('invalid',!match);
+  msg.textContent=match?'Passwords match':'Passwords do not match';
+  msg.className='validation-msg '+(match?'success':'error');
+});
+
+document.getElementById('registerForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('registerBtn');
+  const errorEl=document.getElementById('registerError');
+  const password=document.getElementById('regPassword').value;
+  const confirm=document.getElementById('regPasswordConfirm').value;
+
+  if(password!==confirm){
+    errorEl.textContent='Passwords do not match.';
+    errorEl.classList.add('visible');
+    return;
+  }
+  if(!document.getElementById('termsCheck').checked){
+    errorEl.textContent='Please agree to the Terms of Service and Privacy Policy.';
+    errorEl.classList.add('visible');
+    return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Creating account...';
+  errorEl.classList.remove('visible');
+
+  const firstName=document.getElementById('regFirstName').value.trim();
+  const lastName=document.getElementById('regLastName').value.trim();
+  const name=(firstName+' '+lastName).trim();
+
+  try{
+    const res=await fetch('/api/public/auth/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:name,
+        email:document.getElementById('regEmail').value,
+        phone:document.getElementById('regPhone').value||undefined,
+        password:password,
+      }),
+    });
+    const data=await res.json();
+    if(res.ok&&data.ok){
+      localStorage.setItem('edge_token',data.token);
+      localStorage.setItem('edge_user',JSON.stringify(data.user));
+      window.location.href='/api/public/page/dashboard';
+    }else{
+      errorEl.textContent=data.error==='email_already_registered'?'An account with this email already exists. Try signing in.':data.error==='password_too_short'?'Password must be at least 8 characters.':'Something went wrong. Please try again.';
+      errorEl.classList.add('visible');
+    }
+  }catch{
+    errorEl.textContent='Network error. Please check your connection.';
+    errorEl.classList.add('visible');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='Create Account';
+  }
+});
+</script>
+</body>
+</html>

@@ -29,6 +29,20 @@
       "when": 1787186627620,
       "tag": "0003_stale_liz_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1787187104551,
+      "tag": "0004_dear_hammerhead",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1787187386265,
+      "tag": "0005_jazzy_ser_duncan",
+      "breakpoints": true
     }
   ]
 }

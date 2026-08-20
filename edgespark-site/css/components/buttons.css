@@ -1,0 +1,52 @@
+/* ============================================
+   EDGEPROPERTIES — Buttons
+   ============================================ */
+
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-4) var(--space-6);
+  font-family: var(--font-sans); font-size: var(--text-body-sm);
+  font-weight: var(--weight-semibold); text-decoration: none;
+  border: none; cursor: pointer; border-radius: var(--radius-md);
+  transition: all var(--motion-fast);
+  letter-spacing: 0.01em;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--primary); color: var(--fg-on-primary);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover); transform: translateY(-1px);
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-secondary {
+  background: transparent; color: var(--fg-secondary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-strong); color: var(--fg);
+  background: var(--bg-surface);
+}
+
+.btn-ghost {
+  background: transparent; color: var(--fg-secondary);
+  padding: var(--space-3) var(--space-4);
+}
+.btn-ghost:hover { color: var(--fg); }
+
+.btn-dark {
+  background: var(--accent); color: #fff;
+}
+.btn-dark:hover:not(:disabled) {
+  background: var(--accent-hover); transform: translateY(-1px);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4); font-size: var(--text-caption);
+}
+
+.btn-lg {
+  padding: var(--space-5) var(--space-8); font-size: var(--text-body);
+}

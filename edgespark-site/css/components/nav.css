@@ -1,0 +1,96 @@
+/* ============================================
+   EDGEPROPERTIES — Nav Component
+   ============================================ */
+
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: var(--space-4) 0;
+  background: rgba(250, 249, 247, 0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: all var(--motion-base);
+}
+.nav.scrolled {
+  padding: var(--space-3) 0;
+  box-shadow: var(--shadow-sm);
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: var(--container-max); margin: 0 auto;
+  padding: 0 var(--gutter-mobile);
+}
+@media (min-width: 769px) {
+  .nav-inner { padding: 0 var(--gutter-desktop); }
+}
+
+/* Brand */
+.brand { display: flex; align-items: center; gap: var(--space-3); text-decoration: none; }
+.brand-mark {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; line-height: 0;
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-name { font-weight: var(--weight-bold); font-size: 0.95rem; color: var(--fg); letter-spacing: -0.01em; }
+.brand-sub { font-size: 0.7rem; color: var(--fg-muted); letter-spacing: 0.04em; text-transform: uppercase; font-weight: var(--weight-medium); }
+
+/* Nav links */
+.nav-links { display: flex; align-items: center; gap: var(--space-6); }
+.nav-links a {
+  font-size: var(--text-body-sm); font-weight: var(--weight-medium);
+  color: var(--fg-secondary); text-decoration: none;
+  transition: color var(--motion-fast); position: relative;
+}
+.nav-links a::after {
+  content: ''; position: absolute; bottom: -4px; left: 0;
+  width: 0; height: 1.5px; background: var(--primary);
+  transition: width var(--motion-base);
+}
+.nav-links a:hover { color: var(--fg); }
+.nav-links a:hover::after { width: 100%; }
+
+/* CTA in nav */
+.nav-cta {
+  background: var(--accent) !important; color: #fff !important;
+  padding: var(--space-3) var(--space-5) !important;
+  font-weight: var(--weight-semibold) !important;
+  transition: background var(--motion-fast), transform var(--motion-fast) !important;
+}
+.nav-cta::after { display: none !important; }
+.nav-cta:hover { background: var(--accent-hover) !important; transform: translateY(-1px); }
+
+/* Currency switcher in nav */
+.nav-currency {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  font-size: var(--text-body-sm); color: var(--fg-secondary);
+  cursor: pointer; transition: border-color var(--motion-fast);
+  background: var(--bg-surface);
+}
+.nav-currency:hover { border-color: var(--border-strong); }
+.nav-currency-flag { font-size: 1rem; }
+.nav-currency-code { font-weight: var(--weight-semibold); font-size: var(--text-caption); }
+
+/* Mobile burger */
+.burger {
+  display: none; background: none; border: none; cursor: pointer;
+  padding: var(--space-1); z-index: 101;
+}
+.burger span {
+  display: block; width: 22px; height: 2px; background: var(--fg);
+  margin: 5px 0; transition: all var(--motion-base);
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--accent); flex-direction: column;
+    justify-content: center; gap: var(--space-8); z-index: 99;
+  }
+  .nav-links.open { display: flex; }
+  .nav-links a { font-size: var(--text-heading-2); color: rgba(255,255,255,0.8); }
+  .nav-links a:hover { color: #fff; }
+  .nav-cta { background: var(--primary) !important; color: var(--accent) !important; }
+  .burger { display: block; }
+}

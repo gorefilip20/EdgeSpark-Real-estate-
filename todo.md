@@ -75,3 +75,14 @@
 - [x] Populate clearly labeled sample Nigerian houses and land listings for testing.
 - [x] Add photography-ready seeded media and verify property display/search behavior.
 - [x] Verify admin isolation and public account entry flows.
+
+## Public navigation, favorites, and repository sync
+
+- [x] Remove Admin from the public desktop and mobile navigation menus.
+- [x] Add a database-backed favorites/shortlist model tied to signed-in users and properties.
+- [x] Add save/remove favorite actions on property cards and detail pages.
+- [x] Add a signed-in shortlist page with empty, loading, and saved-property states.
+- [x] Verify public user sign-up/sign-in session recording and admin-only access behavior.
+- [x] Confirm the user details visible in the admin workspace and lead records; anonymous leads remain supported while signed-in submissions persist user linkage.
+- [x] Run tests and visual verification for navigation, favorites, and auth states.
+- [x] Push the completed project to the selected GitHub repository.

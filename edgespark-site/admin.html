@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1C1917;background:#FAFAF9}
+a{text-decoration:none;color:inherit}
+:root{--gold:#C9A24B;--navy:#0F1729;--bg:#FAFAF9;--surface:#FFF;--fg:#1C1917;--fg2:#57534E;--muted:#A8A29E;--border:#E7E5E4;--success:#16A34A;--danger:#DC2626;--warn:#D97706;--info:#2563EB;--radius:12px}
+
+.dash-layout{display:grid;grid-template-columns:1fr;min-height:100vh}
+.dash-sidebar{display:none}
+.dash-main{padding:1rem;padding-bottom:80px;max-width:1400px;width:100%}
+.dash-title{font-family:'Fraunces',serif;font-size:1.75rem;color:var(--fg)}
+.dash-subtitle{font-size:.875rem;color:var(--fg2);margin-top:.25rem}
+
+.dash-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin-bottom:1.5rem}
+.dash-stat{background:var(--surface);border:1px solid var(--border);padding:1rem;border-radius:var(--radius);position:relative;overflow:hidden}
+.dash-stat-value{font-family:'Fraunces',serif;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.dash-stat-label{font-size:.7rem;color:var(--muted);margin-top:.25rem}
+.dash-stat-icon{position:absolute;top:1rem;right:1rem;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.dash-stat-icon.blue{background:#eff6ff;color:var(--info)}
+.dash-stat-icon.green{background:#f0f7ef;color:var(--success)}
+.dash-stat-icon.gold{background:#fef3c7;color:var(--warn)}
+.dash-stat-icon.purple{background:#f3e8ff;color:#7C3AED}
+
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+.section-header h2{font-family:'Fraunces',serif;font-size:1.25rem}
+
+.search-bar{display:flex;gap:.5rem;margin-bottom:1rem}
+.search-bar input{flex:1;padding:.5rem .75rem;font-size:.85rem;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.search-bar input:focus{outline:none;border-color:var(--gold)}
+.search-bar select{padding:.5rem;font-size:.85rem;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+
+.data-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:.8rem}
+.data-table th{text-align:left;padding:.6rem .75rem;font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg);border-bottom:1px solid var(--border)}
+.data-table td{padding:.6rem .75rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover{background:rgba(201,162,75,.03)}
+
+.badge{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.65rem;font-weight:600;text-transform:uppercase;white-space:nowrap}
+.badge-active,.badge-available{background:#f0f7ef;color:var(--success)}
+.badge-pending,.badge-new{background:#fef3c7;color:var(--warn)}
+.badge-sold{background:#fef2f2;color:var(--danger)}
+.badge-approved{background:#eff6ff;color:var(--info)}
+.badge-declined{background:#fef2f2;color:var(--danger)}
+.badge-admin{background:linear-gradient(135deg,#0F1729,#1a2a40);color:var(--gold)}
+.badge-investor{background:#eff6ff;color:var(--info)}
+
+.btn{padding:.5rem 1rem;background:var(--gold);color:#061222;font-weight:600;font-size:.8rem;border:none;border-radius:8px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.35rem}
+.btn:hover{background:#D4B96A}
+.btn-sm{padding:.35rem .6rem;font-size:.7rem}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#B91C1C}
+.btn-secondary{background:var(--border);color:var(--fg)}
+.btn-secondary:hover{background:#D6D3D1}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#15803D}
+.btn-ghost{background:transparent;color:var(--fg2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+
+.form-group{margin-bottom:.75rem}
+label{display:block;font-size:.8rem;font-weight:500;margin-bottom:.35rem}
+input,select,textarea{width:100%;padding:.6rem .75rem;font-size:.875rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.1)}
+textarea{min-height:80px;resize:vertical}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:540px;max-height:85vh;overflow-y:auto}
+.modal h2{font-family:'Fraunces',serif;font-size:1.25rem;margin-bottom:1rem}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem}
+
+.media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.75rem}
+.media-thumb{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;background:#f5f5f4}
+.media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover}
+.media-thumb .remove{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.media-thumb .hero-badge-media{position:absolute;bottom:4px;left:4px;background:var(--gold);color:#061222;padding:2px 6px;border-radius:4px;font-size:.6rem;font-weight:700}
+
+.activity-feed{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.activity-item{display:flex;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.8rem;align-items:flex-start}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:.35rem}
+.activity-dot.green{background:var(--success)}
+.activity-dot.blue{background:var(--info)}
+.activity-dot.gold{background:var(--gold)}
+.activity-dot.red{background:var(--danger)}
+.activity-time{font-size:.7rem;color:var(--muted);white-space:nowrap}
+
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1rem}
+.tab-btn{padding:.6rem 1rem;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.tab-btn:hover{color:var(--fg2)}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:.75rem 1.5rem;border-radius:8px;font-size:.85rem;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-state svg{margin-bottom:.75rem;opacity:.4}
+.empty-state p{font-size:.85rem}
+
+.dash-bottom{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:50;justify-content:space-around;padding:.25rem 0}
+.dash-tab{display:flex;flex-direction:column;align-items:center;padding:.4rem;font-size:.6rem;color:var(--muted);text-decoration:none;cursor:pointer;border:none;background:none}
+.dash-tab.active{color:var(--gold);font-weight:600}
+.dash-tab svg{width:20px;height:20px;margin-bottom:2px}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(min-width:769px){
+  .dash-layout{grid-template-columns:240px 1fr}
+  .dash-sidebar{display:flex;flex-direction:column;background:var(--navy);color:rgba(255,255,255,.7);padding:1.25rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .dash-main{padding:1.5rem 2rem;padding-bottom:1rem}
+  .dash-bottom{display:none}
+  .dash-stats{grid-template-columns:repeat(4,1fr)}
+  .media-grid{grid-template-columns:repeat(4,1fr)}
+}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border-radius:8px;font-size:.8rem;color:rgba(255,255,255,.6);cursor:pointer;margin-bottom:2px;transition:all .12s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.nav-item svg{width:18px;height:18px;flex-shrink:0}
+.nav-badge{background:var(--gold);color:#061222;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:99px;margin-left:auto}
+</style>
+</head>
+<body>
+
+<div class="dash-layout">
+<!-- Sidebar -->
+<aside class="dash-sidebar">
+  <a href="/" style="display:flex;align-items:center;gap:.75rem;text-decoration:none;margin-bottom:1.5rem">
+    <svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg>
+    <span style="font-weight:700;font-size:.9rem;color:#fff">EdgeSpark</span>
+  </a>
+  <nav style="flex:1" id="sideNav">
+    <button class="nav-item active" onclick="showView('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </button>
+    <button class="nav-item" onclick="showView('properties')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+      Properties
+    </button>
+    <button class="nav-item" onclick="showView('deals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      Deals
+    </button>
+    <button class="nav-item" onclick="showView('interests')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Interests <span class="nav-badge" id="interestBadge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showView('users')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </button>
+    <button class="nav-item" onclick="showView('partners')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Partners <span class="nav-badge" id="partnerBadge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showView('inquiries')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Inquiries
+    </button>
+    <div style="height:1px;background:rgba(255,255,255,.08);margin:.75rem 0"></div>
+    <button class="nav-item" onclick="signOut()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      Sign Out
+    </button>
+  </nav>
+  <div style="padding-top:.75rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.75rem">
+    <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,162,75,.2);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--gold)" id="adminAvatar">AD</div>
+    <div>
+      <div style="font-size:.8rem;color:rgba(255,255,255,.8)" id="adminName">Admin</div>
+      <div style="font-size:.65rem;color:rgba(255,255,255,.35)">Administrator</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="dash-main">
+
+<!-- ===== OVERVIEW ===== -->
+<div id="view-overview">
+  <div class="section-header">
+    <div>
+      <h1 class="dash-title">Dashboard</h1>
+      <p class="dash-subtitle">Welcome back, <span id="adminGreeting">Admin</span></p>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted)" id="lastUpdated"></div>
+  </div>
+
+  <div class="dash-stats">
+    <div class="dash-stat">
+      <div class="dash-stat-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></div>
+      <div class="dash-stat-value" id="statProps">-</div>
+      <div class="dash-stat-label">Properties</div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="dash-stat-value" id="statDeals">-</div>
+      <div class="dash-stat-label">Active Deals</div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon gold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="dash-stat-value" id="statUsers">-</div>
+      <div class="dash-stat-label">Registered Users</div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+      <div class="dash-stat-value" id="statInterests">-</div>
+      <div class="dash-stat-label">Investor Interests</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:1rem">
+    <div>
+      <h3 style="font-size:.9rem;font-weight:600;margin-bottom:.75rem">Recent Activity</h3>
+      <div class="activity-feed" id="activityFeed">
+        <div class="activity-item"><span style="color:var(--muted);font-size:.8rem">Loading...</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROPERTIES ===== -->
+<div id="view-properties" style="display:none">
+  <div class="section-header">
+    <h2>Properties</h2>
+    <button class="btn" onclick="openNewProperty()">+ Add Property</button>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="propSearch" placeholder="Search properties..." oninput="filterProperties()">
+    <select id="propStatusFilter" onchange="filterProperties()">
+      <option value="">All Status</option>
+      <option value="available">Available</option>
+      <option value="sold">Sold</option>
+      <option value="reserved">Reserved</option>
+    </select>
+  </div>
+  <div id="propertyList"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<!-- ===== PROPERTY DETAIL (media) ===== -->
+<div id="view-property-detail" style="display:none">
+  <button class="btn btn-ghost" onclick="showView('properties')" style="margin-bottom:1rem">← Back to Properties</button>
+  <div id="propertyDetailContent"></div>
+</div>
+
+<!-- ===== DEALS ===== -->
+<div id="view-deals" style="display:none">
+  <div class="section-header">
+    <h2>Deals</h2>
+    <button class="btn" onclick="openModal('dealModal')">+ New Deal</button>
+  </div>
+  <div id="adminDeals"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<!-- ===== INTERESTS ===== -->
+<div id="view-interests" style="display:none">
+  <div class="section-header">
+    <h2>Investor Interests</h2>
+  </div>
+  <div class="tab-bar" id="interestTabs">
+    <button class="tab-btn active" onclick="filterInterests('all')">All</button>
+    <button class="tab-btn" onclick="filterInterests('pending')">Pending</button>
+    <button class="tab-btn" onclick="filterInterests('approved')">Approved</button>
+    <button class="tab-btn" onclick="filterInterests('declined')">Declined</button>
+  </div>
+  <div id="interestList"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<!-- ===== USERS ===== -->
+<div id="view-users" style="display:none">
+  <div class="section-header">
+    <h2>Users</h2>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="userSearch" placeholder="Search users..." oninput="filterUsers()">
+    <select id="userRoleFilter" onchange="filterUsers()">
+      <option value="">All Roles</option>
+      <option value="investor">Investor</option>
+      <option value="admin">Admin</option>
+    </select>
+  </div>
+  <div id="userList"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<!-- ===== PARTNERS ===== -->
+<div id="view-partners" style="display:none">
+  <div class="section-header">
+    <h2>Partner Applications</h2>
+  </div>
+  <div class="tab-bar" id="partnerTabs">
+    <button class="tab-btn active" onclick="filterPartners('all')">All</button>
+    <button class="tab-btn" onclick="filterPartners('pending')">Pending</button>
+    <button class="tab-btn" onclick="filterPartners('approved')">Approved</button>
+    <button class="tab-btn" onclick="filterPartners('declined')">Declined</button>
+  </div>
+  <div id="partnerList"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<!-- ===== INQUIRIES ===== -->
+<div id="view-inquiries" style="display:none">
+  <div class="section-header">
+    <h2>Inquiries</h2>
+  </div>
+  <div id="inquiryList"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+</main>
+</div>
+
+<!-- Bottom Nav (mobile) -->
+<nav class="dash-bottom">
+  <button class="dash-tab active" onclick="showView('overview')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</button>
+  <button class="dash-tab" onclick="showView('properties')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Props</button>
+  <button class="dash-tab" onclick="showView('interests')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>Leads</button>
+  <button class="dash-tab" onclick="showView('inquiries')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Inbox</button>
+  <button class="dash-tab" onclick="signOut()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Out</button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Property Modal -->
+<div class="modal-overlay" id="propModal"><div class="modal">
+<h2 id="propModalTitle">New Property</h2>
+<form id="propForm">
+<div class="form-group"><label>Title *</label><input type="text" id="propTitle" required placeholder="3-Bedroom Bungalow"></div>
+<div class="form-group"><label>Address *</label><input type="text" id="propAddress" required placeholder="123 Main St"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>City *</label><input type="text" id="propCity" required placeholder="Enugu"></div>
+  <div class="form-group"><label>State *</label><input type="text" id="propState" required placeholder="Enugu"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>Bedrooms</label><input type="number" id="propBeds" placeholder="3"></div>
+  <div class="form-group"><label>Bathrooms</label><input type="number" id="propBaths" placeholder="2"></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>Plot Size (sqm)</label><input type="number" id="propPlot" placeholder="450"></div>
+  <div class="form-group"><label>Type</label><select id="propType"><option value="bungalow">Bungalow</option><option value="duplex">Duplex</option><option value="apartment">Apartment</option><option value="land">Land</option><option value="commercial">Commercial</option></select></div>
+</div>
+<div class="form-group"><label>Price (NGN) *</label><input type="number" id="propPrice" required placeholder="15000000"></div>
+<div class="form-group"><label>Description</label><textarea id="propDesc" placeholder="Property description..."></textarea></div>
+<div class="form-group"><label>Image URL</label><input type="url" id="propImage" placeholder="https://example.com/photo.jpg"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>Latitude</label><input type="number" step="any" id="propLat" placeholder="6.4413"></div>
+  <div class="form-group"><label>Longitude</label><input type="number" step="any" id="propLng" placeholder="7.4988"></div>
+</div>
+<div class="form-group"><label><input type="checkbox" id="propFeatured" style="width:auto;margin-right:.5rem">Featured property</label></div>
+<div class="modal-actions">
+  <button type="button" class="btn btn-secondary" onclick="closeModal('propModal')">Cancel</button>
+  <button type="submit" class="btn" id="propSubmitBtn">Create Property</button>
+</div>
+</form>
+</div></div>
+
+<!-- Deal Modal -->
+<div class="modal-overlay" id="dealModal"><div class="modal">
+<h2>New Deal</h2>
+<form id="dealForm">
+<div class="form-group"><label>Title *</label><input type="text" id="dealTitle" required placeholder="Trans Ekulu Deal"></div>
+<div class="form-group"><label>Property</label><select id="dealProperty"><option value="">Select property...</option></select></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>Purchase (NGN) *</label><input type="number" id="dealPurchase" required></div>
+  <div class="form-group"><label>Renovation (NGN) *</label><input type="number" id="dealRenovation" required></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+  <div class="form-group"><label>Legal Fees (NGN)</label><input type="number" id="dealLegal" value="0"></div>
+  <div class="form-group"><label>Resale (NGN) *</label><input type="number" id="dealResale" required></div>
+</div>
+<div class="form-group"><label>Investor Share (%)</label><input type="number" id="dealInvestorShare" value="70" min="0" max="100"></div>
+<div class="form-group"><label>Description</label><textarea id="dealDesc" placeholder="Deal description..."></textarea></div>
+<div class="modal-actions">
+  <button type="button" class="btn btn-secondary" onclick="closeModal('dealModal')">Cancel</button>
+  <button type="submit" class="btn">Create Deal</button>
+</div>
+</form>
+</div></div>
+
+<!-- Reply Modal -->
+<div class="modal-overlay" id="replyModal"><div class="modal">
+<h2>Reply</h2>
+<div id="replyToInfo" style="background:var(--bg);padding:.75rem;border-radius:8px;margin-bottom:1rem;font-size:.8rem"></div>
+<form id="replyForm">
+<div class="form-group"><label>Subject</label><input type="text" id="replySubject" required></div>
+<div class="form-group"><label>Message</label><textarea id="replyBody" required placeholder="Type your reply..." style="min-height:120px"></textarea></div>
+<input type="hidden" id="replyToEmail"><input type="hidden" id="replyRelatedType"><input type="hidden" id="replyRelatedId">
+<div class="modal-actions">
+  <button type="button" class="btn btn-secondary" onclick="closeModal('replyModal')">Cancel</button>
+  <button type="submit" class="btn">Send Reply</button>
+</div>
+</form>
+</div></div>
+
+<!-- Interest Detail Modal -->
+<div class="modal-overlay" id="interestModal"><div class="modal">
+<h2>Interest Details</h2>
+<div id="interestDetail"></div>
+<div class="modal-actions" id="interestActions"></div>
+</div></div>
+
+<script>
+const token = localStorage.getItem('edge_token');
+const user = JSON.parse(localStorage.getItem('edge_user') || '{}');
+if (!token || user.role !== 'admin') window.location.href = '/api/public/page/login';
+
+const adminName = user.name || 'Admin';
+document.getElementById('adminName').textContent = adminName;
+document.getElementById('adminGreeting').textContent = adminName.split(' ')[0];
+document.getElementById('adminAvatar').textContent = adminName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+let allProperties = [];
+let allUsers = [];
+let allInterests = [];
+let allPartners = [];
+let currentInterestFilter = 'all';
+let currentPartnerFilter = 'all';
+
+function showView(v) {
+  const views = ['overview','properties','property-detail','deals','interests','users','partners','inquiries'];
+  views.forEach(x => {
+    const el = document.getElementById('view-' + x);
+    if (el) el.style.display = x === v ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.remove('active');
+    const txt = el.textContent.trim().toLowerCase();
+    if (txt.startsWith(v.slice(0, 4))) el.classList.add('active');
+  });
+  document.querySelectorAll('.dash-tab').forEach(el => {
+    el.classList.remove('active');
+  });
+  if (v === 'overview') loadOverview();
+  else if (v === 'properties') loadProperties();
+  else if (v === 'deals') loadAdminDeals();
+  else if (v === 'interests') loadInterests();
+  else if (v === 'users') loadUsers();
+  else if (v === 'partners') loadPartners();
+  else if (v === 'inquiries') loadInquiries();
+}
+
+function signOut() {
+  localStorage.removeItem('edge_token');
+  localStorage.removeItem('edge_user');
+  window.location.href = '/api/public/page/login';
+}
+
+function formatNgn(n) {
+  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(n);
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function timeAgo(d) {
+  const diff = Date.now() - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// ===== OVERVIEW =====
+async function loadOverview() {
+  document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+  try {
+    const r = await fetch('/api/public/admin/dashboard', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('statProps').textContent = d.stats.properties.total;
+      document.getElementById('statDeals').textContent = d.stats.deals.total;
+      document.getElementById('statUsers').textContent = d.stats.users.total;
+      document.getElementById('statInterests').textContent = d.stats.interests ? d.stats.interests.total : (d.stats.contacts ? d.stats.contacts.total : '0');
+
+      const feed = document.getElementById('activityFeed');
+      let items = [];
+      if (d.stats.contacts && d.stats.contacts.new > 0) {
+        items.push('<div class="activity-item"><span class="activity-dot gold"></span><div><div>' + d.stats.contacts.new + ' new inquiry(s) waiting for reply</div><span class="activity-time">Requires attention</span></div></div>');
+      }
+      if (d.stats.interests && d.stats.interests.pending > 0) {
+        items.push('<div class="activity-item"><span class="activity-dot blue"></span><div><div>' + d.stats.interests.pending + ' pending investor interest(s)</div><span class="activity-time">Review needed</span></div></div>');
+      }
+      if (d.stats.properties) {
+        items.push('<div class="activity-item"><span class="activity-dot green"></span><div><div>' + d.stats.properties.total + ' total properties listed</div><span class="activity-time">Platform stats</span></div></div>');
+      }
+      if (d.stats.deals) {
+        items.push('<div class="activity-item"><span class="activity-dot green"></span><div><div>' + d.stats.deals.total + ' deals available</div><span class="activity-time">Platform stats</span></div></div>');
+      }
+      if (items.length === 0) {
+        items.push('<div class="activity-item"><span style="color:var(--muted);font-size:.8rem">No recent activity.</span></div>');
+      }
+      feed.innerHTML = items.join('');
+    }
+  } catch (e) {
+    console.error('loadOverview error:', e);
+  }
+}
+
+// ===== PROPERTIES =====
+async function loadProperties() {
+  try {
+    const r = await fetch('/api/public/properties?limit=100', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    allProperties = (d.ok && d.items) ? d.items : [];
+    renderProperties(allProperties);
+    const sel = document.getElementById('dealProperty');
+    sel.innerHTML = '<option value="">Select property...</option>' + allProperties.map(p => '<option value="' + p.id + '">' + escapeHtml(p.title) + '</option>').join('');
+  } catch (e) {
+    console.error('loadProperties error:', e);
+  }
+}
+
+function filterProperties() {
+  const q = document.getElementById('propSearch').value.toLowerCase();
+  const status = document.getElementById('propStatusFilter').value;
+  let filtered = allProperties;
+  if (q) filtered = filtered.filter(p => (p.title + ' ' + (p.city || '') + ' ' + (p.state || '')).toLowerCase().includes(q));
+  if (status) filtered = filtered.filter(p => p.status === status);
+  renderProperties(filtered);
+}
+
+function renderProperties(items) {
+  const el = document.getElementById('propertyList');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg><p>No properties found.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Title</th><th>Location</th><th>Price</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+    items.map(p => '<tr>' +
+      '<td><strong>' + escapeHtml(p.title) + '</strong></td>' +
+      '<td>' + escapeHtml(p.city || '') + ', ' + escapeHtml(p.state || '') + '</td>' +
+      '<td>' + formatNgn(p.price_ngn || p.priceNgn || 0) + '</td>' +
+      '<td style="text-transform:capitalize">' + (p.property_type || p.propertyType || '-') + '</td>' +
+      '<td><span class="badge badge-' + (p.status || 'available') + '">' + (p.status || 'available') + '</span></td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn btn-sm" onclick="viewPropertyMedia(\'' + p.id + '\',\'' + escapeHtml(p.title).replace(/'/g, "\\'") + '\')">Media</button> ' +
+        '<button class="btn btn-sm btn-secondary" onclick="editProperty(\'' + p.id + '\')">Edit</button> ' +
+        '<button class="btn btn-sm btn-ghost" onclick="toggleStatus(\'' + p.id + '\',\'' + (p.status || 'available') + '\')">' + (p.status === 'available' ? 'Mark Sold' : 'Mark Avail') + '</button> ' +
+        '<button class="btn btn-sm btn-danger" onclick="deleteProperty(\'' + p.id + '\',\'' + escapeHtml(p.title).replace(/'/g, "\\'") + '\')">Del</button>' +
+      '</td></tr>'
+    ).join('') + '</tbody></table></div>';
+}
+
+function openNewProperty() {
+  const form = document.getElementById('propForm');
+  form.reset();
+  delete form.dataset.editId;
+  document.getElementById('propSubmitBtn').textContent = 'Create Property';
+  document.getElementById('propModalTitle').textContent = 'New Property';
+  openModal('propModal');
+}
+
+async function editProperty(id) {
+  const p = allProperties.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('propTitle').value = p.title || '';
+  document.getElementById('propAddress').value = p.address || '';
+  document.getElementById('propCity').value = p.city || '';
+  document.getElementById('propState').value = p.state || '';
+  document.getElementById('propBeds').value = p.bedrooms || '';
+  document.getElementById('propBaths').value = p.bathrooms || '';
+  document.getElementById('propPlot').value = p.plot_size_sqm || p.plotSizeSqm || '';
+  document.getElementById('propType').value = p.property_type || p.propertyType || 'bungalow';
+  document.getElementById('propPrice').value = p.price_ngn || p.priceNgn || '';
+  document.getElementById('propDesc').value = p.description || '';
+  document.getElementById('propImage').value = p.hero_image || p.heroImage || '';
+  document.getElementById('propLat').value = p.latitude || '';
+  document.getElementById('propLng').value = p.longitude || '';
+  document.getElementById('propFeatured').checked = !!p.featured;
+  document.getElementById('propForm').dataset.editId = id;
+  document.getElementById('propSubmitBtn').textContent = 'Update Property';
+  document.getElementById('propModalTitle').textContent = 'Edit Property';
+  openModal('propModal');
+}
+
+async function deleteProperty(id, title) {
+  if (!confirm('Delete "' + title + '"? This cannot be undone.')) return;
+  try {
+    await fetch('/api/public/properties/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+    showToast('Property deleted');
+    loadProperties();
+  } catch { showToast('Error deleting property'); }
+}
+
+async function toggleStatus(id, currentStatus) {
+  const newStatus = currentStatus === 'available' ? 'sold' : 'available';
+  try {
+    await fetch('/api/public/properties/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ status: newStatus }) });
+    showToast('Status updated to ' + newStatus);
+    loadProperties();
+  } catch { showToast('Error updating status'); }
+}
+
+// ===== PROPERTY MEDIA =====
+function viewPropertyMedia(propId, propTitle) {
+  showView('property-detail');
+  const el = document.getElementById('propertyDetailContent');
+  el.innerHTML = '<h2 style="font-family:Fraunces,serif;margin-bottom:.5rem">' + propTitle + '</h2>' +
+    '<p style="color:var(--muted);font-size:.85rem;margin-bottom:1.5rem">Upload files or paste URLs to add property media</p>' +
+    '<div id="uploadArea" style="border:2px dashed #D6D3D1;border-radius:12px;padding:2rem;text-align:center;margin-bottom:1rem;cursor:pointer;transition:border-color .2s,background .2s" ' +
+    'onclick="document.getElementById(\'fileInput\').click()" ' +
+    'ondragover="event.preventDefault();this.style.borderColor=\'#C9A24B\';this.style.background=\'rgba(201,162,75,.05)\'" ' +
+    'ondragleave="this.style.borderColor=\'#D6D3D1\';this.style.background=\'transparent\'" ' +
+    'ondrop="handleFileDrop(event,\'' + propId + '\')">' +
+    '<input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm" multiple style="display:none" onchange="handleFileSelect(this.files,\'' + propId + '\')">' +
+    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" style="margin-bottom:.5rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>' +
+    '<p style="font-size:.9rem;color:var(--fg2);margin:0">Drag & drop or <span style="color:var(--gold);font-weight:600">browse</span></p>' +
+    '<p style="font-size:.7rem;color:var(--muted);margin:.35rem 0 0">Images: JPEG, PNG, WebP (max 10MB) | Videos: MP4, MOV (max 100MB)</p></div>' +
+    '<div id="uploadProgress" style="display:none;margin-bottom:1rem"></div>' +
+    '<div style="display:flex;gap:.5rem;margin-bottom:1rem"><input type="text" id="mediaUrl" placeholder="Or paste image/video URL..." style="flex:1"><select id="mediaType" style="width:90px"><option value="image">Image</option><option value="video">Video</option></select><button class="btn" onclick="addMediaUrl(\'' + propId + '\')">Add</button></div>' +
+    '<div class="media-grid" id="mediaGrid"><p style="color:var(--muted);grid-column:1/-1">Loading media...</p></div>';
+  loadPropertyMedia(propId);
+}
+
+async function loadPropertyMedia(propId) {
+  try {
+    const r = await fetch('/api/public/properties/' + propId + '/media');
+    const d = await r.json();
+    const grid = document.getElementById('mediaGrid');
+    if (!d.ok || d.items.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>No media yet. Upload files or paste URLs above.</p></div>';
+      return;
+    }
+    grid.innerHTML = d.items.map(m => '<div class="media-thumb">' +
+      (m.mediaType === 'video' ? '<video src="' + m.s3Uri + '"></video>' : '<img src="' + m.s3Uri + '" alt="' + escapeHtml(m.caption || '') + '">') +
+      (m.isHero ? '<span class="hero-badge-media">HERO</span>' : '') +
+      '<button class="remove" onclick="deleteMedia(\'' + propId + '\',\'' + m.id + '\')">&times;</button></div>').join('');
+  } catch {}
+}
+
+function handleFileDrop(e, propId) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = '#D6D3D1';
+  e.currentTarget.style.background = 'transparent';
+  if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files, propId);
+}
+
+async function handleFileSelect(files, propId) {
+  const prog = document.getElementById('uploadProgress');
+  prog.style.display = 'block';
+  prog.innerHTML = '';
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:.5rem;padding:.5rem;background:var(--bg);border-radius:8px;margin-bottom:.25rem';
+    row.innerHTML = '<span style="flex:1;font-size:.85rem;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(f.name) + '</span><span style="font-size:.75rem;color:var(--muted)" id="status' + i + '"><span class="spinner"></span> Uploading...</span>';
+    prog.appendChild(row);
+    try {
+      const fd = new FormData();
+      fd.append('file', f);
+      const r = await fetch('/api/public/properties/' + propId + '/media/upload', { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: fd });
+      const d = await r.json();
+      document.getElementById('status' + i).textContent = d.ok ? 'Done' : 'Error';
+      document.getElementById('status' + i).style.color = d.ok ? 'var(--success)' : 'var(--danger)';
+    } catch {
+      document.getElementById('status' + i).textContent = 'Failed';
+      document.getElementById('status' + i).style.color = 'var(--danger)';
+    }
+  }
+  loadPropertyMedia(propId);
+  document.getElementById('fileInput').value = '';
+}
+
+async function addMediaUrl(propId) {
+  const url = document.getElementById('mediaUrl').value.trim();
+  const mediaType = document.getElementById('mediaType').value;
+  if (!url) { showToast('Paste a URL first'); return; }
+  try {
+    await fetch('/api/public/properties/' + propId + '/media', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ url, mediaType, fileName: url.split('/').pop(), mimeType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4' }) });
+    document.getElementById('mediaUrl').value = '';
+    showToast('Media added');
+    loadPropertyMedia(propId);
+  } catch { showToast('Failed to add media'); }
+}
+
+async function deleteMedia(propId, mediaId) {
+  if (!confirm('Delete this media?')) return;
+  await fetch('/api/public/properties/' + propId + '/media/' + mediaId, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+  showToast('Media deleted');
+  loadPropertyMedia(propId);
+}
+
+// ===== DEALS =====
+async function loadAdminDeals() {
+  try {
+    const r = await fetch('/api/public/deals', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    const el = document.getElementById('adminDeals');
+    if (!d.ok || d.items.length === 0) {
+      el.innerHTML = '<div class="empty-state"><p>No deals yet. Create one to get started.</p></div>';
+      return;
+    }
+    el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Title</th><th>Status</th><th>Investment</th><th>Resale</th><th>Profit</th><th>Return</th></tr></thead><tbody>' +
+      d.items.map(deal => '<tr>' +
+        '<td><strong>' + escapeHtml(deal.title) + '</strong></td>' +
+        '<td><span class="badge badge-active">' + (deal.status || 'active') + '</span></td>' +
+        '<td>' + formatNgn(deal.total_investment_ngn || deal.totalInvestmentNgn || 0) + '</td>' +
+        '<td>' + formatNgn(deal.projected_resale_ngn || deal.projectedResaleNgn || 0) + '</td>' +
+        '<td>' + formatNgn(deal.gross_profit_ngn || deal.grossProfitNgn || 0) + '</td>' +
+        '<td style="font-weight:600;color:var(--success)">' + ((deal.return_percentage || deal.returnPercentage) ? (deal.return_percentage || deal.returnPercentage) + '%' : '-') + '</td>' +
+      '</tr>').join('') + '</tbody></table></div>';
+  } catch {}
+}
+
+// ===== INTERESTS =====
+async function loadInterests() {
+  try {
+    const r = await fetch('/api/public/admin/interests', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    allInterests = (d.ok && d.items) ? d.items : [];
+    const pending = allInterests.filter(i => i.status === 'pending').length;
+    const badge = document.getElementById('interestBadge');
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+    renderInterests();
+  } catch (e) {
+    console.error('loadInterests error:', e);
+    document.getElementById('interestList').innerHTML = '<div class="empty-state"><p>Could not load interests.</p></div>';
+  }
+}
+
+function filterInterests(status) {
+  currentInterestFilter = status;
+  document.querySelectorAll('#interestTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderInterests();
+}
+
+function renderInterests() {
+  let items = allInterests;
+  if (currentInterestFilter !== 'all') items = items.filter(i => i.status === currentInterestFilter);
+  const el = document.getElementById('interestList');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>No ' + (currentInterestFilter === 'all' ? '' : currentInterestFilter + ' ') + 'interests found.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Investor</th><th>Deal</th><th>Range</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
+    items.map(i => '<tr>' +
+      '<td><strong>' + escapeHtml(i.userName || i.user_name || 'Unknown') + '</strong><br><span style="font-size:.7rem;color:var(--muted)">' + escapeHtml(i.userEmail || i.user_email || '') + '</span></td>' +
+      '<td>' + escapeHtml(i.dealTitle || i.deal_title || 'N/A') + '</td>' +
+      '<td>' + escapeHtml(i.investmentRange || i.investment_range || '-') + '</td>' +
+      '<td><span class="badge badge-' + (i.status || 'pending') + '">' + (i.status || 'pending') + '</span></td>' +
+      '<td>' + formatDate(i.createdAt || i.created_at) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        (i.status === 'pending' ?
+          '<button class="btn btn-sm btn-success" onclick="updateInterest(\'' + i.id + '\',\'approved\')">Approve</button> ' +
+          '<button class="btn btn-sm btn-danger" onclick="updateInterest(\'' + i.id + '\',\'declined\')">Decline</button>'
+          : '<button class="btn btn-sm btn-ghost" onclick="updateInterest(\'' + i.id + '\',\'pending\')">Reset</button>') +
+      '</td></tr>'
+    ).join('') + '</tbody></table></div>';
+}
+
+async function updateInterest(id, status) {
+  try {
+    await fetch('/api/public/admin/interests/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ status })
+    });
+    showToast('Interest ' + status);
+    loadInterests();
+  } catch { showToast('Error updating interest'); }
+}
+
+// ===== USERS =====
+async function loadUsers() {
+  try {
+    const r = await fetch('/api/public/admin/users', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    allUsers = (d.ok && d.items) ? d.items : [];
+    renderUsers(allUsers);
+  } catch (e) {
+    console.error('loadUsers error:', e);
+  }
+}
+
+function filterUsers() {
+  const q = document.getElementById('userSearch').value.toLowerCase();
+  const role = document.getElementById('userRoleFilter').value;
+  let filtered = allUsers;
+  if (q) filtered = filtered.filter(u => ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(q));
+  if (role) filtered = filtered.filter(u => u.role === role);
+  renderUsers(filtered);
+}
+
+function renderUsers(items) {
+  const el = document.getElementById('userList');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>No users found.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Joined</th></tr></thead><tbody>' +
+    items.map(u => '<tr>' +
+      '<td><strong>' + escapeHtml(u.name) + '</strong></td>' +
+      '<td>' + escapeHtml(u.email) + '</td>' +
+      '<td>' + escapeHtml(u.phone || '-') + '</td>' +
+      '<td><span class="badge badge-' + (u.role || 'investor') + '">' + (u.role || 'investor') + '</span></td>' +
+      '<td>' + formatDate(u.created_at || u.createdAt) + '</td>' +
+    '</tr>').join('') + '</tbody></table></div>';
+}
+
+// ===== PARTNERS =====
+async function loadPartners() {
+  try {
+    const r = await fetch('/api/public/admin/partners', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    allPartners = (d.ok && d.items) ? d.items : [];
+    const pending = allPartners.filter(p => p.status === 'pending').length;
+    const badge = document.getElementById('partnerBadge');
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline'; }
+    else badge.style.display = 'none';
+    renderPartners();
+  } catch (e) {
+    console.error('loadPartners error:', e);
+  }
+}
+
+function filterPartners(status) {
+  currentPartnerFilter = status;
+  document.querySelectorAll('#partnerTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderPartners();
+}
+
+function renderPartners() {
+  let items = allPartners;
+  if (currentPartnerFilter !== 'all') items = items.filter(p => p.status === currentPartnerFilter);
+  const el = document.getElementById('partnerList');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty-state"><p>No ' + (currentPartnerFilter === 'all' ? '' : currentPartnerFilter + ' ') + 'applications found.</p></div>';
+    return;
+  }
+  el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Investment Range</th><th>Company</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
+    items.map(p => '<tr>' +
+      '<td><strong>' + escapeHtml(p.fullName || p.full_name || '') + '</strong></td>' +
+      '<td>' + escapeHtml(p.email || '') + '</td>' +
+      '<td>' + escapeHtml(p.investmentRange || p.investment_range || '-') + '</td>' +
+      '<td>' + escapeHtml(p.company || '-') + '</td>' +
+      '<td><span class="badge badge-' + (p.status || 'pending') + '">' + (p.status || 'pending') + '</span></td>' +
+      '<td>' + formatDate(p.createdAt || p.created_at) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        (p.status === 'pending' ?
+          '<button class="btn btn-sm btn-success" onclick="updatePartner(\'' + p.id + '\',\'approved\')">Approve</button> ' +
+          '<button class="btn btn-sm btn-danger" onclick="updatePartner(\'' + p.id + '\',\'declined\')">Decline</button>'
+          : '<button class="btn btn-sm btn-ghost" onclick="updatePartner(\'' + p.id + '\',\'pending\')">Reset</button>') +
+        ' <button class="btn btn-sm" onclick="openReply(\'' + escapeHtml(p.email || '').replace(/'/g, "\\'") + '\',\'partner\',\'' + p.id + '\',\'' + escapeHtml(p.fullName || p.full_name || '').replace(/'/g, "\\'") + '\')">Reply</button>' +
+      '</td></tr>'
+    ).join('') + '</tbody></table></div>';
+}
+
+async function updatePartner(id, status) {
+  try {
+    await fetch('/api/public/admin/partners/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ status })
+    });
+    showToast('Partner ' + status);
+    loadPartners();
+  } catch { showToast('Error updating partner'); }
+}
+
+// ===== INQUIRIES =====
+async function loadInquiries() {
+  try {
+    const r = await fetch('/api/public/contacts', { headers: { Authorization: 'Bearer ' + token } });
+    const d = await r.json();
+    const el = document.getElementById('inquiryList');
+    if (!d.ok || d.items.length === 0) {
+      el.innerHTML = '<div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><p>No inquiries yet.</p></div>';
+      return;
+    }
+    el.innerHTML = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Interest</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
+      d.items.map(c => '<tr>' +
+        '<td><strong>' + escapeHtml(c.name) + '</strong></td>' +
+        '<td>' + escapeHtml(c.email) + '</td>' +
+        '<td>' + escapeHtml(c.interest_range || c.interestRange || '-') + '</td>' +
+        '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(c.message || '-') + '</td>' +
+        '<td>' + formatDate(c.created_at || c.createdAt) + '</td>' +
+        '<td><button class="btn btn-sm" onclick="openReply(\'' + escapeHtml(c.email).replace(/'/g, "\\'") + '\',\'contact\',\'' + c.id + '\',\'' + escapeHtml(c.name).replace(/'/g, "\\'") + '\')">Reply</button></td>' +
+      '</tr>').join('') + '</tbody></table></div>';
+  } catch {}
+}
+
+// ===== REPLY =====
+function openReply(email, relatedType, relatedId, name) {
+  document.getElementById('replyToEmail').value = email;
+  document.getElementById('replyRelatedType').value = relatedType;
+  document.getElementById('replyRelatedId').value = relatedId;
+  document.getElementById('replyToInfo').innerHTML = '<strong>To:</strong> ' + escapeHtml(name) + ' (' + escapeHtml(email) + ')';
+  document.getElementById('replySubject').value = 'Re: EdgeSpark ' + (relatedType === 'partner' ? 'Partner Application' : 'Inquiry');
+  openModal('replyModal');
+}
+
+// ===== FORM SUBMISSIONS =====
+document.getElementById('propForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = document.getElementById('propForm');
+  const editId = form.dataset.editId;
+  const btn = document.getElementById('propSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  try {
+    const method = editId ? 'PATCH' : 'POST';
+    const url = editId ? '/api/public/properties/' + editId : '/api/public/properties';
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({
+        title: document.getElementById('propTitle').value,
+        address: document.getElementById('propAddress').value,
+        city: document.getElementById('propCity').value,
+        state: document.getElementById('propState').value,
+        bedrooms: parseInt(document.getElementById('propBeds').value) || null,
+        bathrooms: parseInt(document.getElementById('propBaths').value) || null,
+        plot_size_sqm: parseInt(document.getElementById('propPlot').value) || null,
+        property_type: document.getElementById('propType').value,
+        price_ngn: parseInt(document.getElementById('propPrice').value),
+        description: document.getElementById('propDesc').value,
+        hero_image: document.getElementById('propImage').value || null,
+        latitude: parseFloat(document.getElementById('propLat').value) || null,
+        longitude: parseFloat(document.getElementById('propLng').value) || null,
+        featured: document.getElementById('propFeatured').checked
+      })
+    });
+    if (r.ok) {
+      closeModal('propModal');
+      form.reset();
+      delete form.dataset.editId;
+      showToast(editId ? 'Property updated' : 'Property created');
+      loadProperties();
+    } else {
+      const d = await r.json();
+      showToast(d.error || 'Failed to save property');
+    }
+  } catch { showToast('Network error'); }
+  finally {
+    btn.disabled = false;
+    btn.textContent = editId ? 'Update Property' : 'Create Property';
+  }
+});
+
+document.getElementById('dealForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const p = parseInt(document.getElementById('dealPurchase').value) || 0;
+  const r2 = parseInt(document.getElementById('dealRenovation').value) || 0;
+  const l = parseInt(document.getElementById('dealLegal').value) || 0;
+  const rs = parseInt(document.getElementById('dealResale').value) || 0;
+  const t = p + r2 + l;
+  const profit = rs - t;
+  const rp = ((profit / t) * 100).toFixed(1);
+  try {
+    const r = await fetch('/api/public/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({
+        title: document.getElementById('dealTitle').value,
+        property_id: document.getElementById('dealProperty').value || undefined,
+        purchase_price_ngn: p,
+        renovation_costs_ngn: r2,
+        legal_fees_ngn: l,
+        total_investment_ngn: t,
+        projected_resale_ngn: rs,
+        gross_profit_ngn: profit,
+        return_percentage: parseFloat(rp),
+        investor_share_percent: parseInt(document.getElementById('dealInvestorShare').value) || 70,
+        description: document.getElementById('dealDesc').value
+      })
+    });
+    if (r.ok) {
+      closeModal('dealModal');
+      document.getElementById('dealForm').reset();
+      showToast('Deal created');
+      loadAdminDeals();
+    } else {
+      const d = await r.json();
+      showToast(d.error || 'Failed to create deal');
+    }
+  } catch { showToast('Network error'); }
+});
+
+document.getElementById('replyForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    await fetch('/api/public/admin/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({
+        toEmail: document.getElementById('replyToEmail').value,
+        subject: document.getElementById('replySubject').value,
+        body: document.getElementById('replyBody').value,
+        relatedType: document.getElementById('replyRelatedType').value,
+        relatedId: document.getElementById('replyRelatedId').value
+      })
+    });
+    closeModal('replyModal');
+    showToast('Reply sent!');
+    document.getElementById('replyForm').reset();
+  } catch { showToast('Failed to send reply'); }
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+loadOverview();
+</script>
+</body>
+</html>

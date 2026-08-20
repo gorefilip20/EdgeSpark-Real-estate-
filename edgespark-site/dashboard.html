@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/components/forms.css">
+<link rel="stylesheet" href="css/components/tables.css">
+<link rel="stylesheet" href="css/components/dashboard.css">
+<style>
+.welcome-banner{background:linear-gradient(135deg,#0F1729 0%,#162d4a 100%);border-radius:12px;padding:2rem;color:#fff;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center}
+.welcome-banner h2{font-family:var(--serif,'Fraunces',serif);font-size:1.5rem;margin-bottom:.25rem}
+.welcome-banner p{color:rgba(255,255,255,.6);font-size:.875rem}
+.welcome-banner .wb-cta{padding:.6rem 1.5rem;background:var(--primary,#C9A24B);color:#061222;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.875rem;white-space:nowrap}
+.activity-feed{background:var(--bg-surface,#fff);border:1px solid var(--border,#E7E5E4);border-radius:12px;padding:1.5rem}
+.activity-feed h3{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.activity-item{display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--border,#E7E5E4);font-size:.875rem}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;background:var(--primary,#C9A24B);margin-top:.35rem;flex-shrink:0}
+.activity-text{color:var(--fg-secondary,#57534E);flex:1}
+.activity-time{color:var(--fg-muted,#A8A29E);font-size:.75rem;white-space:nowrap}
+.profile-avatar-section{display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem}
+.profile-avatar-large{width:80px;height:80px;background:var(--accent,#0F1729);color:var(--primary,#C9A24B);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif,'Fraunces',serif);font-size:1.5rem;font-weight:700}
+.profile-avatar-info h3{margin-bottom:.25rem}
+.profile-avatar-info p{color:var(--fg-muted,#A8A29E);font-size:.875rem}
+.interest-card{background:var(--bg-surface,#fff);border:1px solid var(--border,#E7E5E4);border-radius:10px;padding:1rem;margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center}
+.interest-card .ic-title{font-weight:600;font-size:.875rem;margin-bottom:.25rem}
+.interest-card .ic-date{font-size:.75rem;color:var(--fg-muted,#A8A29E)}
+.interest-status{padding:.25rem .6rem;font-size:.7rem;font-weight:700;text-transform:uppercase;border-radius:4px;letter-spacing:.04em}
+.interest-status.pending{background:#FEF3C7;color:#92400E}
+.interest-status.approved{background:#D1FAE5;color:#065F46}
+.interest-status.declined{background:#FEE2E2;color:#991B1B}
+.interest-status.reviewed{background:#DBEAFE;color:#1E40AF}
+.dash-properties-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-top:1rem}
+.dp-card{background:var(--bg-surface,#fff);border:1px solid var(--border,#E7E5E4);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s}
+.dp-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.dp-card .dp-img{height:160px;background:linear-gradient(135deg,#1a2a40,#0f1e30);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dp-card .dp-img img{width:100%;height:100%;object-fit:cover}
+.dp-card .dp-body{padding:1rem}
+.dp-card .dp-title{font-weight:600;font-size:.875rem;margin-bottom:.25rem}
+.dp-card .dp-loc{font-size:.8rem;color:var(--fg-muted,#A8A29E);margin-bottom:.5rem}
+.dp-card .dp-price{font-family:var(--serif,'Fraunces',serif);font-size:1.1rem}
+</style>
+</head>
+<body>
+
+<div class="dash-layout">
+  <!-- Sidebar -->
+  <aside class="dash-sidebar">
+    <a href="/" class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span>
+      <span class="brand-text"><span class="brand-name">EdgeSpark</span></span>
+    </a>
+    <nav class="dash-nav">
+      <a class="dash-nav-item active" data-view="overview" onclick="showView('overview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Overview
+      </a>
+      <a class="dash-nav-item" data-view="deals" onclick="showView('deals')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        Deals
+      </a>
+      <a class="dash-nav-item" data-view="properties" onclick="showView('properties')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Properties
+      </a>
+      <a class="dash-nav-item" data-view="profile" onclick="showView('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+      <div class="dash-nav-divider"></div>
+      <a class="dash-nav-item" href="/" onclick="signOut()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        Sign Out
+      </a>
+    </nav>
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar" id="userAvatar">--</div>
+        <div>
+          <div class="dash-user-name" id="userName">Loading...</div>
+          <div class="dash-user-role">Investor</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="dash-main">
+
+    <!-- OVERVIEW VIEW -->
+    <div id="view-overview">
+      <div class="welcome-banner">
+        <div>
+          <h2 id="welcomeMsg">Welcome back</h2>
+          <p>Here's what's happening with your investments.</p>
+        </div>
+        <button class="wb-cta" onclick="showView('deals')">Browse Deals</button>
+      </div>
+
+      <div class="dash-stats" id="overviewStats">
+        <div class="dash-stat-card"><div class="dash-stat-value" id="statDeals">-</div><div class="dash-stat-label">Active Deals</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-value" id="statInterests">-</div><div class="dash-stat-label">My Interests</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-value" id="statProperties">-</div><div class="dash-stat-label">Properties</div></div>
+        <div class="dash-stat-card"><div class="dash-stat-value" id="statApproved">-</div><div class="dash-stat-label">Approved</div></div>
+      </div>
+
+      <div class="activity-feed" id="activityFeed">
+        <h3>Recent Activity</h3>
+        <div class="activity-item"><div class="activity-dot"></div><div class="activity-text">Welcome to EdgeSpark! Start by browsing available deals.</div><span class="activity-time">Just now</span></div>
+      </div>
+    </div>
+
+    <!-- DEALS VIEW -->
+    <div id="view-deals" style="display:none">
+      <div class="dash-header">
+        <div>
+          <h1 class="dash-title">Available Deals</h1>
+          <p class="dash-subtitle">Active investment opportunities</p>
+        </div>
+      </div>
+      <div id="dealList">
+        <p style="text-align:center;padding:3rem 0;color:var(--fg-muted,#A8A29E)">Loading deals...</p>
+      </div>
+    </div>
+
+    <!-- DEAL DETAIL VIEW -->
+    <div id="view-detail" style="display:none">
+      <div class="dash-detail">
+        <a class="dash-detail-back" onclick="showView('deals')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Deals
+        </a>
+        <div id="dealDetailContent">Loading...</div>
+      </div>
+    </div>
+
+    <!-- INTEREST FORM VIEW -->
+    <div id="view-interest" style="display:none">
+      <div class="dash-detail">
+        <a class="dash-detail-back" onclick="showView('detail')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Deal
+        </a>
+        <div id="interestContent"></div>
+      </div>
+    </div>
+
+    <!-- PROPERTIES VIEW -->
+    <div id="view-properties" style="display:none">
+      <div class="dash-header">
+        <div>
+          <h1 class="dash-title">Browse Properties</h1>
+          <p class="dash-subtitle">Available properties for investment</p>
+        </div>
+      </div>
+      <div class="dash-properties-grid" id="propertiesGrid">
+        <p style="color:var(--fg-muted,#A8A29E)">Loading properties...</p>
+      </div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" style="display:none">
+      <div class="dash-header">
+        <h1 class="dash-title">Profile</h1>
+      </div>
+      <div class="dash-profile-card" style="max-width:var(--dashboard-max,800px);">
+        <div class="profile-avatar-section">
+          <div class="profile-avatar-large" id="profileAvatar">--</div>
+          <div class="profile-avatar-info">
+            <h3 id="profileDisplayName">-</h3>
+            <p id="profileDisplayEmail">-</p>
+          </div>
+        </div>
+        <h3>Personal Information</h3>
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label" for="profileName">Full Name</label>
+            <input class="form-input" type="text" id="profileName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profileEmail">Email Address</label>
+            <input class="form-input" type="email" id="profileEmail" disabled style="opacity:.6">
+            <div class="form-helper">Email cannot be changed.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profilePhone">Phone (optional)</label>
+            <input class="form-input" type="tel" id="profilePhone">
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:1rem">Save Changes</button>
+          <span id="profileSaveMsg" style="font-size:.875rem;margin-left:1rem;color:var(--success,#16A34A);display:none">Saved!</span>
+        </form>
+      </div>
+
+      <div class="dash-profile-card" style="max-width:var(--dashboard-max,800px);">
+        <h3>My Interests</h3>
+        <div id="myInterests">
+          <p style="color:var(--fg-muted,#A8A29E);font-size:.875rem">Loading your interests...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Bottom tab bar (mobile) -->
+<nav class="dash-bottom-bar">
+  <a class="dash-tab active" data-view="overview" onclick="showView('overview')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Overview
+  </a>
+  <a class="dash-tab" data-view="deals" onclick="showView('deals')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+    Deals
+  </a>
+  <a class="dash-tab" data-view="profile" onclick="showView('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </a>
+  <a class="dash-tab" href="/" onclick="signOut()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+    Out
+  </a>
+</nav>
+
+<script>
+const token=localStorage.getItem('edge_token');
+const user=JSON.parse(localStorage.getItem('edge_user')||'{}');
+if(!token)window.location.href='/api/public/page/login';
+
+document.getElementById('userName').textContent=user.name||'Investor';
+document.getElementById('userAvatar').textContent=(user.name||'IN').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('welcomeMsg').textContent='Welcome back, '+(user.name?.split(' ')[0]||'Investor');
+
+let currentDeal=null;
+
+function formatNgn(n){return new Intl.NumberFormat('en-NG',{style:'currency',currency:'NGN',maximumFractionDigits:0}).format(n);}
+
+function showView(view){
+  ['overview','deals','detail','interest','properties','profile'].forEach(v=>{
+    const el=document.getElementById('view-'+v);
+    if(el)el.style.display=v===view?'block':'none';
+  });
+  document.querySelectorAll('.dash-nav-item,.dash-tab').forEach(el=>{
+    const dv=el.dataset.view;
+    el.classList.toggle('active',dv===view||(view==='detail'&&dv==='deals')||(view==='interest'&&dv==='deals'));
+  });
+  if(view==='overview')loadOverview();
+  if(view==='deals')loadDeals();
+  if(view==='properties')loadProperties();
+  if(view==='profile')loadProfile();
+}
+
+function signOut(){localStorage.removeItem('edge_token');localStorage.removeItem('edge_user');}
+
+async function loadOverview(){
+  try{
+    const [dr,pr]=await Promise.all([
+      fetch('/api/public/deals?status=active',{headers:{'Authorization':'Bearer '+token}}),
+      fetch('/api/public/properties?limit=50&status=available')
+    ]);
+    const dd=await dr.json();
+    const pd=await pr.json();
+    document.getElementById('statDeals').textContent=dd.items?.length||0;
+    document.getElementById('statProperties').textContent=pd.items?.length||0;
+    document.getElementById('statInterests').textContent='-';
+    document.getElementById('statApproved').textContent='-';
+  }catch{}
+}
+
+async function loadDeals(){
+  try{
+    const res=await fetch('/api/public/deals?status=active',{headers:{'Authorization':'Bearer '+token}});
+    const data=await res.json();
+    if(!data.ok)throw new Error();
+    const list=document.getElementById('dealList');
+    if(!data.items||data.items.length===0){
+      list.innerHTML='<div style="text-align:center;padding:3rem 0;color:var(--fg-muted,#A8A29E)"><p>No active deals. Check back soon.</p></div>';
+      return;
+    }
+    list.innerHTML=data.items.map(d=>
+      '<a class="dash-deal-card" onclick="showDeal(\''+d.slug+'\')">'+
+        '<div class="dash-deal-thumb"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></div>'+
+        '<div class="dash-deal-info"><div class="dash-deal-title">'+d.title+'</div><div class="dash-deal-meta">'+(d.city||'Nigeria')+'</div><span class="dash-deal-status status-active">'+d.status+'</span></div>'+
+        '<div class="dash-deal-price">'+formatNgn(d.projected_resale_ngn)+'<span class="dash-deal-price-converted">Resale target</span></div>'+
+      '</a>'
+    ).join('');
+  }catch{
+    document.getElementById('dealList').innerHTML='<p style="text-align:center;padding:3rem 0;color:#DC2626">Error loading deals.</p>';
+  }
+}
+
+async function showDeal(slug){
+  showView('detail');
+  const container=document.getElementById('dealDetailContent');
+  container.innerHTML='<p style="color:var(--fg-muted,#A8A29E);padding:2rem 0">Loading deal...</p>';
+  try{
+    const res=await fetch('/api/public/deals/'+slug,{headers:{'Authorization':'Bearer '+token}});
+    const data=await res.json();
+    if(!data.ok)throw new Error();
+    currentDeal=data.deal;
+    const d=data.deal;
+    container.innerHTML=
+      '<h1 class="dash-title" style="margin-bottom:.5rem">'+d.title+'</h1>'+
+      '<p class="dash-subtitle" style="margin-bottom:2rem">'+(d.city||'Nigeria')+'</p>'+
+      '<h3 style="font-weight:700;margin-bottom:1rem">Deal Analyzer</h3>'+
+      '<div class="deal-card"><div class="table-wrap"><table class="deal-table">'+
+        '<thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>'+
+        '<tr><td>Purchase Price</td><td>'+formatNgn(d.purchase_price_ngn)+'</td></tr>'+
+        '<tr><td>Renovation & Costs</td><td>'+formatNgn(d.renovation_costs_ngn+(d.legal_fees_ngn||0))+'</td></tr>'+
+        '<tr class="row-highlight"><td><strong>Total Investment</strong></td><td><strong>'+formatNgn(d.total_investment_ngn)+'</strong></td></tr>'+
+        '<tr><td>Projected Resale</td><td>'+formatNgn(d.projected_resale_ngn)+'</td></tr>'+
+        '<tr class="row-profit"><td>Gross Profit</td><td>'+formatNgn(d.gross_profit_ngn)+' ('+(d.return_percentage||0)+'%)</td></tr>'+
+      '</tbody></table></div>'+
+      '<div class="deal-footer"><span>Investor Share: '+(d.investor_share_min||60)+'–'+(d.investor_share_max||80)+'%</span><span>'+(d.deal_cycle_months||3)+'-month cycle</span></div></div>'+
+      '<div style="margin-top:2rem"><button class="btn btn-primary btn-lg" onclick="showInterestForm()">Express Interest</button></div>';
+  }catch{
+    container.innerHTML='<p style="color:#DC2626">Deal not found.</p>';
+  }
+}
+
+function showInterestForm(){
+  if(!currentDeal)return;
+  showView('interest');
+  const c=document.getElementById('interestContent');
+  c.innerHTML=
+    '<h1 class="dash-title" style="margin-bottom:.5rem">Express Interest</h1>'+
+    '<p class="dash-subtitle" style="margin-bottom:2rem">'+currentDeal.title+'</p>'+
+    '<div class="dash-profile-card" style="max-width:var(--dashboard-max,800px)">'+
+      '<form id="interestForm">'+
+        '<div class="form-group"><label class="form-label">Investment Range</label>'+
+          '<select class="form-input" id="interestRange"><option value="">Select...</option><option value="$5,000-$10,000">$5,000 - $10,000</option><option value="$10,000-$50,000">$10,000 - $50,000</option><option value="$50,000-$100,000">$50,000 - $100,000</option><option value="$100,000+">$100,000+</option></select>'+
+        '</div>'+
+        '<div class="form-group"><label class="form-label" for="interestMsg">Message (optional)</label>'+
+          '<textarea class="form-textarea" id="interestMsg" placeholder="Your investment goals..."></textarea>'+
+        '</div>'+
+        '<button type="submit" class="btn btn-primary btn-lg" id="interestBtn">Submit Interest</button>'+
+      '</form>'+
+    '</div>';
+  document.getElementById('interestForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const btn=document.getElementById('interestBtn');
+    btn.disabled=true;btn.textContent='Submitting...';
+    try{
+      const res=await fetch('/api/public/deals/'+currentDeal.id+'/interest',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({amountIndicative:document.getElementById('interestRange').value,message:document.getElementById('interestMsg').value||undefined})
+      });
+      const data=await res.json();
+      if(data.ok){
+        c.innerHTML='<div style="text-align:center;padding:3rem 0"><h2 style="color:var(--success,#16A34A);margin-bottom:.5rem">Interest Submitted!</h2><p style="color:var(--fg-secondary,#57534E)">We will be in touch shortly.</p><button class="btn btn-primary" style="margin-top:1.5rem" onclick="showView(\'deals\')">Back to Deals</button></div>';
+      }else{
+        alert(data.error==='already_expressed'?'You already expressed interest in this deal.':'Error: '+(data.error||'unknown'));
+        btn.disabled=false;btn.textContent='Submit Interest';
+      }
+    }catch{btn.disabled=false;btn.textContent='Submit Interest';}
+  });
+}
+
+async function loadProperties(){
+  try{
+    const r=await fetch('/api/public/properties?limit=50&status=available');
+    const d=await r.json();
+    const grid=document.getElementById('propertiesGrid');
+    if(!d.ok||!d.items||d.items.length===0){grid.innerHTML='<p style="color:var(--fg-muted,#A8A29E)">No properties available.</p>';return;}
+    grid.innerHTML=d.items.map(p=>{
+      const img=p.hero_image?'<img src="'+p.hero_image+'" alt="'+p.title+'" loading="lazy">':'';
+      return '<div class="dp-card" onclick="window.location=\'/api/public/page/property/'+p.slug+'\'">'+
+        '<div class="dp-img">'+img+'</div>'+
+        '<div class="dp-body"><div class="dp-title">'+p.title+'</div><div class="dp-loc">'+(p.city||'')+(p.state?', '+p.state:'')+'</div><div class="dp-price">'+formatNgn(p.price_ngn)+'</div></div>'+
+      '</div>';
+    }).join('');
+  }catch{}
+}
+
+async function loadProfile(){
+  try{
+    const res=await fetch('/api/public/auth/me',{headers:{'Authorization':'Bearer '+token}});
+    const data=await res.json();
+    if(data.ok){
+      document.getElementById('profileName').value=data.user.name||'';
+      document.getElementById('profileEmail').value=data.user.email||'';
+      document.getElementById('profilePhone').value=data.user.phone||'';
+      document.getElementById('profileDisplayName').textContent=data.user.name||'';
+      document.getElementById('profileDisplayEmail').textContent=data.user.email||'';
+      document.getElementById('profileAvatar').textContent=(data.user.name||'IN').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    }
+  }catch{}
+
+  // Load interests
+  try{
+    const ir=await fetch('/api/public/deals/my-interests',{headers:{'Authorization':'Bearer '+token}});
+    const id=await ir.json();
+    const el=document.getElementById('myInterests');
+    if(id.ok&&id.items&&id.items.length>0){
+      el.innerHTML=id.items.map(i=>
+        '<div class="interest-card"><div><div class="ic-title">'+(i.deal_title||'Deal')+'</div><div class="ic-date">Submitted '+new Date(i.created_at).toLocaleDateString()+'</div></div><span class="interest-status '+(i.status||'pending')+'">'+i.status+'</span></div>'
+      ).join('');
+    }else{
+      el.innerHTML='<p style="color:var(--fg-muted,#A8A29E);font-size:.875rem">No interests submitted yet.</p>';
+    }
+  }catch{
+    document.getElementById('myInterests').innerHTML='<p style="color:var(--fg-muted,#A8A29E);font-size:.875rem">No interests submitted yet.</p>';
+  }
+}
+
+document.getElementById('profileForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  try{
+    const res=await fetch('/api/public/auth/me',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({name:document.getElementById('profileName').value,phone:document.getElementById('profilePhone').value||null})
+    });
+    if(res.ok){
+      const msg=document.getElementById('profileSaveMsg');
+      msg.style.display='inline';
+      setTimeout(()=>msg.style.display='none',2000);
+    }
+  }catch{}
+});
+
+loadOverview();
+</script>
+</body>
+</html>

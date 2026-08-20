@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Calculator — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1C1917;background:#FAFAF9}
+:root{--gold:#C9A24B;--navy:#0F1729;--bg:#FAFAF9;--surface:#FFF;--fg:#1C1917;--fg2:#57534E;--muted:#A8A29E;--border:#E7E5E4;--serif:'Fraunces',Georgia,serif;--sans:'Plus Jakarta Sans',system-ui,sans-serif;--success:#16A34A}
+a{text-decoration:none;color:inherit}
+.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 0;background:rgba(250,249,247,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.brand{display:flex;align-items:center;gap:.75rem;text-decoration:none}
+.brand-mark{width:40px;height:40px;background:var(--navy);display:flex;align-items:center;justify-content:center}
+.brand-name{font-weight:700;font-size:.95rem;color:var(--fg)}
+.nav-links{display:flex;align-items:center;gap:1.5rem}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--fg2);transition:color .2s}
+.nav-links a:hover{color:var(--fg)}
+.nav-cta{background:var(--navy)!important;color:#fff!important;padding:.6rem 1.4rem;font-weight:600;border-radius:8px}
+.burger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+.burger span{display:block;width:22px;height:2px;background:var(--fg);margin:5px 0}
+.page-header{padding:8rem 0 3rem;background:linear-gradient(135deg,#061222 0%,#0f2847 50%,#162d4a 100%);color:#fff;text-align:center}
+.page-header h1{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);margin-bottom:.75rem}
+.page-header p{color:rgba(255,255,255,.6);font-size:1.125rem;max-width:600px;margin:0 auto}
+
+/* Tabs */
+.tabs{display:flex;justify-content:center;gap:.5rem;padding:1.5rem 0;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.tab-btn{padding:.75rem 1.5rem;font-size:.875rem;font-weight:600;color:var(--fg2);background:none;border:1px solid transparent;border-radius:8px;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.tab-btn:hover{color:var(--fg);background:rgba(201,162,75,.05)}
+.tab-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tab-panel{display:none;max-width:900px;margin:0 auto}
+.tab-panel.active{display:block}
+
+/* Calc Cards */
+.calc-layout{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.calc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem}
+.calc-card h2{font-family:var(--serif);font-size:1.5rem;margin-bottom:1.5rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem}
+.form-group{margin-bottom:1.25rem}
+label{display:block;font-size:.875rem;font-weight:500;margin-bottom:.5rem}
+input,select{width:100%;padding:.75rem 1rem;font-size:1rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:border-color .12s;font-family:var(--sans)}
+input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.15)}
+
+/* Results */
+.result-card{background:var(--navy);color:#fff;border-radius:12px;padding:2rem}
+.result-card h3{font-family:var(--serif);font-size:1.25rem;margin-bottom:1rem;color:var(--gold)}
+.result-row{display:flex;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.result-row:last-child{border-bottom:none}
+.result-label{color:rgba(255,255,255,.6);font-size:.875rem}
+.result-value{font-family:var(--serif);font-size:1.125rem;font-variant-numeric:tabular-nums}
+.result-highlight{background:rgba(201,162,75,.15);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;text-align:center}
+.result-highlight .big{font-family:var(--serif);font-size:2.25rem;color:var(--gold)}
+.result-highlight .label-text{font-size:.875rem;color:rgba(255,255,255,.6);margin-top:.25rem}
+.profit-bar{height:8px;background:rgba(255,255,255,.1);border-radius:9999px;margin-top:1rem;overflow:hidden}
+.profit-fill{height:100%;background:var(--gold);border-radius:9999px;transition:width .3s}
+
+/* SVG Donut */
+.donut-container{display:flex;justify-content:center;margin-bottom:1.5rem}
+.donut-container svg{transform:rotate(-90deg)}
+.donut-legend{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:1rem}
+.donut-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:rgba(255,255,255,.7)}
+.donut-legend-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Amortization */
+.amort-toggle{margin-top:1rem;text-align:center}
+.amort-toggle button{font-size:.875rem;color:var(--gold);background:none;border:none;cursor:pointer;font-weight:600}
+.amort-table{display:none;margin-top:1rem;max-height:300px;overflow-y:auto;border-radius:8px}
+.amort-table.open{display:block}
+.amort-table table{width:100%;border-collapse:collapse;font-size:.8rem}
+.amort-table th{position:sticky;top:0;background:rgba(201,162,75,.2);padding:.5rem;text-align:left;color:rgba(255,255,255,.8);font-weight:600}
+.amort-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+
+/* Print */
+.print-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.5rem;background:none;border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-weight:500;color:var(--fg2);cursor:pointer;margin-top:1.5rem}
+.print-btn:hover{border-color:var(--gold);color:var(--gold)}
+@media print{.nav,.tabs,.print-btn,.burger{display:none!important}.page-header{padding:2rem 0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tab-panel{display:block!important;page-break-inside:avoid}.container{max-width:100%}}
+
+.cta-bar{text-align:center;padding:2rem 0 4rem}
+.cta-bar .btn{display:inline-block;padding:.85rem 3rem;background:var(--gold);color:#061222;font-weight:700;font-size:1rem;border:none;border-radius:8px;cursor:pointer}
+.cta-bar .btn:hover{background:#D4B96A}
+.cta-bar p{font-size:.75rem;color:var(--muted);margin-top:1rem}
+
+@media(max-width:768px){
+  .nav-links{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);flex-direction:column;justify-content:center;gap:2.5rem;z-index:99}
+  .nav-links.open{display:flex}
+  .nav-links a{font-size:1.25rem;color:rgba(255,255,255,.8)}
+  .nav-cta{background:var(--gold)!important;color:var(--navy)!important}
+  .burger{display:block;z-index:101}
+  .calc-layout{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .tabs{flex-wrap:wrap}
+  .page-header{padding:6rem 0 2rem}
+}
+</style>
+</head>
+<body>
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand"><span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span><span class="brand-text"><span class="brand-name">EdgeSpark</span></span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="/#opportunity">Opportunity</a>
+      <a href="/api/public/page/properties">Properties</a>
+      <a href="/#learn">Learn</a>
+      <a href="/api/public/page/calculator">Calculator</a>
+      <a href="/api/public/page/partner">Partner</a>
+      <a href="/api/public/page/login" class="nav-cta">Login</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-header">
+  <div class="container">
+    <h1>Investment Calculator</h1>
+    <p>Calculate your returns, mortgage payments, and buying power with our comprehensive tools.</p>
+  </div>
+</section>
+
+<main class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('mortgage')">Mortgage</button>
+    <button class="tab-btn" onclick="switchTab('roi')">ROI Calculator</button>
+    <button class="tab-btn" onclick="switchTab('afford')">Affordability</button>
+  </div>
+
+  <!-- ==================== MORTGAGE TAB ==================== -->
+  <div class="tab-panel active" id="tab-mortgage">
+    <div class="calc-layout">
+      <div class="calc-card">
+        <h2>Mortgage Calculator</h2>
+        <div class="form-group">
+          <label for="mPurchase">Property Price (NGN)</label>
+          <input type="number" id="mPurchase" value="500000000" oninput="calcMortgage()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mDown">Down Payment (%)</label>
+            <input type="number" id="mDown" value="30" min="5" max="95" oninput="calcMortgage()">
+          </div>
+          <div class="form-group">
+            <label for="mRate">Interest Rate (%/yr)</label>
+            <input type="number" id="mRate" value="15" min="1" max="40" step="0.5" oninput="calcMortgage()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="mTerm">Loan Term</label>
+          <select id="mTerm" onchange="calcMortgage()">
+            <option value="1">1 year</option>
+            <option value="3">3 years</option>
+            <option value="5" selected>5 years</option>
+            <option value="10">10 years</option>
+            <option value="15">15 years</option>
+            <option value="20">20 years</option>
+          </select>
+        </div>
+      </div>
+      <div class="result-card" id="mResults">
+        <div class="result-highlight">
+          <div class="big" id="mMonthly">-</div>
+          <div class="label-text">Monthly Payment</div>
+        </div>
+        <div class="donut-container" id="mDonut"></div>
+        <div class="donut-legend">
+          <div class="donut-legend-item"><span class="dot" style="background:var(--gold)"></span>Principal</div>
+          <div class="donut-legend-item"><span class="dot" style="background:#6366F1"></span>Interest</div>
+        </div>
+        <div class="result-row"><span class="result-label">Loan Amount</span><span class="result-value" id="mLoan">-</span></div>
+        <div class="result-row"><span class="result-label">Down Payment</span><span class="result-value" id="mDownAmt">-</span></div>
+        <div class="result-row"><span class="result-label">Total Interest</span><span class="result-value" id="mInterest">-</span></div>
+        <div class="result-row"><span class="result-label">Total Cost</span><span class="result-value" id="mTotal">-</span></div>
+        <div class="amort-toggle"><button onclick="toggleAmort()">Show Amortization Schedule</button></div>
+        <div class="amort-table" id="amortTable"></div>
+      </div>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print Report
+    </button>
+  </div>
+
+  <!-- ==================== ROI TAB ==================== -->
+  <div class="tab-panel" id="tab-roi">
+    <div class="calc-layout">
+      <div class="calc-card">
+        <h2>Deal ROI Calculator</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rPurchase">Purchase Price (NGN)</label>
+            <input type="number" id="rPurchase" value="15000000" oninput="calcROI()">
+          </div>
+          <div class="form-group">
+            <label for="rRenov">Renovation & Costs (NGN)</label>
+            <input type="number" id="rRenov" value="2500000" oninput="calcROI()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rLegal">Legal & Fees (NGN)</label>
+            <input type="number" id="rLegal" value="500000" oninput="calcROI()">
+          </div>
+          <div class="form-group">
+            <label for="rResale">Projected Resale (NGN)</label>
+            <input type="number" id="rResale" value="24000000" oninput="calcROI()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rShare">Your Share (%)</label>
+            <input type="number" id="rShare" value="70" min="1" max="100" oninput="calcROI()">
+          </div>
+          <div class="form-group">
+            <label for="rCycle">Deal Cycle (months)</label>
+            <input type="number" id="rCycle" value="3" min="1" max="24" oninput="calcROI()">
+          </div>
+        </div>
+      </div>
+      <div class="result-card" id="rResults">
+        <div class="result-highlight">
+          <div class="big" id="rReturn">-</div>
+          <div class="label-text">Your Projected Return</div>
+        </div>
+        <div class="profit-bar"><div class="profit-fill" id="rBar" style="width:0%"></div></div>
+        <div class="result-row"><span class="result-label">Total Investment</span><span class="result-value" id="rTotal">-</span></div>
+        <div class="result-row"><span class="result-label">Gross Profit</span><span class="result-value" id="rProfit">-</span></div>
+        <div class="result-row"><span class="result-label">Return %</span><span class="result-value" id="rPct">-</span></div>
+        <div class="result-row"><span class="result-label">Your Profit</span><span class="result-value" id="rYours">-</span></div>
+        <div class="result-row"><span class="result-label">Monthly Return</span><span class="result-value" id="rMonthly">-</span></div>
+        <div class="result-row"><span class="result-label">Annualized ROI</span><span class="result-value" id="rAnnual">-</span></div>
+      </div>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print Report
+    </button>
+  </div>
+
+  <!-- ==================== AFFORDABILITY TAB ==================== -->
+  <div class="tab-panel" id="tab-afford">
+    <div class="calc-layout">
+      <div class="calc-card">
+        <h2>Affordability Calculator</h2>
+        <p style="font-size:.875rem;color:var(--fg2);margin-bottom:1.5rem">How much property can you afford based on your income?</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="aIncome">Monthly Income (NGN)</label>
+            <input type="number" id="aIncome" value="2000000" oninput="calcAfford()">
+          </div>
+          <div class="form-group">
+            <label for="aExpenses">Monthly Expenses (NGN)</label>
+            <input type="number" id="aExpenses" value="800000" oninput="calcAfford()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="aSavings">Available Savings (NGN)</label>
+            <input type="number" id="aSavings" value="15000000" oninput="calcAfford()">
+          </div>
+          <div class="form-group">
+            <label for="aRate">Interest Rate (%/yr)</label>
+            <input type="number" id="aRate" value="15" min="1" max="40" step="0.5" oninput="calcAfford()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="aTerm">Loan Term (years)</label>
+          <select id="aTerm" onchange="calcAfford()">
+            <option value="3">3 years</option>
+            <option value="5" selected>5 years</option>
+            <option value="10">10 years</option>
+            <option value="15">15 years</option>
+            <option value="20">20 years</option>
+          </select>
+        </div>
+      </div>
+      <div class="result-card" id="aResults">
+        <div class="result-highlight">
+          <div class="big" id="aMax">-</div>
+          <div class="label-text">Maximum Property Price You Can Afford</div>
+        </div>
+        <div class="result-row"><span class="result-label">Monthly Disposable</span><span class="result-value" id="aDisposable">-</span></div>
+        <div class="result-row"><span class="result-label">Max Monthly Payment (40%)</span><span class="result-value" id="aPayment">-</span></div>
+        <div class="result-row"><span class="result-label">Max Loan Amount</span><span class="result-value" id="aLoan">-</span></div>
+        <div class="result-row"><span class="result-label">Down Payment (from savings)</span><span class="result-value" id="aDown">-</span></div>
+        <div class="result-row"><span class="result-label">Debt-to-Income Ratio</span><span class="result-value" id="aDTI">-</span></div>
+        <h3 style="margin-top:1rem">Properties In Your Range</h3>
+        <p style="font-size:.875rem;color:rgba(255,255,255,.5);margin-top:.5rem" id="aRange">-</p>
+      </div>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print Report
+    </button>
+  </div>
+
+  <div class="cta-bar">
+    <a href="/api/public/page/register" class="btn">Get Started</a>
+    <p>Illustrative only. Actual returns depend on market conditions and deal execution.</p>
+  </div>
+</main>
+
+<footer style="background:var(--navy);color:rgba(255,255,255,.5);padding:3rem 0;text-align:center;font-size:.875rem">
+  <div class="container">
+    <p>&copy; 2026 Evarestus Company Ltd. All rights reserved. · EdgeSpark</p>
+  </div>
+</footer>
+
+<script>
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>40));
+document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
+
+function formatNgn(n){return new Intl.NumberFormat('en-NG',{style:'currency',currency:'NGN',maximumFractionDigits:0}).format(n);}
+
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.tab-btn[onclick*="'+id+'"]').classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ======== MORTGAGE ========
+function calcMortgage(){
+  const price=parseInt(document.getElementById('mPurchase').value)||0;
+  const downPct=parseFloat(document.getElementById('mDown').value)||30;
+  const rate=parseFloat(document.getElementById('mRate').value)||15;
+  const years=parseInt(document.getElementById('mTerm').value)||5;
+  const downAmt=price*(downPct/100);
+  const loan=price-downAmt;
+  const monthlyRate=rate/100/12;
+  const months=years*12;
+  const monthly=monthlyRate>0?loan*(monthlyRate*Math.pow(1+monthlyRate,months))/(Math.pow(1+monthlyRate,months)-1):loan/months;
+  const totalCost=monthly*months;
+  const totalInterest=totalCost-loan;
+
+  document.getElementById('mMonthly').textContent=formatNgn(Math.round(monthly));
+  document.getElementById('mLoan').textContent=formatNgn(loan);
+  document.getElementById('mDownAmt').textContent=formatNgn(downAmt);
+  document.getElementById('mInterest').textContent=formatNgn(Math.round(totalInterest));
+  document.getElementById('mTotal').textContent=formatNgn(Math.round(totalCost));
+
+  // SVG Donut
+  const total=loan+totalInterest;
+  const principalPct=total>0?(loan/total)*100:50;
+  const circumference=2*Math.PI*60;
+  const principalLen=circumference*(principalPct/100);
+  const interestLen=circumference-principalLen;
+  document.getElementById('mDonut').innerHTML=
+    '<svg width="160" height="160" viewBox="0 0 160 160">'+
+    '<circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="20"/>'+
+    '<circle cx="80" cy="80" r="60" fill="none" stroke="#C9A24B" stroke-width="20" stroke-dasharray="'+principalLen+' '+interestLen+'" stroke-linecap="round"/>'+
+    '<circle cx="80" cy="80" r="60" fill="none" stroke="#6366F1" stroke-width="20" stroke-dasharray="0 '+principalLen+' '+interestLen+' 0"/>'+
+    '<text x="80" y="76" text-anchor="middle" fill="#fff" font-size="12" font-family="var(--sans)" transform="rotate(90 80 80)">'+principalPct.toFixed(0)+'%</text>'+
+    '<text x="80" y="90" text-anchor="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="var(--sans)" transform="rotate(90 80 80)">Principal</text>'+
+    '</svg>';
+
+  // Amortization schedule
+  let balance=loan;
+  let html='<table><tr><th>Month</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Balance</th></tr>';
+  for(let i=1;i<=months;i++){
+    const intPart=balance*monthlyRate;
+    const prinPart=monthly-intPart;
+    balance=Math.max(0,balance-prinPart);
+    if(i<=12||i%12===0||i===months){
+      html+='<tr><td>'+i+'</td><td>'+formatNgn(Math.round(monthly))+'</td><td>'+formatNgn(Math.round(prinPart))+'</td><td>'+formatNgn(Math.round(intPart))+'</td><td>'+formatNgn(Math.round(balance))+'</td></tr>';
+    }
+  }
+  html+='</table>';
+  document.getElementById('amortTable').innerHTML=html;
+}
+
+function toggleAmort(){
+  document.getElementById('amortTable').classList.toggle('open');
+}
+
+// ======== ROI ========
+function calcROI(){
+  const purchase=parseInt(document.getElementById('rPurchase').value)||0;
+  const renov=parseInt(document.getElementById('rRenov').value)||0;
+  const legal=parseInt(document.getElementById('rLegal').value)||0;
+  const resale=parseInt(document.getElementById('rResale').value)||0;
+  const share=parseInt(document.getElementById('rShare').value)||70;
+  const cycle=parseInt(document.getElementById('rCycle').value)||3;
+  const total=purchase+renov+legal;
+  const profit=resale-total;
+  const pct=total>0?((profit/total)*100):0;
+  const yours=Math.round(profit*(share/100));
+  const monthly=cycle>0?(yours/cycle):yours;
+  const annual=cycle>0?((pct*12)/cycle):pct;
+
+  document.getElementById('rReturn').textContent=formatNgn(yours);
+  document.getElementById('rTotal').textContent=formatNgn(total);
+  document.getElementById('rProfit').textContent=formatNgn(profit);
+  document.getElementById('rPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('rYours').textContent=formatNgn(yours);
+  document.getElementById('rMonthly').textContent=formatNgn(Math.round(monthly))+'/mo';
+  document.getElementById('rAnnual').textContent=annual.toFixed(1)+'%';
+  document.getElementById('rBar').style.width=Math.min(Math.max(pct,0),100)+'%';
+}
+
+// ======== AFFORDABILITY ========
+function calcAfford(){
+  const income=parseInt(document.getElementById('aIncome').value)||0;
+  const expenses=parseInt(document.getElementById('aExpenses').value)||0;
+  const savings=parseInt(document.getElementById('aSavings').value)||0;
+  const rate=parseFloat(document.getElementById('aRate').value)||15;
+  const years=parseInt(document.getElementById('aTerm').value)||5;
+  const disposable=income-expenses;
+  const maxPayment=disposable*0.4;
+  const monthlyRate=rate/100/12;
+  const months=years*12;
+  const maxLoan=monthlyRate>0?maxPayment*(Math.pow(1+monthlyRate,months)-1)/(monthlyRate*Math.pow(1+monthlyRate,months)):maxPayment*months;
+  const maxPrice=maxLoan+savings;
+  const dti=income>0?((maxPayment/income)*100):0;
+
+  document.getElementById('aMax').textContent=formatNgn(Math.round(maxPrice));
+  document.getElementById('aDisposable').textContent=formatNgn(disposable);
+  document.getElementById('aPayment').textContent=formatNgn(Math.round(maxPayment));
+  document.getElementById('aLoan').textContent=formatNgn(Math.round(maxLoan));
+  document.getElementById('aDown').textContent=formatNgn(savings);
+  document.getElementById('aDTI').textContent=dti.toFixed(1)+'%';
+
+  const usd=Math.round(maxPrice/1600).toLocaleString();
+  document.getElementById('aRange').textContent='You can afford properties up to '+formatNgn(Math.round(maxPrice))+' (~$'+usd+' USD). Browse our properties to find deals within your range.';
+}
+
+calcMortgage();
+calcROI();
+calcAfford();
+</script>
+</body>
+</html>

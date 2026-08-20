@@ -1,0 +1,4 @@
+project_id = "4ea3c559-2f14-4b79-b053-f88a503d06ae"
+
+[server]
+path = "server"

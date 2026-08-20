@@ -1,0 +1,45 @@
+/* ============================================
+   EDGEPROPERTIES — Trust Bar
+   ============================================ */
+
+.trust-bar {
+  background: var(--accent);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.trust-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+.trust-item strong {
+  color: rgba(255,255,255,0.75);
+}
+.trust-dot {
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .trust-bar-inner {
+    gap: var(--space-4);
+    justify-content: flex-start;
+    padding: var(--space-4) var(--gutter-mobile);
+  }
+  .trust-item {
+    font-size: var(--text-caption);
+  }
+}

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner With Us — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1C1917;background:#FAFAF9}
+:root{--gold:#C9A24B;--navy:#0F1729;--bg:#FAFAF9;--surface:#FFF;--fg:#1C1917;--fg2:#57534E;--muted:#A8A29E;--border:#E7E5E4;--serif:'Fraunces',Georgia,serif;--sans:'Plus Jakarta Sans',system-ui,sans-serif;--success:#16A34A}
+a{text-decoration:none;color:inherit}
+.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 0;background:rgba(250,249,247,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.brand{display:flex;align-items:center;gap:.75rem;text-decoration:none}
+.brand-mark{width:40px;height:40px;background:var(--navy);display:flex;align-items:center;justify-content:center}
+.brand-name{font-weight:700;font-size:.95rem;color:var(--fg)}
+.nav-links{display:flex;align-items:center;gap:1.5rem}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--fg2);transition:color .2s}
+.nav-links a:hover{color:var(--fg)}
+.nav-cta{background:var(--navy)!important;color:#fff!important;padding:.6rem 1.4rem;font-weight:600;border-radius:8px}
+.burger{display:none;background:none;border:none;cursor:pointer;padding:4px}
+.burger span{display:block;width:22px;height:2px;background:var(--fg);margin:5px 0}
+
+/* Header */
+.page-header{padding:8rem 0 3rem;background:linear-gradient(135deg,#061222 0%,#0f2847 50%,#162d4a 100%);color:#fff;text-align:center}
+.page-header h1{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);margin-bottom:.75rem}
+.page-header p{color:rgba(255,255,255,.6);font-size:1.125rem;max-width:600px;margin:0 auto}
+
+/* Tier Cards */
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;padding:3rem 0;margin-top:-2rem}
+.tier-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;text-align:center;position:relative;transition:all .2s}
+.tier-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08);transform:translateY(-2px)}
+.tier-card.featured{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.tier-badge{display:inline-block;padding:.25rem .75rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:4px;margin-bottom:1rem}
+.tier-badge.bronze{background:#F3E8D8;color:#92400E}
+.tier-badge.gold{background:rgba(201,162,75,.15);color:var(--gold)}
+.tier-badge.platinum{background:var(--navy);color:var(--gold)}
+.tier-card h3{font-family:var(--serif);font-size:1.5rem;margin-bottom:.5rem}
+.tier-card .tier-range{font-size:1.75rem;font-family:var(--serif);color:var(--gold);margin-bottom:1rem}
+.tier-features{list-style:none;text-align:left;margin-bottom:1.5rem}
+.tier-features li{padding:.5rem 0;font-size:.875rem;color:var(--fg2);border-bottom:1px solid var(--border);display:flex;gap:.5rem;align-items:flex-start}
+.tier-features li:last-child{border-bottom:none}
+.tier-features .check{color:var(--success);font-weight:700;flex-shrink:0}
+.tier-cta{display:block;width:100%;padding:.75rem;border-radius:8px;font-weight:600;font-size:.875rem;cursor:pointer;transition:all .2s;border:none;font-family:var(--sans)}
+.tier-cta.primary{background:var(--gold);color:#061222}
+.tier-cta.primary:hover{background:#D4B96A}
+.tier-cta.secondary{background:none;color:var(--fg);border:1px solid var(--border)}
+.tier-cta.secondary:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Form Section */
+.form-section{max-width:700px;margin:0 auto;padding:3rem 0}
+.form-section h2{font-family:var(--serif);font-size:2rem;text-align:center;margin-bottom:.5rem}
+.form-section .subtitle{text-align:center;color:var(--fg2);margin-bottom:2rem}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1.25rem}
+label{display:block;font-size:.875rem;font-weight:500;margin-bottom:.5rem}
+input,select,textarea{width:100%;padding:.75rem 1rem;font-size:1rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:border-color .12s;font-family:var(--sans)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.15)}
+textarea{min-height:100px;resize:vertical}
+.checkbox-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem}
+.checkbox-row label{display:flex;align-items:center;gap:.5rem;font-size:.875rem;cursor:pointer;color:var(--fg2);margin-bottom:0}
+.checkbox-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--gold)}
+.btn{width:100%;padding:.85rem;background:var(--gold);color:#061222;font-weight:700;font-size:1rem;border:none;border-radius:8px;cursor:pointer;transition:all .25s;font-family:var(--sans)}
+.btn:hover{background:#D4B96A}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.error{padding:.75rem 1rem;background:#fef2f2;border:1px solid #fecaca;color:#DC2626;font-size:.875rem;border-radius:8px;margin-bottom:1.25rem;display:none}
+.error.visible{display:block}
+
+/* FAQ */
+.faq-section{max-width:700px;margin:0 auto;padding:2rem 0 4rem}
+.faq-section h2{font-family:var(--serif);font-size:2rem;text-align:center;margin-bottom:2rem}
+.faq-item{border:1px solid var(--border);border-radius:10px;margin-bottom:.75rem;overflow:hidden;background:var(--surface)}
+.faq-q{padding:1.25rem 1.5rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.95rem;color:var(--fg)}
+.faq-q:hover{color:var(--gold)}
+.faq-q svg{transition:transform .2s;flex-shrink:0}
+.faq-item.open .faq-q svg{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 1.5rem}
+.faq-item.open .faq-a{max-height:200px;padding:0 1.5rem 1.25rem}
+.faq-a p{font-size:.875rem;color:var(--fg2);line-height:1.7}
+
+/* Success Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:rgba(0,0,0,.5);align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border-radius:16px;padding:3rem;max-width:450px;width:90%;text-align:center;animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-box .check-circle{width:64px;height:64px;background:#f0f7ef;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+.modal-box h3{font-family:var(--serif);font-size:1.5rem;margin-bottom:.75rem;color:var(--fg)}
+.modal-box p{font-size:.875rem;color:var(--fg2);line-height:1.6;margin-bottom:1.5rem}
+.modal-box .modal-btn{display:inline-block;padding:.75rem 2rem;background:var(--navy);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.875rem;font-family:var(--sans)}
+.modal-box .modal-btn:hover{opacity:.9}
+
+@media(max-width:768px){
+  .nav-links{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);flex-direction:column;justify-content:center;gap:2.5rem;z-index:99}
+  .nav-links.open{display:flex}
+  .nav-links a{font-size:1.25rem;color:rgba(255,255,255,.8)}
+  .nav-cta{background:var(--gold)!important;color:var(--navy)!important}
+  .burger{display:block;z-index:101}
+  .tiers{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .page-header{padding:6rem 0 2rem}
+}
+</style>
+</head>
+<body>
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/" class="brand"><span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span><span class="brand-text"><span class="brand-name">EdgeSpark</span></span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="/#opportunity">Opportunity</a>
+      <a href="/api/public/page/properties">Properties</a>
+      <a href="/#learn">Learn</a>
+      <a href="/api/public/page/calculator">Calculator</a>
+      <a href="/api/public/page/partner">Partner</a>
+      <a href="/api/public/page/login" class="nav-cta">Login</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-header">
+  <div class="container">
+    <h1>Partner With EdgeSpark</h1>
+    <p>Invest in verified Nigerian real estate. You approve every deal before any money moves.</p>
+  </div>
+</section>
+
+<main class="container">
+  <!-- Tier Cards -->
+  <div class="tiers">
+    <div class="tier-card">
+      <span class="tier-badge bronze">Bronze</span>
+      <h3>Starter</h3>
+      <div class="tier-range">$5k–$25k</div>
+      <ul class="tier-features">
+        <li><span class="check">&#10003;</span> Access to verified property listings</li>
+        <li><span class="check">&#10003;</span> Full Deal Analyzer reports</li>
+        <li><span class="check">&#10003;</span> 60% investor profit share</li>
+        <li><span class="check">&#10003;</span> Email support</li>
+      </ul>
+      <button class="tier-cta secondary" onclick="scrollToForm()">Apply Now</button>
+    </div>
+    <div class="tier-card featured">
+      <span class="tier-badge gold">Gold</span>
+      <h3>Growth</h3>
+      <div class="tier-range">$25k–$100k</div>
+      <ul class="tier-features">
+        <li><span class="check">&#10003;</span> Priority deal access</li>
+        <li><span class="check">&#10003;</span> Full Deal Analyzer reports</li>
+        <li><span class="check">&#10003;</span> 70% investor profit share</li>
+        <li><span class="check">&#10003;</span> Dedicated account manager</li>
+        <li><span class="check">&#10003;</span> Monthly market reports</li>
+      </ul>
+      <button class="tier-cta primary" onclick="scrollToForm()">Apply Now</button>
+    </div>
+    <div class="tier-card">
+      <span class="tier-badge platinum">Platinum</span>
+      <h3>Premium</h3>
+      <div class="tier-range">$100k+</div>
+      <ul class="tier-features">
+        <li><span class="check">&#10003;</span> First-look deal access</li>
+        <li><span class="check">&#10003;</span> Custom portfolio strategy</li>
+        <li><span class="check">&#10003;</span> 80% investor profit share</li>
+        <li><span class="check">&#10003;</span> Direct WhatsApp line</li>
+        <li><span class="check">&#10003;</span> On-site property visits</li>
+      </ul>
+      <button class="tier-cta secondary" onclick="scrollToForm()">Apply Now</button>
+    </div>
+  </div>
+
+  <!-- Application Form -->
+  <div class="form-section" id="formSection">
+    <h2>Apply to Partner</h2>
+    <p class="subtitle">Fill out the form below and our team will reach out within 2 business days.</p>
+    <div class="form-card">
+      <div class="error" id="partnerError"></div>
+      <form id="partnerForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fullName">Full Name *</label>
+            <input type="text" id="fullName" required placeholder="Your full name" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" required placeholder="you@email.com" autocomplete="email">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="+234 ..." autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input type="text" id="company" placeholder="Your company name">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="investmentRange">Investment Range</label>
+            <select id="investmentRange">
+              <option value="">Select range...</option>
+              <option value="$5,000 - $10,000">$5,000 - $10,000</option>
+              <option value="$10,000 - $25,000">$10,000 - $25,000</option>
+              <option value="$25,000 - $50,000">$25,000 - $50,000</option>
+              <option value="$50,000 - $100,000">$50,000 - $100,000</option>
+              <option value="$100,000+">$100,000+</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="experience">Real Estate Experience</label>
+            <select id="experience">
+              <option value="">Select...</option>
+              <option value="none">No prior experience</option>
+              <option value="beginner">Beginner (1-2 deals)</option>
+              <option value="intermediate">Intermediate (3-10 deals)</option>
+              <option value="experienced">Experienced (10+ deals)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Property Types of Interest</label>
+          <div class="checkbox-row">
+            <label><input type="checkbox" name="propTypes" value="bungalow"> Bungalow</label>
+            <label><input type="checkbox" name="propTypes" value="duplex"> Duplex</label>
+            <label><input type="checkbox" name="propTypes" value="apartment"> Apartment</label>
+            <label><input type="checkbox" name="propTypes" value="land"> Land</label>
+            <label><input type="checkbox" name="propTypes" value="commercial"> Commercial</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="source">How did you hear about us?</label>
+          <select id="source">
+            <option value="">Select...</option>
+            <option value="social_media">Social Media</option>
+            <option value="referral">Referral</option>
+            <option value="search">Google Search</option>
+            <option value="youtube">YouTube</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">Tell us about yourself</label>
+          <textarea id="message" placeholder="Why are you interested in partnering with EdgeSpark? What are your investment goals?"></textarea>
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Submit Application</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">How does the JV partnership model work?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="faq-a"><p>You fund the acquisition and renovation. EdgeSpark handles sourcing, verification, renovation management, and resale. Profits are split according to your tier (60-80% to you). You approve every deal before funds move.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What is the minimum investment?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="faq-a"><p>Our Bronze tier starts at $5,000. This lets you participate in a single deal and experience the process before committing more capital. We encourage starting small and building trust.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">How are properties verified?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="faq-a"><p>Every property undergoes title verification at the Land Registry, physical inspection, and a complete Deal Analyzer report showing acquisition costs, renovation estimates, and projected resale values.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">What is the typical deal cycle?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="faq-a"><p>Most deals complete in 2-4 months from acquisition to resale. During this period you receive regular updates with photos, progress reports, and financial tracking.</p></div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Can I visit properties before investing?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div class="faq-a"><p>Platinum partners receive on-site property visits as part of their tier. All partners receive detailed video walkthroughs and photo documentation before any commitment.</p></div>
+    </div>
+  </div>
+</main>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-box">
+    <div class="check-circle">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h3>Application Received!</h3>
+    <p>Thank you for your interest in partnering with EdgeSpark. Our team will review your application and contact you within 2 business days.</p>
+    <button class="modal-btn" onclick="closeModal()">Back to Home</button>
+  </div>
+</div>
+
+<footer style="background:var(--navy);color:rgba(255,255,255,.5);padding:3rem 0;text-align:center;font-size:.875rem">
+  <div class="container">
+    <p>&copy; 2026 Evarestus Company Ltd. All rights reserved. · EdgeSpark</p>
+  </div>
+</footer>
+
+<script>
+const nav=document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>40));
+document.getElementById('burger')?.addEventListener('click',()=>document.getElementById('navLinks').classList.toggle('open'));
+
+function scrollToForm(){
+  document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
+}
+
+function closeModal(){
+  document.getElementById('successModal').classList.remove('open');
+  window.location='/';
+}
+
+document.getElementById('partnerForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('submitBtn');
+  const err=document.getElementById('partnerError');
+  btn.disabled=true;
+  btn.textContent='Submitting...';
+  err.classList.remove('visible');
+  const propTypes=[...document.querySelectorAll('input[name="propTypes"]:checked')].map(cb=>cb.value);
+  try{
+    const r=await fetch('/api/public/partners/apply',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        fullName:document.getElementById('fullName').value,
+        email:document.getElementById('email').value,
+        phone:document.getElementById('phone').value||undefined,
+        company:document.getElementById('company').value||undefined,
+        investmentRange:document.getElementById('investmentRange').value||undefined,
+        experience:document.getElementById('experience').value||undefined,
+        propertyTypes:propTypes.length?propTypes:undefined,
+        source:document.getElementById('source').value||undefined,
+        message:document.getElementById('message').value||undefined
+      })
+    });
+    const d=await r.json();
+    if(r.ok&&d.ok){
+      document.getElementById('successModal').classList.add('open');
+    }else{
+      err.textContent=d.error||'Something went wrong. Please try again.';
+      err.classList.add('visible');
+    }
+  }catch{
+    err.textContent='Network error. Please check your connection.';
+    err.classList.add('visible');
+  }finally{
+    btn.disabled=false;
+    btn.textContent='Submit Application';
+  }
+});
+</script>
+</body>
+</html>

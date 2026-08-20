@@ -46,6 +46,13 @@ export const properties = mysqlTable("properties", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const favorites = mysqlTable("favorites", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  propertyId: int("propertyId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const propertyMedia = mysqlTable("propertyMedia", {
   id: int("id").autoincrement().primaryKey(),
   propertyId: int("propertyId").notNull(),
@@ -61,7 +68,8 @@ export const propertyMedia = mysqlTable("propertyMedia", {
 export const inquiries = mysqlTable("inquiries", {
   id: int("id").autoincrement().primaryKey(),
   propertyId: int("propertyId"),
-  name: varchar("name", { length: 160 }).notNull(),
+  userId: int("userId"),
+  propertyTitle: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 60 }),
   message: text("message").notNull(),
@@ -83,6 +91,7 @@ export const leadStatusHistory = mysqlTable("leadStatusHistory", {
 export const partnershipApplications = mysqlTable("partnershipApplications", {
   id: int("id").autoincrement().primaryKey(),
   role: mysqlEnum("role", ["investor", "owner", "agent", "developer", "realtor"]).notNull(),
+  userId: int("userId"),
   name: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 60 }),
@@ -95,12 +104,14 @@ export const partnershipApplications = mysqlTable("partnershipApplications", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
-export const propertiesRelations = relations(properties, ({ many }) => ({ media: many(propertyMedia), inquiries: many(inquiries) }));
+export const propertiesRelations = relations(properties, ({ many }) => ({ media: many(propertyMedia), inquiries: many(inquiries), favorites: many(favorites) }));
+export const favoritesRelations = relations(favorites, ({ one }) => ({ property: one(properties, { fields: [favorites.propertyId], references: [properties.id] }), user: one(users, { fields: [favorites.userId], references: [users.id] }) }));
 export const propertyMediaRelations = relations(propertyMedia, ({ one }) => ({ property: one(properties, { fields: [propertyMedia.propertyId], references: [properties.id] }) }));
 export const inquiryRelations = relations(inquiries, ({ one }) => ({ property: one(properties, { fields: [inquiries.propertyId], references: [properties.id] }) }));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export type Favorite = typeof favorites.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;

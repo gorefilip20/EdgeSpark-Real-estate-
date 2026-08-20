@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — EdgeSpark</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components/buttons.css">
+<link rel="stylesheet" href="css/components/forms.css">
+<link rel="stylesheet" href="css/components/auth.css">
+<style>
+.password-wrapper{position:relative}
+.password-wrapper input{padding-right:3rem}
+.toggle-pw{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-muted,#A8A29E);padding:4px;display:flex}
+.toggle-pw:hover{color:var(--fg-secondary,#57534E)}
+.remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4,1rem)}
+.remember-row label{display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:var(--fg-secondary,#57534E);cursor:pointer}
+.remember-row label input{width:16px;height:16px;accent-color:var(--primary,#C9A24B)}
+.form-input.invalid{border-color:#DC2626}
+.form-input.valid{border-color:var(--success,#16A34A)}
+.validation-msg{font-size:.75rem;margin-top:.25rem;min-height:1rem}
+.validation-msg.error{color:#DC2626}
+.validation-msg.success{color:var(--success,#16A34A)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin-right:.5rem;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="auth-layout">
+  <!-- Brand panel (desktop) -->
+  <div class="auth-brand-panel">
+    <div class="auth-brand-content">
+      <span class="type-overline">Welcome Back</span>
+      <h2>Pick up where you left off.</h2>
+      <p>Sign in to view your deal interests, track investment opportunities, and manage your portfolio.</p>
+      <div class="auth-brand-stats">
+        <div>
+          <div class="auth-brand-stat-value">28M+</div>
+          <div class="auth-brand-stat-label">Housing deficit</div>
+        </div>
+        <div>
+          <div class="auth-brand-stat-value">$1T</div>
+          <div class="auth-brand-stat-label">Market opportunity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form panel -->
+  <div class="auth-form-panel">
+    <div class="auth-form-wrapper">
+      <div class="auth-header">
+        <a href="/" class="brand">
+          <span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span>
+          <span class="brand-text">
+            <span class="brand-name">EdgeSpark</span>
+          </span>
+        </a>
+        <h1>Sign in</h1>
+        <p>Enter your email and password to access your account.</p>
+      </div>
+
+      <div class="auth-error" id="loginError"></div>
+
+      <form class="auth-form" id="loginForm">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address</label>
+          <input class="form-input" type="email" id="loginEmail" required placeholder="you@email.com" autocomplete="email">
+          <div class="validation-msg" id="emailValidation"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <div class="password-wrapper">
+            <input class="form-input" type="password" id="loginPassword" required placeholder="Enter your password" autocomplete="current-password">
+            <button type="button" class="toggle-pw" onclick="togglePassword('loginPassword',this)" aria-label="Show password">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="remember-row">
+          <label><input type="checkbox" id="rememberMe"> Remember me</label>
+          <a href="/api/public/page/forgot-password" style="font-size:.875rem;color:var(--primary,#C9A24B);font-weight:500">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="justify-content:center" id="loginBtn">
+          Sign In
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/api/public/page/register">Create one</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const token=localStorage.getItem('edge_token');
+  if(token)window.location.href='/api/public/page/dashboard';
+  const remembered=localStorage.getItem('edge_remember_email');
+  if(remembered){
+    document.getElementById('loginEmail').value=remembered;
+    document.getElementById('rememberMe').checked=true;
+  }
+})();
+
+function togglePassword(id,btn){
+  const inp=document.getElementById(id);
+  const showing=inp.type==='text';
+  inp.type=showing?'password':'text';
+  btn.innerHTML=showing?
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>':
+    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+}
+
+document.getElementById('loginEmail')?.addEventListener('blur',function(){
+  const v=this.value.trim();
+  const msg=document.getElementById('emailValidation');
+  if(!v){msg.textContent='';this.classList.remove('valid','invalid');return;}
+  const valid=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  this.classList.toggle('valid',valid);
+  this.classList.toggle('invalid',!valid);
+  msg.textContent=valid?'':'Please enter a valid email address';
+  msg.className='validation-msg '+(valid?'success':'error');
+});
+
+document.getElementById('loginForm')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('loginBtn');
+  const errorEl=document.getElementById('loginError');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Signing in...';
+  errorEl.classList.remove('visible');
+
+  if(document.getElementById('rememberMe').checked){
+    localStorage.setItem('edge_remember_email',document.getElementById('loginEmail').value);
+  }else{
+    localStorage.removeItem('edge_remember_email');
+  }
+
+  try{
+    const res=await fetch('/api/public/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email:document.getElementById('loginEmail').value,
+        password:document.getElementById('loginPassword').value,
+      }),
+    });
+    const data=await res.json();
+    if(res.ok&&data.ok){
+      localStorage.setItem('edge_token',data.token);
+      localStorage.setItem('edge_user',JSON.stringify(data.user));
+      window.location.href=data.user.role==='admin'?'/api/public/page/admin':'/api/public/page/dashboard';
+    }else{
+      errorEl.textContent=data.error==='invalid_credentials'?'Incorrect email or password.':'Something went wrong. Please try again.';
+      errorEl.classList.add('visible');
+    }
+  }catch{
+    errorEl.textContent='Network error. Please check your connection.';
+    errorEl.classList.add('visible');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='Sign In';
+  }
+});
+</script>
+</body>
+</html>
