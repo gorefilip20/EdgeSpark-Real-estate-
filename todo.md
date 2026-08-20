@@ -151,3 +151,12 @@
 - [x] Expand the About Us founder backgrounds for Evarestus and Benjamin using the approved identities and existing portraits.
 - [x] Verify About Us and founder presentation on desktop and mobile.
 - [x] Run tests, push the update to GitHub, and save a checkpoint.
+
+## Search submit and partnership lead visibility
+
+- [x] Add an explicit Search button beneath the property filters and submit criteria together.
+- [x] Ensure search button behavior works on mobile and desktop without losing filters.
+- [x] Verify partnership form validation and successful persistence of name, email, phone, company, investment range, role, and message.
+- [x] Verify the protected admin workspace displays partnership applications and their full recorded details.
+- [x] Add or update tests for search submission and partnership lead persistence/visibility.
+- [ ] Verify responsive states, push the update to GitHub, and save a checkpoint.

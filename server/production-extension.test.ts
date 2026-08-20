@@ -23,3 +23,16 @@ describe("production extension helpers", () => {
     expect(matchesNigeriaSearch(property, "Abuja")).toBe(false);
   });
 });
+
+import { buildPartnershipLeadPayload, buildPropertySearchInput } from "../shared/types";
+
+describe("submitted search and partnership lead contracts", () => {
+  it("serializes draft location and search criteria only when submitted", () => {
+    expect(buildPropertySearchInput({ search: "villa", location: "Lekki", type: "all", status: "available" })).toEqual({ search: "villa Lekki", type: "all", status: "available" });
+  });
+
+  it("keeps every partnership application field with the selected role", () => {
+    const payload = buildPartnershipLeadPayload({ name: "Ada Investor", email: "ada@example.com", phone: "+2348012345678", company: "Ada Capital", investmentRange: "₦50m–₦100m", message: "I would like to explore a development partnership." }, "developer");
+    expect(payload).toMatchObject({ role: "developer", name: "Ada Investor", email: "ada@example.com", phone: "+2348012345678", company: "Ada Capital", investmentRange: "₦50m–₦100m", message: "I would like to explore a development partnership." });
+  });
+});
