@@ -125,3 +125,12 @@
 - [x] Keep autocomplete keyboard- and mobile-accessible with arrow-key, Enter, Escape, listbox, and touch support.
 - [x] Confirm whether Evarestus and Benjamin appear publicly as founders and document the result: neither name nor founder label appears in the current public client source.
 - [x] Test autocomplete behavior and checkpoint the update with utility assertions for suggestions, duplicates, and tag preservation.
+
+## Founder section and private contacts
+
+- [x] Add a founder section near the bottom of the public homepage using the supplied two-card direction.
+- [x] Add Evarestus and Benjamin founder profiles with names, roles, and concise credibility-focused descriptions.
+- [x] Remove visible phone numbers from founder/contact presentation.
+- [x] Add visible Email and LinkedIn action labels without displaying the underlying addresses or URLs.
+- [x] Make Email open the user’s email app and LinkedIn open the intended founder profile destinations.
+- [x] Verify responsive founder cards and contact-link behavior, then checkpoint the update.
