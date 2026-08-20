@@ -86,3 +86,16 @@
 - [x] Confirm the user details visible in the admin workspace and lead records; anonymous leads remain supported while signed-in submissions persist user linkage.
 - [x] Run tests and visual verification for navigation, favorites, and auth states.
 - [x] Push the completed project to the selected GitHub repository.
+
+## Shortlist comparison and repository quality
+
+- [x] Add side-by-side comparison selection from the signed-in shortlist.
+- [x] Add comparison metrics for price, location, type, size, ROI, yield, status, and contact actions.
+- [x] Add responsive comparison behavior for mobile users.
+- [x] Verify the full-stack codebase with type checks, unit tests, and visual checks.
+- [x] Confirm the complete codebase is pushed to the selected GitHub repository and branch.
+
+## Responsive release requirement
+
+- [x] Verify every public, account, shortlist, property-detail, WhatsApp, and protected-admin flow at mobile and desktop breakpoints.
+- [x] Ensure comparison tables scroll or reflow cleanly on narrow screens without clipping or horizontal page overflow.
