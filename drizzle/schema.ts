@@ -24,6 +24,11 @@ export const properties = mysqlTable("properties", {
   city: varchar("city", { length: 120 }).notNull(),
   state: varchar("state", { length: 120 }).notNull(),
   country: varchar("country", { length: 120 }).default("Nigeria").notNull(),
+  neighborhood: varchar("neighborhood", { length: 160 }),
+  agentName: varchar("agentName", { length: 160 }),
+  agentWhatsapp: varchar("agentWhatsapp", { length: 40 }),
+  developerName: varchar("developerName", { length: 180 }),
+  developerWhatsapp: varchar("developerWhatsapp", { length: 40 }),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
   price: int("price").notNull(),
@@ -62,6 +67,16 @@ export const inquiries = mysqlTable("inquiries", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const leadStatusHistory = mysqlTable("leadStatusHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  leadType: mysqlEnum("leadType", ["inquiry", "partnership"]).notNull(),
+  leadId: int("leadId").notNull(),
+  fromStatus: varchar("fromStatus", { length: 40 }),
+  toStatus: varchar("toStatus", { length: 40 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const partnershipApplications = mysqlTable("partnershipApplications", {
   id: int("id").autoincrement().primaryKey(),
   role: mysqlEnum("role", ["investor", "owner", "agent", "developer", "realtor"]).notNull(),
@@ -87,3 +102,4 @@ export type Property = typeof properties.$inferSelect;
 export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;
 export type PartnershipApplication = typeof partnershipApplications.$inferSelect;
+export type LeadStatusHistory = typeof leadStatusHistory.$inferSelect;

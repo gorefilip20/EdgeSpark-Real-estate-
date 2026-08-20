@@ -31,7 +31,7 @@ export async function listPublishedProperties(filters?: { search?: string; type?
   const conditions = [eq(properties.published, 1)];
   if (filters?.type && filters.type !== "all") conditions.push(eq(properties.propertyType, filters.type as any));
   if (filters?.status && filters.status !== "all") conditions.push(eq(properties.status, filters.status as any));
-  if (filters?.search) conditions.push(or(like(properties.title, `%${filters.search}%`), like(properties.city, `%${filters.search}%`), like(properties.state, `%${filters.search}%`)) as any);
+  if (filters?.search) conditions.push(or(like(properties.title, `%${filters.search}%`), like(properties.address, `%${filters.search}%`), like(properties.neighborhood, `%${filters.search}%`), like(properties.city, `%${filters.search}%`), like(properties.state, `%${filters.search}%`), like(properties.propertyType, `%${filters.search}%`)) as any);
   return withMedia(await db.select().from(properties).where(and(...conditions)).orderBy(desc(properties.featured), desc(properties.createdAt)));
 }
 export async function getPropertyBySlug(slug: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(properties).where(eq(properties.slug, slug)).limit(1); const result = await withMedia(rows); return result[0]; }

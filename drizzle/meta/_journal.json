@@ -15,6 +15,13 @@
       "when": 1787184405192,
       "tag": "0001_ancient_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787185644727,
+      "tag": "0002_marvelous_nitro",
+      "breakpoints": true
     }
   ]
 }

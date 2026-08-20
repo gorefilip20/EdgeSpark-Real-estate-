@@ -34,3 +34,15 @@
 - [x] Add admin UI for lead status changes and response notes.
 - [x] Expand Vitest coverage for public lead submission and property operations.
 - [x] Verify mobile, accessibility, loading, error, and empty states explicitly.
+
+## Production extension
+
+- [x] Add Nigerian property search across city, state, neighborhood, address, and property title.
+- [x] Distinguish land and house/property types in listing data, filters, cards, and admin forms.
+- [x] Connect production listing data and real property photography through admin-managed media.
+- [x] Add WhatsApp availability/contact actions for each property, agent, and developer conversation.
+- [x] Add Google Places nearby amenities and neighborhood exploration from property/listing maps.
+- [x] Add lead status history and admin response notes for inquiries and WhatsApp-intent leads.
+- [x] Add notification retry/fallback handling for owner alerts and document delivery behavior.
+- [x] Add tests for Nigerian search, WhatsApp link generation, lead history, and notification fallback behavior.
+- [x] Verify responsive search, WhatsApp conversion, admin media, and amenity flows before the next checkpoint.
