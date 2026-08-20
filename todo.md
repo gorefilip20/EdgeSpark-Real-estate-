@@ -46,3 +46,32 @@
 - [x] Add notification retry/fallback handling for owner alerts and document delivery behavior.
 - [x] Add tests for Nigerian search, WhatsApp link generation, lead history, and notification fallback behavior.
 - [x] Verify responsive search, WhatsApp conversion, admin media, and amenity flows before the next checkpoint.
+
+## Seed, accounts, and production notifications
+
+- [x] Add a seed workflow for clearly labeled sample Nigerian house and land listings with source/verification metadata. (Demo records are labeled TEST DATA and require verification before publishing.)
+- [x] Add high-quality property photography assets to the managed storage workflow and connect them to seeded listings.
+- [x] Keep the admin dashboard on a separate protected route with explicit admin-only access behavior.
+- [x] Add public user sign-up/create-account and login entry points without exposing admin credentials.
+- [x] Defer secure owner email notification configuration until a later notification phase.
+- [x] Defer secure owner SMS fallback notification configuration until a later notification phase.
+- [x] Keep credentials out of the codebase; admin access remains role-gated through the connected auth provider.
+- [x] Test seeded listings, search/display, user account flow, and admin isolation; notification configuration is intentionally deferred.
+
+## Auth and notification integration
+
+- [x] Add a separate public user account page with sign-up and login entry points.
+- [x] Add a separate admin login page that routes only to the protected admin workspace.
+- [x] Defer Resend email delivery until a later notification phase.
+- [x] Defer Termii SMS fallback until a later notification phase.
+- [x] Defer notification delivery status and simulation mode with the notification phase.
+- [x] Defer simulated notification delivery testing with the notification phase.
+- [x] Verify and checkpoint the auth mockups; notification integration is intentionally deferred.
+
+## Scope change — notifications deferred
+
+- [x] Remove Resend/Termii implementation and credential requirements from the active product scope; revisit later when notification work resumes.
+- [x] Finish separate admin login and public user account page routing.
+- [x] Populate clearly labeled sample Nigerian houses and land listings for testing.
+- [x] Add photography-ready seeded media and verify property display/search behavior.
+- [x] Verify admin isolation and public account entry flows.

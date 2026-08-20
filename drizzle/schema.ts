@@ -39,6 +39,9 @@ export const properties = mysqlTable("properties", {
   projectedYield: decimal("projectedYield", { precision: 5, scale: 2 }),
   featured: int("featured").default(0).notNull(),
   published: int("published").default(0).notNull(),
+  isDemo: int("isDemo").default(0).notNull(),
+  sourceLabel: varchar("sourceLabel", { length: 180 }),
+  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "under_review", "verified"]).default("unverified").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
