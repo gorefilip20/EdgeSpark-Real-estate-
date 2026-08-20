@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { matchesPropertyTag, normalizePropertyTags } from "../client/src/lib/propertyTags";
+import { appendTag, getTagSuggestions, matchesPropertyTag, normalizePropertyTags } from "../client/src/lib/propertyTags";
 
 function context(user: TrpcContext["user"]): TrpcContext {
   return {
@@ -30,5 +30,8 @@ describe("shortlist tag filtering", () => {
     expect(matchesPropertyTag("Lagos, high yield", "lagos")).toBe(true);
     expect(matchesPropertyTag("Abuja, land", "Lagos")).toBe(false);
     expect(matchesPropertyTag("Abuja, land", "All")).toBe(true);
+    expect(getTagSuggestions("Lagos, ", ["Lagos", "High yield", "Land"], "hig")).toEqual(["High yield"]);
+    expect(appendTag("Lagos, manual note", "High yield")).toBe("Lagos, manual note, High yield");
+    expect(appendTag("Lagos", "lagos")).toBe("Lagos");
   });
 });

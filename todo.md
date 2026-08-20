@@ -117,3 +117,11 @@
 - [x] Filter shortlist cards and comparison selections by the active tag.
 - [x] Add an empty filtered-results state and tests for matching behavior, including shared tag normalization and case-insensitive matching.
 - [x] Verify and checkpoint the tag-filtering feature.
+
+## Tag autocomplete and founder confirmation
+
+- [x] Add reusable existing-tag suggestions to the shortlist tag editor with corrected draft-state handling.
+- [x] Support selecting a suggestion without losing manually entered tags.
+- [x] Keep autocomplete keyboard- and mobile-accessible with arrow-key, Enter, Escape, listbox, and touch support.
+- [x] Confirm whether Evarestus and Benjamin appear publicly as founders and document the result: neither name nor founder label appears in the current public client source.
+- [x] Test autocomplete behavior and checkpoint the update with utility assertions for suggestions, duplicates, and tag preservation.
