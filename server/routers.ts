@@ -5,7 +5,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { notifyOwner } from "./_core/notification";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { getDb, getPropertyBySlug, listAdminProperties, listFavoritesForUser, listLeads, listPublishedProperties, listUsers, removeFavorite, saveFavorite, inquiries, partnershipApplications, properties, propertyMedia } from "./db";
+import { getDb, getPropertyBySlug, listAdminProperties, listFavoritesForUser, listLeads, listPublishedProperties, listUsers, removeFavorite, saveFavorite, updateFavoriteMetadata, inquiries, partnershipApplications, properties, propertyMedia } from "./db";
 import { storagePut } from "./storage";
 
 const propertyInput = z.object({
@@ -20,6 +20,7 @@ export const appRouter = router({
     list: protectedProcedure.query(({ ctx }) => listFavoritesForUser(ctx.user.id)),
     save: protectedProcedure.input(z.object({ propertyId: z.number().int() })).mutation(async ({ ctx, input }) => { await saveFavorite(ctx.user.id, input.propertyId); return { success: true }; }),
     remove: protectedProcedure.input(z.object({ propertyId: z.number().int() })).mutation(async ({ ctx, input }) => { await removeFavorite(ctx.user.id, input.propertyId); return { success: true }; }),
+    updateMetadata: protectedProcedure.input(z.object({ propertyId: z.number().int(), notes: z.string().max(2000).nullable(), tags: z.string().max(500).nullable() })).mutation(async ({ ctx, input }) => { await updateFavoriteMetadata(ctx.user.id, input.propertyId, input.notes, input.tags); return { success: true }; }),
   }),
   properties: router({
     list: publicProcedure.input(z.object({ search: z.string().optional(), type: z.string().optional(), status: z.string().optional() }).optional()).query(({ input }) => listPublishedProperties(input)),

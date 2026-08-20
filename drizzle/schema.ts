@@ -50,6 +50,8 @@ export const favorites = mysqlTable("favorites", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   propertyId: int("propertyId").notNull(),
+  notes: text("notes"),
+  tags: text("tags"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

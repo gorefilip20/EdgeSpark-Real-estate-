@@ -99,3 +99,13 @@
 
 - [x] Verify every public, account, shortlist, property-detail, WhatsApp, and protected-admin flow at mobile and desktop breakpoints.
 - [x] Ensure comparison tables scroll or reflow cleanly on narrow screens without clipping or horizontal page overflow.
+
+## Shortlist notes and tags
+
+- [x] Add private notes and custom tags to each signed-in user-property favorite record.
+- [x] Add protected procedures to read and update notes/tags for the owning user only.
+- [x] Add note/tag editing controls to the shortlist cards and comparison view.
+- [x] Add tag chips and note previews with responsive mobile behavior.
+- [x] Add tests for user ownership, validation, persistence, and UI state handling.
+- [x] Verify and checkpoint the notes/tags feature.
+- [x] Commit and push the completed notes/tags implementation to the selected GitHub repository branch and confirm its commit SHA.
