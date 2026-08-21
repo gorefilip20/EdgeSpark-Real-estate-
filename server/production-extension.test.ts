@@ -24,7 +24,7 @@ describe("production extension helpers", () => {
   });
 });
 
-import { buildDeveloperWhatsAppLink, buildPartnershipLeadPayload, buildPriceUpdateInput, buildPropertySearchInput, buildPropertyShareLink, matchesPropertyFilters, matchesPropertySearch, reorderMediaIds, rotateMediaByDay, selectGalleryImage, shouldUseClipboardFallback } from "../shared/types";
+import { buildDeveloperWhatsAppLink, buildPartnershipLeadPayload, buildPriceUpdateInput, buildPropertySearchInput, buildPropertyShareLink, buildGoogleMapsDirectionsUrl, getPropertyLocationExactness, getPropertyMapCenter, matchesPropertyFilters, matchesPropertySearch, reorderMediaIds, rotateMediaByDay, selectGalleryImage, shouldUseClipboardFallback } from "../shared/types";
 
 describe("submitted search and partnership lead contracts", () => {
   it("serializes draft location and search criteria only when submitted", () => {
@@ -102,5 +102,28 @@ describe("admin property and gallery governance contracts", () => {
     expect(shouldExposeGalleryToPublic(true, "approved")).toBe(true);
     expect(shouldExposeGalleryToPublic(true, "draft")).toBe(false);
     expect(shouldExposeGalleryToPublic(false, "approved")).toBe(false);
+  });
+});
+
+describe("property map location contracts", () => {
+  it("uses exact coordinates and directions when a listing has valid latitude and longitude", () => {
+    const property = { latitude: "6.5244000", longitude: "3.3792000", address: "Victoria Island", city: "Lagos", state: "Lagos", country: "Nigeria" };
+    expect(getPropertyLocationExactness(property)).toBe("exact");
+    expect(getPropertyMapCenter(property)).toEqual({ lat: 6.5244, lng: 3.3792 });
+    expect(buildGoogleMapsDirectionsUrl(property)).toContain("destination=6.5244%2C3.3792");
+  });
+
+  it("labels address-only listings approximate and routes them to a searchable Google Maps area", () => {
+    const property = { address: "Maitama", city: "Abuja", state: "FCT", country: "Nigeria" };
+    expect(getPropertyLocationExactness(property)).toBe("approximate");
+    expect(getPropertyMapCenter(property)).toEqual({ lat: 9.0765, lng: 7.3986 });
+    expect(buildGoogleMapsDirectionsUrl(property)).toContain("query=Maitama%2C%20Abuja%2C%20FCT%2C%20Nigeria");
+  });
+
+  it("does not fabricate a map center for a listing without location context", () => {
+    const property = {};
+    expect(getPropertyLocationExactness(property)).toBe("unavailable");
+    expect(getPropertyMapCenter(property)).toBeNull();
+    expect(buildGoogleMapsDirectionsUrl(property)).toBeNull();
   });
 });

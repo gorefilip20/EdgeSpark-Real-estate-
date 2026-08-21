@@ -114,3 +114,33 @@ export function reorderMediaIds(orderedIds: number[], draggedId: number, targetI
   next.splice(to, 0, moved);
   return next;
 }
+
+export type PropertyLocationExactness = "exact" | "approximate" | "unavailable";
+
+export function getPropertyLocationExactness(property: { latitude?: unknown; longitude?: unknown; address?: string | null; city?: string | null; state?: string | null }): PropertyLocationExactness {
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+  if (Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) return "exact";
+  if (property.address || property.city || property.state) return "approximate";
+  return "unavailable";
+}
+
+export function buildGoogleMapsDirectionsUrl(property: { latitude?: unknown; longitude?: unknown; address?: string | null; city?: string | null; state?: string | null; country?: string | null }): string | null {
+  const exactness = getPropertyLocationExactness(property);
+  if (exactness === "exact") return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${Number(property.latitude)},${Number(property.longitude)}`)}`;
+  const locationParts = [property.address, property.city, property.state].filter(Boolean);
+  if (!locationParts.length) return null;
+  const query = [...locationParts, property.country || "Nigeria"].join(", ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function getPropertyMapCenter(property: { latitude?: unknown; longitude?: unknown; city?: string | null; state?: string | null }): { lat: number; lng: number } | null {
+  const latitude = Number(property.latitude);
+  const longitude = Number(property.longitude);
+  if (Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) return { lat: latitude, lng: longitude };
+  const state = `${property.state || ""} ${property.city || ""}`.toLowerCase();
+  if (state.includes("abuja") || state.includes("fct")) return { lat: 9.0765, lng: 7.3986 };
+  if (state.includes("lagos")) return { lat: 6.5244, lng: 3.3792 };
+  if (state.includes("ebonyi")) return { lat: 6.2649, lng: 8.0137 };
+  return null;
+}

@@ -227,3 +227,51 @@
 - [x] Preserve keyboard/button fallback and save the reordered media IDs through the existing mutation.
 - [x] Add focused tests for deterministic reorder payload construction and persistence contract.
 - [x] Verify admin media ordering on mobile and desktop, run checks, push to the requested GitHub branch, and save a checkpoint.
+
+## 30-day social growth campaign
+
+- [x] Define EdgeSpark content pillars, investor DM funnel, platform voice, posting cadence, and property-claim guardrails.
+- [ ] Create 60 original property visuals: two per day across house and land themes.
+- [x] Write detailed day-by-day captions and post formats for TikTok, Instagram, Facebook, LinkedIn, and X.
+- [x] Include follow, save, comment, and DM calls to action that guide prospects without promising returns or inventing availability.
+- [ ] Package the calendar, DM scripts, hashtag guidance, and 60 visual assets for publishing.
+- [ ] Quality-check all assets and deliver the campaign bundle.
+
+## Deferred visual generation and campaign operations
+
+- [x] Finalize the non-image 30-day campaign playbook, platform captions, DM scripts, hashtags, and measurement workflow.
+- [x] Prepare a publishing checklist and content-repurposing workflow for TikTok, Instagram, Facebook, LinkedIn, and X.
+- [ ] Keep the 60 original house-and-land visual briefs queued for generation after the image quota resets.
+- [ ] Generate and quality-check the 60 visual assets after quota availability returns.
+
+## Quota reset check
+
+- [x] Check whether image generation is available again.
+- [ ] If available, generate the queued 60 house-and-land campaign visuals in cohesive batches.
+- [x] Package generated visuals and update the campaign asset status.
+
+## Direct image bundle retry
+
+- [ ] Retry the 60-image house-and-land generation and produce standalone files suitable for direct upload.
+- [ ] Package each image with its campaign day, house/land label, and matching caption reference.
+- [ ] Provide a clear upload-ready asset bundle or direct file attachments, not only storage URLs.
+
+## Asset delivery correction
+
+- [x] Do not present `/manus-storage/...` paths as browser-download links.
+- [x] Deliver generated campaign visuals as valid file attachments or properly exposed public URLs.
+- [x] Reconcile the visual manifest with only assets that can be opened outside the project environment.
+
+## Exact property map and directions
+
+- [x] Ensure authorized listings expose stored latitude and longitude for exact map placement.
+- [x] Show a property-specific marker, location label, and Google Maps directions link on property detail pages.
+- [x] Clearly label exact, approximate, and unavailable locations; never fabricate exact coordinates for illustrative or unverified listings.
+- [x] Add focused tests for coordinate validation, map-link construction, and exactness labeling.
+- [x] Verify map behavior on mobile and desktop and save a final checkpoint.
+
+## GitHub synchronization
+
+- [ ] Inspect current branch, remote, and working tree for the verified map update.
+- [ ] Commit and push the latest project changes to the selected EdgeSpark GitHub branch.
+- [ ] Confirm the remote branch and resulting commit SHA, then save or reference the checkpoint.
