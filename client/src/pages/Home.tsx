@@ -948,6 +948,49 @@ function PropertyCard({ property }: { property: any }) {
     </Link>
   );
 }
+function LocalAccountForm({ admin = false }: { admin?: boolean }) {
+  const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const register = trpc.auth.register.useMutation();
+  const login = trpc.auth.login.useMutation();
+  const pending = register.isPending || login.isPending;
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
+    try {
+      const result = mode === "register"
+        ? await register.mutateAsync({ name, email, password })
+        : await login.mutateAsync({ email, password });
+      await utils.auth.me.invalidate();
+      if (admin && result.role !== "admin") {
+        setError("This account is not an administrator. Use the owner email configured in Hostinger.");
+        return;
+      }
+      navigate(admin ? "/admin" : "/account");
+    } catch (err: any) {
+      setError(err?.message || "We could not complete that request. Please try again.");
+    }
+  };
+  return <form onSubmit={submit} className="mt-7 space-y-4" noValidate>
+    {mode === "register" && <Input required minLength={2} value={name} onChange={e => setName(e.target.value)} placeholder="Full name" autoComplete="name" />}
+    <Input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" autoComplete="email" />
+    <Input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password (8+ characters)" autoComplete={mode === "register" ? "new-password" : "current-password"} />
+    {error ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
+    <Button type="submit" disabled={pending} className="w-full rounded-full bg-[#bd7b4b] py-6 text-white">
+      {pending ? "Please wait…" : mode === "register" ? "Create account" : admin ? "Sign in as admin" : "Sign in"}
+      <ArrowRight className="ml-2 h-4 w-4" />
+    </Button>
+    <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }} className="w-full text-sm font-semibold text-[#173b46] underline-offset-4 hover:underline">
+      {mode === "login" ? "Need an account? Create one" : "Already have an account? Sign in"}
+    </button>
+    {!admin ? <button type="button" onClick={() => startLogin()} className="w-full text-sm text-[#6c7776] hover:text-[#173b46]">Continue with connected provider</button> : null}
+  </form>;
+}
 function AccountPage() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   return (
@@ -998,19 +1041,12 @@ function AccountPage() {
             <div>
               <div className="eyebrow">Create or access account</div>
               <h2 className="mt-3 font-display text-3xl text-[#173b46]">
-                Start with a secure sign-in.
+                Your shortlist, saved securely.
               </h2>
               <p className="mt-4 text-sm leading-6 text-[#6c7776]">
-                EdgeSpark uses the secure account provider already connected to
-                this platform. You can create a new account or sign in from the
-                same entry point.
+                Create an account with your email and password, then return to your saved properties and enquiries from any device.
               </p>
-              <Button
-                onClick={() => startLogin()}
-                className="mt-7 w-full rounded-full bg-[#bd7b4b] py-6 text-white"
-              >
-                Create account / sign in <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <LocalAccountForm />
             </div>
           )}
         </div>
@@ -1047,12 +1083,7 @@ function AdminLoginPage() {
               Admin session detected. Opening workspace…
             </p>
           ) : (
-            <Button
-              onClick={() => startLogin()}
-              className="mt-8 w-full rounded-full bg-[#bd7b4b] py-6 text-white"
-            >
-              Sign in as admin <ShieldCheck className="ml-2 h-4 w-4" />
-            </Button>
+            <LocalAccountForm admin />
           )}
           <Link
             href="/"
@@ -1074,7 +1105,7 @@ function FounderSection() {
       bio: "Leads deal sourcing, property acquisition, and on-the-ground operations, bringing disciplined diligence to each opportunity.",
       email: "evarestusuchinecherem@gmail.com",
       linkedin: "https://www.linkedin.com/in/evarestus-chinecherem-4269a5363",
-      image: "/manus-storage/edgespark-evarestus-portrait_d22844f6.jpg",
+      image: "/team/evaristus-chinyere.jpg",
     },
     {
       initials: "BI",
@@ -1083,7 +1114,7 @@ function FounderSection() {
       bio: "Drives financial analysis, investor relations, and deal structuring so every opportunity is evaluated with clarity.",
       email: "benjamin.c.ikwuagwu@gmail.com",
       linkedin: "https://www.linkedin.com/in/ben-ikwuagwu-52918a306",
-      image: "/manus-storage/edgespark-benjamin-portrait_3293de44.jpg",
+      image: "/team/benjamin.jpg",
     },
   ];
   return (
@@ -1153,13 +1184,13 @@ function AboutPage() {
     {
       name: "Evarestus Chinecherem Ugwuokanya",
       role: "Founder & Managing Director",
-      image: "/manus-storage/edgespark-evarestus-portrait_d22844f6.jpg",
+      image: "/team/evaristus-chinyere.jpg",
       body: "Evarestus leads deal sourcing, property acquisition, and on-the-ground operations. His work is grounded in disciplined diligence: understanding the asset, the location, the use case, and the path from acquisition to long-term value.",
     },
     {
       name: "Benjamin Chisom Ikwuagwu",
       role: "Co-founder",
-      image: "/manus-storage/edgespark-benjamin-portrait_3293de44.jpg",
+      image: "/team/benjamin.jpg",
       body: "Benjamin leads financial analysis, investor relations, and deal structuring. He brings a clear, measured lens to opportunity sizing, capital conversations, and the details that help partners move with confidence.",
     },
   ];

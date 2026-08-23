@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { TRPCError } from "@trpc/server";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { sdk } from "./_core/sdk";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { notifyOwner } from "./_core/notification";
@@ -21,8 +23,10 @@ import {
   partnershipApplications,
   properties,
   propertyMedia,
+  users,
 } from "./db";
 import { storagePut } from "./storage";
+import { ENV } from "./_core/env";
 
 const propertyInput = z.object({
   title: z.string().min(4),
@@ -73,6 +77,36 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    register: publicProcedure.input(z.object({ name: z.string().min(2).max(120), email: z.string().email().max(320), password: z.string().min(8).max(200) })).mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const email = input.email.trim().toLowerCase();
+      const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existing[0]) throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists" });
+      const salt = randomBytes(16).toString("hex");
+      const hash = scryptSync(input.password, salt, 32).toString("hex");
+      const openId = `local_${randomBytes(18).toString("hex")}`;
+      const role = ENV.ownerEmail && email === ENV.ownerEmail.toLowerCase() ? "admin" : "user";
+      await db.insert(users).values({ openId, name: input.name.trim(), email, loginMethod: "email", passwordHash: `${salt}:${hash}`, role, lastSignedIn: new Date() });
+      const token = await sdk.createSessionToken(openId, { name: input.name.trim() });
+      ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
+      const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+      return user;
+    }),
+    login: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1).max(200) })).mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      const email = input.email.trim().toLowerCase();
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (!user?.passwordHash) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect" });
+      const [salt, expected] = user.passwordHash.split(":");
+      const actual = scryptSync(input.password, salt, 32);
+      if (!expected || !timingSafeEqual(actual, Buffer.from(expected, "hex"))) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect" });
+      await db.update(users).set({ lastSignedIn: new Date(), role: ENV.ownerEmail && email === ENV.ownerEmail.toLowerCase() ? "admin" : user.role }).where(eq(users.id, user.id));
+      const token = await sdk.createSessionToken(user.openId, { name: user.name || email });
+      ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
+      return { ...user, passwordHash: undefined };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

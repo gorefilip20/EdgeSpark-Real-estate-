@@ -1,12 +1,22 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { sql } from "drizzle-orm";
 import { InsertUser, favorites, inquiries, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _localAuthSchemaReady = false;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); }
+  }
+  if (_db && !_localAuthSchemaReady) {
+    try {
+      await _db.execute(sql.raw("ALTER TABLE users ADD COLUMN passwordHash TEXT NULL"));
+    } catch {
+      // The column already exists on normal deployments; ignore duplicate-column errors.
+    }
+    _localAuthSchemaReady = true;
   }
   return _db;
 }
