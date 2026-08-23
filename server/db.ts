@@ -1,7 +1,7 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { sql } from "drizzle-orm";
-import { InsertUser, favorites, inquiries, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
+import { InsertUser, favorites, inquiries, localAccounts, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -12,9 +12,9 @@ export async function getDb() {
   }
   if (_db && !_localAuthSchemaReady) {
     try {
-      await _db.execute(sql.raw("ALTER TABLE users ADD COLUMN passwordHash TEXT NULL"));
-    } catch {
-      // The column already exists on normal deployments; ignore duplicate-column errors.
+      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
+    } catch (error) {
+      console.warn("[Database] Local account table setup failed:", error);
     }
     _localAuthSchemaReady = true;
   }
@@ -52,4 +52,4 @@ export async function removeFavorite(userId: number, propertyId: number) { const
 export async function updateFavoriteMetadata(userId: number, propertyId: number, notes: string | null, tags: string | null) { const db = await getDb(); if (!db) return; await db.update(favorites).set({ notes, tags } as any).where(and(eq(favorites.userId, userId), eq(favorites.propertyId, propertyId))); }
 export async function listUsers() { const db = await getDb(); if (!db) return []; return db.select({ id: users.id, name: users.name, email: users.email, role: users.role, loginMethod: users.loginMethod, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).orderBy(desc(users.lastSignedIn)); }
 export async function listLeads() { const db = await getDb(); if (!db) return { inquiries: [], partnerships: [] }; const [inquiryRows, partnershipRows] = await Promise.all([db.select().from(inquiries).orderBy(desc(inquiries.createdAt)), db.select().from(partnershipApplications).orderBy(desc(partnershipApplications.createdAt))]); return { inquiries: inquiryRows, partnerships: partnershipRows }; }
-export { favorites, inquiries, partnershipApplications, properties, propertyMedia, users };
+export { favorites, inquiries, localAccounts, partnershipApplications, properties, propertyMedia, users };
