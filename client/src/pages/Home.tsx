@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Route, Switch, useLocation, useRoute } from "wouter";
 import {
   ArrowRight,
+  ArrowDownToLine,
   ArrowUpRight,
   Bath,
   BedDouble,
@@ -154,6 +155,18 @@ const fmt = (value: number | string | null | undefined) =>
 const statusLabel = (status: string) => status.replace("_", " ");
 const whatsappLink = (_phone: string | undefined, title: string) =>
   buildDeveloperWhatsAppLink(title);
+const buildLeadEmailLink = (lead: any) => {
+  const subject = `EdgeSpark follow-up: ${lead.role ? `${lead.role} partnership` : lead.propertyTitle || "property enquiry"}`;
+  const body = `Hello ${lead.name || "there"},
+
+Thank you for reaching out to EdgeSpark. I would like to continue the conversation about ${lead.propertyTitle || "your property opportunity"}.
+
+Would you be available for a short call this week?
+
+Best regards,
+EdgeSpark Real Estate Capital`;
+  return `mailto:${encodeURIComponent(lead.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
 const copyPropertyLink = async (property: any) => {
   const propertyUrl = `${window.location.origin}/property/${property.slug}`;
   try {
@@ -221,9 +234,9 @@ function Header({ dark = false }: { dark?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <header
-      className={`absolute left-0 right-0 top-0 z-30 ${dark ? "text-white" : "text-[#173b46]"}`}
+      className={`relative z-30 lg:absolute lg:left-0 lg:right-0 lg:top-0 ${dark ? "text-white" : "text-[#173b46]"}`}
     >
-      <div className="container flex h-24 items-center justify-between">
+      <div className="container flex min-h-20 items-center justify-between py-4 lg:h-24 lg:py-0">
         <Link href="/">
           <BrandMark light={dark} />
         </Link>
@@ -248,12 +261,12 @@ function Header({ dark = false }: { dark?: boolean }) {
             </Button>
           </Link>
         </div>
-        <button className="lg:hidden" onClick={() => setOpen(!open)}>
+        <button aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open} className="rounded-full p-2 lg:hidden" onClick={() => setOpen(!open)}>
           {open ? <X /> : <Menu />}
         </button>
       </div>
       {open && (
-        <div className="container rounded-2xl bg-[#173b46] p-5 text-white shadow-xl lg:hidden">
+        <div className="container border-t border-white/10 bg-[#173b46] p-5 text-white shadow-xl lg:hidden">
           <div className="grid gap-4 text-sm">
             <Link href="/properties">Explore properties</Link>
             <Link href="/about">About us</Link>
@@ -283,6 +296,7 @@ function Footer() {
           <div className="mt-4 grid gap-3 text-sm">
             <Link href="/properties">Properties</Link>
             <Link href="/calculator">Deal analyzer</Link>
+            <a href="/downloads/edgespark-real-estate-field-guide.pdf" download>Download field guide</a>
           </div>
         </div>
         <div>
@@ -1280,37 +1294,37 @@ function HomePage() {
   const properties = (data?.length ? data : demoProperties).slice(0, 3);
   return (
     <div>
-      <section className="relative min-h-[730px] overflow-hidden bg-[#173b46] text-white">
+      <section className="relative overflow-hidden bg-[#173b46] text-white lg:min-h-[730px]">
         <Header dark />
         <div className="hero-grid absolute inset-0 opacity-40" />
-        <div className="container relative grid min-h-[730px] items-start gap-14 pb-16 pt-40 md:pt-32 lg:items-center lg:grid-cols-[1.1fr_.9fr]">
+        <div className="container relative grid items-start gap-12 pb-14 pt-14 sm:gap-14 sm:pb-16 lg:min-h-[730px] lg:items-center lg:grid-cols-[1.1fr_.9fr] lg:pb-16 lg:pt-32">
           <div>
             <div className="eyebrow">Property, with perspective</div>
-            <h1 className="mt-6 max-w-3xl font-display text-5xl leading-[1.04] tracking-[-.03em] md:text-7xl">
+            <h1 className="mt-5 max-w-3xl font-display text-[clamp(2.85rem,11vw,4.5rem)] leading-[1.02] tracking-[-.04em] sm:mt-6 md:text-7xl">
               Build wealth around{" "}
               <span className="text-[#d59462]">better places.</span>
             </h1>
-            <p className="mt-7 max-w-xl text-lg leading-8 text-white/70">
+            <p className="mt-6 max-w-xl text-base leading-7 text-white/70 sm:mt-7 sm:text-lg sm:leading-8">
               Discover carefully selected real estate opportunities, understand
               the numbers, and speak directly with a team that thinks beyond the
               transaction.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-8 grid max-w-md gap-3 sm:mt-9 sm:flex sm:max-w-none sm:flex-wrap">
               <Link href="/properties">
-                <Button className="rounded-full bg-[#bd7b4b] px-6 py-6 text-white hover:bg-[#a9663b]">
+                <Button className="w-full rounded-full bg-[#bd7b4b] px-6 py-6 text-white hover:bg-[#a9663b] sm:w-auto">
                   Explore opportunities <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/partner">
                 <Button
                   variant="outline"
-                  className="rounded-full border-white/25 bg-transparent px-6 py-6 text-white hover:bg-white/10"
+                  className="w-full rounded-full border-white/25 bg-transparent px-6 py-6 text-white hover:bg-white/10 sm:w-auto"
                 >
                   Partner with EdgeSpark
                 </Button>
               </Link>
             </div>
-            <div className="mt-16 grid max-w-xl grid-cols-3 gap-6 border-t border-white/15 pt-6">
+            <div className="mt-12 grid max-w-xl grid-cols-3 gap-4 border-t border-white/15 pt-6 sm:mt-16 sm:gap-6">
               <div>
                 <div className="font-display text-3xl">01</div>
                 <div className="mt-1 text-xs uppercase tracking-[.15em] text-white/55">
@@ -1433,6 +1447,16 @@ function HomePage() {
               <PropertyCard key={property.id} property={property} />
             ))}
           </div>
+        </div>
+      </section>
+      <section className="bg-[#173b46] py-16 text-white">
+        <div className="container flex flex-col items-start justify-between gap-7 md:flex-row md:items-center">
+          <div className="max-w-2xl">
+            <div className="eyebrow text-[#d59462]">Free field guide</div>
+            <h2 className="mt-3 font-display text-3xl leading-tight sm:text-4xl">Make your next property decision with more clarity.</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Download the EdgeSpark Real Estate Field Guide for practical questions on location, budgets, due diligence, rental economics, and resilience.</p>
+          </div>
+          <a href="/downloads/edgespark-real-estate-field-guide.pdf" download className="inline-flex shrink-0 items-center rounded-full bg-[#bd7b4b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a9663b]">Download the guide <ArrowDownToLine className="ml-2 h-4 w-4" /></a>
         </div>
       </section>
       <FounderSection />
@@ -3055,7 +3079,13 @@ function AdminPage() {
               )}
             </div>
             <div className="mt-8 border-t border-[#deded5] pt-6">
-              <div className="eyebrow">Leads inbox</div>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <div className="eyebrow">Leads inbox</div>
+                  <p className="mt-2 text-sm text-[#6c7776]">Review enquiries, update status, and start a personal follow-up.</p>
+                </div>
+                <a href="/email/property-pitch.html" target="_blank" rel="noreferrer" className="inline-flex items-center rounded-full border border-[#173b46]/15 px-4 py-2 text-xs font-semibold text-[#173b46] hover:bg-[#ebe9e1]">Open pitch email template <ArrowUpRight className="ml-2 h-3.5 w-3.5" /></a>
+              </div>
               <div className="mt-4 grid gap-3">
                 {[
                   ...(leads?.inquiries || []),
@@ -3146,6 +3176,10 @@ function AdminPage() {
                     <p className="mt-3 text-sm leading-6 text-[#6c7776]">
                       {lead.message}
                     </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <a href={buildLeadEmailLink(lead)} className="inline-flex items-center rounded-full bg-[#173b46] px-4 py-2 text-xs font-semibold text-white hover:bg-[#102d36]"><Mail className="mr-2 h-3.5 w-3.5" />Email this lead</a>
+                      {lead.phone ? <a href={`https://wa.me/${String(lead.phone).replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-full border border-[#deded5] px-4 py-2 text-xs font-semibold text-[#173b46] hover:bg-[#ebe9e1]"><MessageCircle className="mr-2 h-3.5 w-3.5" />WhatsApp</a> : null}
+                    </div>
                   </div>
                 ))}
                 {!leads?.inquiries?.length && !leads?.partnerships?.length && (

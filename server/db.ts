@@ -20,7 +20,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
   if (user.lastSignedIn) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
   if (user.role) { values.role = user.role; updateSet.role = user.role; }
-  else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
+  else if (user.openId === ENV.ownerOpenId || (ENV.ownerEmail && user.email === ENV.ownerEmail)) { values.role = "admin"; updateSet.role = "admin"; }
   values.lastSignedIn ??= new Date(); updateSet.lastSignedIn ??= new Date();
   await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
