@@ -163,15 +163,15 @@ const statusLabel = (status: string) => status.replace("_", " ");
 const whatsappLink = (_phone: string | undefined, title: string) =>
   buildDeveloperWhatsAppLink(title);
 const buildLeadEmailLink = (lead: any) => {
-  const subject = `EdgeSpark follow-up: ${lead.role ? `${lead.role} partnership` : lead.propertyTitle || "property enquiry"}`;
+  const subject = `EdgePark follow-up: ${lead.role ? `${lead.role} partnership` : lead.propertyTitle || "property enquiry"}`;
   const body = `Hello ${lead.name || "there"},
 
-Thank you for reaching out to EdgeSpark. I would like to continue the conversation about ${lead.propertyTitle || "your property opportunity"}.
+Thank you for reaching out to EdgePark. I would like to continue the conversation about ${lead.propertyTitle || "your property opportunity"}.
 
 Would you be available for a short call this week?
 
 Best regards,
-EdgeSpark Real Estate Capital`;
+EdgePark Estate`;
   return `mailto:${encodeURIComponent(lead.email || "")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
 const copyPropertyLink = async (property: any) => {
@@ -217,21 +217,18 @@ function BrandMark({ light = false }: { light?: boolean }) {
       <div
         className={`relative flex h-10 w-10 items-center justify-center rounded-xl ${light ? "bg-[#bd7b4b]" : "bg-[#173b46]"}`}
       >
-        <span className="font-display text-2xl font-bold text-[#f8f7f3]">
-          E
-        </span>
-        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#bd7b4b]" />
+        <img src="/brand/edgepark-monogram.png" alt="" className="h-full w-full object-contain p-1.5" />
       </div>
       <div>
         <div
           className={`font-display text-lg font-semibold leading-none ${light ? "text-white" : "text-[#173b46]"}`}
         >
-          EdgeSpark
+          EdgePark
         </div>
         <div
           className={`mt-1 text-[9px] font-bold uppercase tracking-[.25em] ${light ? "text-white/60" : "text-[#6c7776]"}`}
         >
-          Real estate capital
+          Estate capital
         </div>
       </div>
     </div>
@@ -328,7 +325,7 @@ function Footer() {
         </div>
       </div>
       <div className="container mt-10 border-t border-[#deded5] pt-5 text-xs text-[#6c7776]">
-        © {new Date().getFullYear()} EdgeSpark Real Estate Capital. All
+        © {new Date().getFullYear()} EdgePark Estate. All
         opportunities subject to independent review.
       </div>
     </footer>
@@ -998,7 +995,7 @@ function AccountPage() {
       <div className="relative bg-[#173b46] pb-16 pt-28 text-white">
         <Header dark />
         <div className="container">
-          <div className="eyebrow text-[#d59462]">Your EdgeSpark account</div>
+          <div className="eyebrow text-[#d59462]">Your EdgePark account</div>
           <h1 className="mt-4 max-w-2xl font-display text-5xl">
             Save properties. Continue conversations.
           </h1>
@@ -1200,12 +1197,12 @@ function AboutPage() {
         <Header dark />
         <div className="hero-grid absolute inset-0 opacity-30" />
         <div className="container relative">
-          <div className="eyebrow text-[#d59462]">About EdgeSpark</div>
+          <div className="eyebrow text-[#d59462]">About EdgePark</div>
           <h1 className="mt-5 max-w-4xl font-display text-5xl leading-tight md:text-7xl">
             A clearer way to build around better places.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-            EdgeSpark Real Estate Capital brings together carefully sourced
+            EdgePark Estate brings together carefully sourced
             opportunities, practical analysis, and human partnership for
             investors, owners, agents, developers, and realtors.
           </p>
@@ -1228,7 +1225,7 @@ function AboutPage() {
             </p>
             <p>
               Whether someone is evaluating a home, land, development
-              opportunity, or a long-term partnership, EdgeSpark creates a
+              opportunity, or a long-term partnership, EdgePark creates a
               thoughtful first surface for understanding what matters before the
               next move.
             </p>
@@ -1339,7 +1336,7 @@ function HomePage() {
                   variant="outline"
                   className="w-full rounded-full border-white/25 bg-transparent px-6 py-6 text-white hover:bg-white/10 sm:w-auto"
                 >
-                  Partner with EdgeSpark
+                  Partner with EdgePark
                 </Button>
               </Link>
             </div>
@@ -1399,7 +1396,7 @@ function HomePage() {
         <div className="container">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <div className="eyebrow">The EdgeSpark lens</div>
+              <div className="eyebrow">The EdgePark lens</div>
               <h2 className="mt-4 max-w-2xl font-display text-4xl leading-tight text-[#173b46] md:text-5xl">
                 Good property is more than a postcode.
               </h2>
@@ -1473,7 +1470,7 @@ function HomePage() {
           <div className="max-w-2xl">
             <div className="eyebrow text-[#d59462]">Free field guide</div>
             <h2 className="mt-3 font-display text-3xl leading-tight sm:text-4xl">Make your next property decision with more clarity.</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Download the EdgeSpark Real Estate Field Guide for practical questions on location, budgets, due diligence, rental economics, and resilience.</p>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Download the EdgePark Real Estate Field Guide for practical questions on location, budgets, due diligence, rental economics, and resilience.</p>
           </div>
           <a href="/downloads/edgespark-real-estate-field-guide.pdf" download className="inline-flex shrink-0 items-center rounded-full bg-[#bd7b4b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a9663b]">Download the guide <ArrowDownToLine className="ml-2 h-4 w-4" /></a>
         </div>
@@ -2047,7 +2044,7 @@ function PropertyPage() {
   const mutation = trpc.leads.submitInquiry.useMutation({
     onSuccess: () => {
       setSent(true);
-      toast.success("Your inquiry is with the EdgeSpark team.");
+      toast.success("Your inquiry is with the EdgePark team.");
     },
   });
   const [form, setForm] = useState({
@@ -2056,6 +2053,18 @@ function PropertyPage() {
     phone: "",
     message: `I’d like to understand the opportunity in ${property.title}.`,
   });
+  const [errors, setErrors] = useState<string[]>([]);
+  const submitInquiry = (event: React.FormEvent) => {
+    event.preventDefault();
+    const nextErrors: string[] = [];
+    if (form.name.trim().length < 2) nextErrors.push("Enter your full name.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) nextErrors.push("Enter a valid email address.");
+    if (form.phone.trim() && form.phone.trim().replace(/\D/g, "").length < 7) nextErrors.push("Enter a valid phone number or leave it blank.");
+    if (form.message.trim().length < 10) nextErrors.push("Tell us a little more about your request.");
+    setErrors(nextErrors);
+    if (nextErrors.length) return;
+    mutation.mutate({ ...form, name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), message: form.message.trim(), propertyId: property.id, propertyTitle: property.title });
+  };
   return (
     <div>
       <div className="bg-[#f1f0ea] pb-14 pt-28">
@@ -2209,7 +2218,7 @@ function PropertyPage() {
         ) : (
           <div className="mt-5 rounded-xl bg-[#f8f7f3] p-6 text-sm leading-6 text-[#6c7776]">
             The exact map point is not available yet. This listing is shown by
-            its stated city and state only; contact EdgeSpark for the verified
+            its stated city and state only; contact EdgePark for the verified
             location before arranging a viewing.
           </div>
         )}
@@ -2303,15 +2312,17 @@ function PropertyPage() {
               brief and next steps.
             </div>
           ) : (
-            <div className="mt-7 grid gap-4">
+            <form onSubmit={submitInquiry} noValidate className="mt-7 grid gap-4">
               <Input
-                placeholder="Your name"
+                required
+                placeholder="Your name *"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
               />
               <Input
+                required
                 type="email"
-                placeholder="Email address"
+                placeholder="Email address *"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
               />
@@ -2321,28 +2332,21 @@ function PropertyPage() {
                 onChange={e => setForm({ ...form, phone: e.target.value })}
               />
               <Textarea
+                required
+                minLength={10}
                 rows={5}
                 value={form.message}
                 onChange={e => setForm({ ...form, message: e.target.value })}
               />
-              <Button
-                disabled={mutation.isPending}
-                onClick={() =>
-                  mutation.mutate({
-                    ...form,
-                    propertyId: property.id,
-                    propertyTitle: property.title,
-                  })
-                }
-                className="rounded-full bg-[#173b46] py-6 text-white"
-              >
+              {errors.length > 0 && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700"><div className="font-semibold">Please correct the following:</div><ul className="mt-2 list-disc pl-5">{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
+              <Button type="submit" disabled={mutation.isPending} className="rounded-full bg-[#173b46] py-6 text-white">
                 {mutation.isPending ? "Sending…" : "Send inquiry"}
                 <MessageCircle className="ml-2 h-4 w-4" />
               </Button>
               <p className="text-center text-xs text-[#6c7776]">
                 No pressure. Just a thoughtful first conversation.
               </p>
-            </div>
+            </form>
           )}
         </div>
       </main>
@@ -2384,141 +2388,29 @@ const roles = [
 ];
 function PartnerPage() {
   const [role, setRole] = useState("investor");
-  const mutation = trpc.leads.submitPartnership.useMutation({
-    onSuccess: () =>
-      toast.success("Application received. We’ll be in touch soon."),
-  });
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    investmentRange: "",
-    message: "",
-  });
-  return (
-    <div>
-      <div className="bg-[#173b46] pb-20 pt-28 text-white">
-        <Header dark />
-        <div className="container">
-          <div className="eyebrow text-[#d59462]">
-            Partnerships, thoughtfully structured
-          </div>
-          <h1 className="mt-5 max-w-4xl font-display text-5xl leading-tight md:text-7xl">
-            The best opportunities are built together.
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/65">
-            Whether you bring capital, a property, market reach, or development
-            expertise, we’re open to the conversation that could turn alignment
-            into momentum.
-          </p>
-        </div>
-      </div>
-      <main className="container py-16">
-        <div className="grid gap-4 md:grid-cols-5">
-          {roles.map(({ id, title, desc, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setRole(id)}
-              className={`rounded-[1.2rem] p-5 text-left ${role === id ? "bg-[#bd7b4b] text-white" : "bg-[#ebe9e1] text-[#173b46]"}`}
-            >
-              <Icon className="h-6 w-6" />
-              <div className="mt-8 font-display text-xl">{title}</div>
-              <p
-                className={`mt-3 text-xs leading-5 ${role === id ? "text-white/75" : "text-[#6c7776]"}`}
-              >
-                {desc}
-              </p>
-            </button>
-          ))}
-        </div>
-        <div className="mt-12 grid gap-10 lg:grid-cols-[.9fr_1.1fr]">
-          <div>
-            <div className="eyebrow">Start here</div>
-            <h2 className="mt-4 font-display text-4xl text-[#173b46]">
-              Tell us a little about the opportunity.
-            </h2>
-            <p className="mt-5 text-base leading-8 text-[#6c7776]">
-              We’ll review the context, understand what a good outcome looks
-              like for you, and come back with the most useful next step.
-            </p>
-            <div className="mt-9 grid gap-4 text-sm text-[#173b46]">
-              <div className="flex gap-3">
-                <Check className="h-5 w-5 text-[#bd7b4b]" />A clear point of
-                contact
-              </div>
-              <div className="flex gap-3">
-                <Check className="h-5 w-5 text-[#bd7b4b]" />A considered
-                response, not a generic pitch
-              </div>
-              <div className="flex gap-3">
-                <Check className="h-5 w-5 text-[#bd7b4b]" />A process built
-                around fit and trust
-              </div>
-            </div>
-          </div>
-          <div className="rounded-[1.5rem] border border-[#deded5] bg-white p-7 shadow-sm">
-            <div className="eyebrow">
-              {roles.find(r => r.id === role)?.title}
-            </div>
-            <div className="mt-6 grid gap-4">
-              <Input
-                placeholder="Full name"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-              />
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-              />
-              <div className="grid gap-4 md:grid-cols-2">
-                <Input
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })}
-                />
-                <Input
-                  placeholder="Company / organization"
-                  value={form.company}
-                  onChange={e => setForm({ ...form, company: e.target.value })}
-                />
-              </div>
-              <Input
-                placeholder="Investment range or project scale (optional)"
-                value={form.investmentRange}
-                onChange={e =>
-                  setForm({ ...form, investmentRange: e.target.value })
-                }
-              />
-              <Textarea
-                rows={6}
-                placeholder="What would you like to explore together?"
-                value={form.message}
-                onChange={e => setForm({ ...form, message: e.target.value })}
-              />
-              <Button
-                disabled={mutation.isPending}
-                onClick={() =>
-                  mutation.mutate(
-                    buildPartnershipLeadPayload(form, role as any)
-                  )
-                }
-                className="rounded-full bg-[#173b46] py-6 text-white"
-              >
-                {mutation.isPending
-                  ? "Submitting…"
-                  : "Submit partnership application"}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
+  const mutation = trpc.leads.submitPartnership.useMutation({ onSuccess: () => toast.success("Application received. We’ll be in touch soon.") });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", investmentRange: "", message: "", location: "", assetType: "", budget: "", timeline: "", fundingStatus: "", experience: "", proposalLink: "" });
+  const [errors, setErrors] = useState<string[]>([]);
+  const roleDetails: Record<string, { title: string; fields: string[]; prompt: string }> = {
+    investor: { title: "Investor", fields: ["investmentRange", "fundingStatus", "timeline"], prompt: "Tell us about your investment goals, preferred asset class, and timeline." },
+    owner: { title: "Property owner", fields: ["location", "assetType", "budget"], prompt: "Tell us about the property, ownership position, location, and what you need." },
+    agent: { title: "Agent", fields: ["company", "location", "assetType"], prompt: "Tell us about your market, inventory, and the type of collaboration you want." },
+    developer: { title: "Developer", fields: ["location", "assetType", "budget", "timeline"], prompt: "Tell us about the development, site, stage, capital need, and delivery timeline." },
+    realtor: { title: "Realtor", fields: ["company", "location", "experience"], prompt: "Tell us about your market coverage, clients, and the opportunities you represent." },
+  };
+  const detailLabels: Record<string, string> = { location: "Property/project location", assetType: "Asset type", budget: "Budget or project scale", timeline: "Timeline", fundingStatus: "Funding status", experience: "Market experience", proposalLink: "Proposal or pitch-deck link" };
+  const setField = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const required = ["name", "email", "phone", "message", ...roleDetails[role].fields];
+    const missing = required.filter(key => !String((form as any)[key] || "").trim());
+    if (missing.length) { setErrors(missing.map(key => `${detailLabels[key] || key[0].toUpperCase() + key.slice(1)} is required.`)); return; }
+    setErrors([]);
+    const details = Object.entries(detailLabels).filter(([key]) => String((form as any)[key] || "").trim()).map(([key, label]) => `${label}: ${(form as any)[key]}`).join("\\n");
+    mutation.mutate(buildPartnershipLeadPayload({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), company: form.company.trim(), investmentRange: form.investmentRange.trim(), message: `${form.message.trim()}\\n\\n${details}` }, role as any));
+  };
+  const whatsapp = `https://wa.me/2348141997159?text=${encodeURIComponent(`Hello EdgePark Estate, I need help with a ${roleDetails[role].title} partnership application.`)}`;
+  return <div><div className="bg-[#173b46] pb-20 pt-28 text-white"><Header dark /><div className="container"><div className="eyebrow text-[#d59462]">Partnerships, thoughtfully structured</div><h1 className="mt-5 max-w-4xl font-display text-5xl leading-tight md:text-7xl">The best opportunities are built together.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-white/65">Choose the path that describes you. Each application captures the information our team needs to respond with a useful next step.</p></div></div><main className="container py-16"><div className="grid gap-4 md:grid-cols-5">{roles.map(({ id, title, desc, icon: Icon }) => <button type="button" key={id} onClick={() => { setRole(id); setErrors([]); }} className={`rounded-[1.2rem] p-5 text-left ${role === id ? "bg-[#bd7b4b] text-white" : "bg-[#ebe9e1] text-[#173b46]"}`}><Icon className="h-6 w-6" /><div className="mt-8 font-display text-xl">{title}</div><p className={`mt-3 text-xs leading-5 ${role === id ? "text-white/75" : "text-[#6c7776]"}`}>{desc}</p></button>)}</div><div className="mt-12 grid gap-10 lg:grid-cols-[.9fr_1.1fr]"><div><div className="eyebrow">{roleDetails[role].title} pathway</div><h2 className="mt-4 font-display text-4xl text-[#173b46]">A different brief for a better conversation.</h2><p className="mt-5 text-base leading-8 text-[#6c7776]">{roleDetails[role].prompt} We keep your application in the admin partnership inbox for a considered follow-up.</p><a href={whatsapp} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center rounded-full border border-[#173b46]/20 px-5 py-3 text-sm font-semibold text-[#173b46]">Need help? Continue on WhatsApp <ArrowRight className="ml-2 h-4 w-4" /></a></div><form onSubmit={submit} noValidate className="rounded-[1.5rem] border border-[#deded5] bg-white p-7 shadow-sm"><div className="eyebrow">{roleDetails[role].title} application</div><div className="mt-6 grid gap-4"><Input required aria-label="Full name" placeholder="Full name *" value={form.name} onChange={e => setField("name", e.target.value)} /><Input required type="email" aria-label="Email address" placeholder="Email address *" value={form.email} onChange={e => setField("email", e.target.value)} /><Input required aria-label="Phone" placeholder="Phone / WhatsApp *" value={form.phone} onChange={e => setField("phone", e.target.value)} /><Input placeholder="Company / organization" value={form.company} onChange={e => setField("company", e.target.value)} />{roleDetails[role].fields.map(key => <Input key={key} required placeholder={`${detailLabels[key]} *`} value={(form as any)[key]} onChange={e => setField(key, e.target.value)} />)}<Input placeholder="Proposal or pitch-deck link (optional)" value={form.proposalLink} onChange={e => setField("proposalLink", e.target.value)} /><Textarea required rows={6} placeholder="Describe the opportunity or request *" value={form.message} onChange={e => setField("message", e.target.value)} />{errors.length > 0 && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700"><div className="font-semibold">Please complete the following:</div><ul className="mt-2 list-disc pl-5">{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}<Button type="submit" disabled={mutation.isPending} className="rounded-full bg-[#173b46] py-6 text-white">{mutation.isPending ? "Submitting…" : "Submit partnership application"}<ArrowRight className="ml-2 h-4 w-4" /></Button><a href={whatsapp} target="_blank" rel="noreferrer" className="text-center text-sm font-semibold text-[#bd7b4b]">Prefer to send details on WhatsApp?</a></div></form></div></main><Footer /></div>;
 }
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -2630,7 +2522,7 @@ function AdminPage() {
           <div>
             <div className="eyebrow">Private workspace</div>
             <h1 className="mt-3 font-display text-4xl text-[#173b46]">
-              EdgeSpark operations.
+              EdgePark operations.
             </h1>
           </div>
           <Badge className="w-fit bg-[#d9e4df] text-[#173b46]">
