@@ -44,6 +44,8 @@ import {
   buildPropertySearchInput,
   buildPropertyShareLink,
   matchesPropertyFilters,
+  NIGERIA_LGAS,
+  NIGERIA_STATES,
   NIGERIA_LOCATION_OPTIONS,
   reorderMediaIds,
   rotateMediaByDay,
@@ -150,6 +152,11 @@ const dayOfYear = () =>
       86400000
   );
 const dailyMedia = (media: any[] = []) => rotateMediaByDay(media, dayOfYear());
+function ImageWithFallback({ src, alt, className, label }: { src?: string; alt: string; className: string; label: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <div className={`${className} flex items-center justify-center bg-gradient-to-br from-[#d7d9d0] via-[#b9c7c0] to-[#31525b] p-6 text-center text-2xl font-semibold text-white/90`}>{label}</div>;
+  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} loading="lazy" />;
+}
 const fmt = (value: number | string | null | undefined) =>
   `₦${Number(value || 0).toLocaleString("en-NG")}`;
 const statusLabel = (status: string) => status.replace("_", " ");
@@ -822,11 +829,7 @@ function PropertyGallery({ property }: { property: any }) {
     <div>
       <div className="relative h-[360px] overflow-hidden rounded-[1.4rem] bg-[#d7d9d0] md:h-[500px]">
         {current ? (
-          <img
-            src={current}
-            alt={property.title}
-            className="h-full w-full object-cover"
-          />
+          <ImageWithFallback src={current} alt={property.title} label={property.title.slice(0, 2).toUpperCase()} className="h-full w-full object-cover" />
         ) : (
           <div className="hero-grid h-full bg-[#31525b]" />
         )}
@@ -844,11 +847,7 @@ function PropertyGallery({ property }: { property: any }) {
               className={`h-16 overflow-hidden rounded-lg border-2 ${selected === index ? "border-[#bd7b4b]" : "border-transparent"}`}
               aria-label={`View image ${index + 1} of ${property.title}`}
             >
-              <img
-                src={image.url}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <ImageWithFallback src={image.url} alt="" label={`${index + 1}`} className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -889,13 +888,7 @@ function PropertyCard({ property }: { property: any }) {
           >
             <Link2 className="h-4 w-4" />
           </button>
-          {image ? (
-            <img src={image} className="h-full w-full object-cover" />
-          ) : (
-            <div className="hero-grid flex h-full items-end bg-[#31525b] p-5">
-              <Building2 className="h-20 w-20 text-white/15" />
-            </div>
-          )}
+          <ImageWithFallback src={image} alt={property.title} label={property.title.slice(0, 2).toUpperCase()} className="h-full w-full object-cover" />
           <div className="absolute left-4 top-4 flex gap-2">
             <Badge className="border-0 bg-white/90 text-[#173b46]">
               {statusLabel(property.status)}
@@ -920,7 +913,10 @@ function PropertyCard({ property }: { property: any }) {
                 {property.title}
               </h3>
             </div>
-            <ArrowRight className="mt-1 h-5 w-5 text-[#bd7b4b]" />
+            <div className="flex items-center gap-2">
+              {buildGoogleMapsDirectionsUrl(property) ? <a href={buildGoogleMapsDirectionsUrl(property) || undefined} target="_blank" rel="noreferrer" onClick={event => event.stopPropagation()} className="inline-flex items-center gap-1 rounded-full border border-[#deded5] px-3 py-2 text-xs font-semibold text-[#173b46] hover:bg-[#f1f0ea]"><MapPin className="h-3.5 w-3.5" />Map</a> : null}
+              <ArrowRight className="mt-1 h-5 w-5 text-[#bd7b4b]" />
+            </div>
           </div>
           <div className="mt-5 flex items-center gap-4 text-sm text-[#6c7776]">
             <span className="flex items-center gap-1">
@@ -933,7 +929,7 @@ function PropertyCard({ property }: { property: any }) {
             </span>
             <span>{property.areaSqm || "—"} m²</span>
           </div>
-          <div className="mt-5 flex items-end justify-between border-t border-[#ebe9e1] pt-4">
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-[#ebe9e1] pt-4">
             <div>
               <div className="text-xs text-[#6c7776]">Guide price</div>
               <div className="mt-1 text-lg font-bold text-[#173b46]">
@@ -1113,11 +1109,7 @@ function FounderSection() {
             >
               <div className="flex items-start gap-4">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-[#d59462]/60 bg-[#bd7b4b]">
-                  <img
-                    src={founder.image}
-                    alt={`${founder.name} portrait`}
-                    className="h-full w-full object-cover"
-                  />
+                  <ImageWithFallback src={founder.image} alt={`${founder.name} portrait`} label={founder.initials} className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h3 className="font-display text-2xl">{founder.name}</h3>
@@ -1255,11 +1247,7 @@ function AboutPage() {
                 className="rounded-[1.5rem] border border-[#deded5] bg-white p-7 shadow-sm"
               >
                 <div className="flex items-center gap-5">
-                  <img
-                    src={founder.image}
-                    alt={`${founder.name} portrait`}
-                    className="h-24 w-24 rounded-full border-2 border-[#d59462] object-cover"
-                  />
+                  <ImageWithFallback src={founder.image} alt={`${founder.name} portrait`} label={founder.name.slice(0, 2).toUpperCase()} className="h-24 w-24 rounded-full border-2 border-[#d59462] object-cover" />
                   <div>
                     <h3 className="font-display text-2xl text-[#173b46]">
                       {founder.name}
@@ -1487,6 +1475,8 @@ function ListingsPage() {
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
   const [location, setLocation] = useState("");
+  const [selectedState, setSelectedState] = useState<keyof typeof NIGERIA_LGAS | "">("");
+  const [selectedLga, setSelectedLga] = useState("");
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
   const [transactionType, setTransactionType] = useState<
@@ -1504,6 +1494,7 @@ function ListingsPage() {
   const [page, setPage] = useState(1);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [locationFocused, setLocationFocused] = useState(false);
+  const lgaOptions = selectedState ? NIGERIA_LGAS[selectedState] : [];
   const locationSuggestions = NIGERIA_LOCATION_OPTIONS.filter(
     option => !location || option.toLowerCase().includes(location.toLowerCase())
   ).slice(0, 6);
@@ -1512,7 +1503,7 @@ function ListingsPage() {
       search,
       type,
       status,
-      location,
+      location: [selectedState, selectedLga, location].filter(Boolean).join(" "),
       minPrice,
       maxPrice,
       transactionType,
@@ -1540,7 +1531,7 @@ function ListingsPage() {
             Browse available and emerging opportunities, then use the numbers as
             a starting point for a deeper conversation.
           </p>
-          <div className="mt-10 grid gap-3 rounded-2xl border border-[#deded5] bg-white p-3 md:grid-cols-[1.6fr_1fr_1fr_auto]">
+          <form onSubmit={event => { event.preventDefault(); applySearch(); }} className="mt-10 grid gap-3 rounded-2xl border border-[#deded5] bg-white p-3 md:grid-cols-[1.6fr_1fr_1fr_auto]">
             <div className="relative">
               <Search className="absolute left-4 top-3.5 h-4 w-4 text-[#6c7776]" />
               <Input
@@ -1585,7 +1576,33 @@ function ListingsPage() {
               <option value="available">Available</option>
               <option value="under_offer">Under offer</option>
             </select>
-            <div className="relative">
+            <div className="grid gap-3 sm:grid-cols-2 md:col-span-2">
+              <select
+                value={selectedState}
+                onChange={e => {
+                  const next = e.target.value as keyof typeof NIGERIA_LGAS | "";
+                  setSelectedState(next);
+                  setSelectedLga("");
+                  setPage(1);
+                }}
+                className="h-10 rounded-md border-0 bg-[#f8f7f3] px-3 text-sm text-[#173b46]"
+                aria-label="Filter by Nigerian state"
+              >
+                <option value="">All Nigerian states</option>
+                {NIGERIA_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+              </select>
+              <select
+                value={selectedLga}
+                onChange={e => { setSelectedLga(e.target.value); setPage(1); }}
+                disabled={!selectedState}
+                className="h-10 rounded-md border-0 bg-[#f8f7f3] px-3 text-sm text-[#173b46] disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Filter by local government area"
+              >
+                <option value="">{selectedState ? "All LGAs in selected state" : "Select a state first"}</option>
+                {lgaOptions.map(lga => <option key={lga} value={lga}>{lga}</option>)}
+              </select>
+            </div>
+            <div className="relative md:col-span-2">
               <Input
                 list="nigeria-location-options"
                 value={location}
@@ -1610,7 +1627,7 @@ function ListingsPage() {
                 })}
               </datalist>
               {locationFocused && (
-                <div className="absolute left-0 right-0 top-12 z-20 rounded-xl border border-[#deded5] bg-white p-2 shadow-xl">
+                <div className="absolute left-0 right-0 top-12 z-20 max-h-72 overflow-y-auto rounded-xl border border-[#deded5] bg-white p-2 shadow-xl">
                   <div className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[.16em] text-[#bd7b4b]">
                     Popular Nigerian locations
                   </div>
@@ -1622,16 +1639,15 @@ function ListingsPage() {
                         key={option}
                         onMouseDown={event => {
                           event.preventDefault();
-                          setLocation(state);
+                          setSelectedState(state as keyof typeof NIGERIA_LGAS);
+                          setSelectedLga(lga || "");
+                          setLocation([state, lga].filter(Boolean).join(" "));
                           setLocationFocused(false);
                         }}
                         className="block w-full rounded-lg px-2 py-2 text-left text-xs text-[#173b46] hover:bg-[#f1f0ea]"
                       >
                         <span className="font-semibold">{state}</span>
-                        <span className="text-[#6c7776]">
-                          {" "}
-                          · {lga} · {street}
-                        </span>
+                        {lga || street ? <span className="text-[#6c7776]">{" "}· {[lga, street].filter(Boolean).join(" · ")}</span> : null}
                       </button>
                     );
                   })}
@@ -1653,17 +1669,16 @@ function ListingsPage() {
               className="border-0 bg-[#f8f7f3]"
             />
             <Button
-              type="button"
-              onClick={applySearch}
+              type="submit"
               className="h-11 rounded-lg bg-[#bd7b4b] px-6 text-white hover:bg-[#a9663b] md:col-span-4"
             >
               Search properties <Search className="ml-2 h-4 w-4" />
             </Button>
             <p className="md:col-span-4 px-1 text-xs text-[#6c7776]">
               Search by Nigerian state, local government area, neighborhood,
-              street, or property name. Tap the location field to see examples.
+              street, or property name. Select a state and LGA for a focused search.
             </p>
-          </div>
+          </form>
         </div>
       </div>
       <section className="py-12">

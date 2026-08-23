@@ -4,6 +4,8 @@
  */
 
 export type * from "../drizzle/schema";
+export { NIGERIA_LGAS, NIGERIA_STATES, NIGERIA_LOCATION_OPTIONS } from "./nigeriaLocations";
+import { NIGERIA_LOCATION_OPTIONS } from "./nigeriaLocations";
 export * from "./_core/errors";
 
 export type PropertyFilterDraft = {
@@ -28,19 +30,6 @@ export function buildPropertySearchInput(filters: Pick<PropertyFilterDraft, "sea
 }
 
 export const DEVELOPER_WHATSAPP = "2348141997159";
-
-export const NIGERIA_LOCATION_OPTIONS = [
-  "Lagos · Eti-Osa · Lekki Phase 1",
-  "Lagos · Ikeja · Allen Avenue",
-  "Lagos · Ibeju-Lekki · Elerangbe",
-  "Abuja · AMAC · Maitama",
-  "Abuja · AMAC · Wuse 2",
-  "Abuja · Gwagwalada · Gwagwalada Town",
-  "Ebonyi · Abakaliki · Kpiri-Kpiri",
-  "Rivers · Obio-Akpor · Rumuola",
-  "Oyo · Ibadan North · Bodija",
-  "Ogun · Ifo · Oke-Aro",
-] as const;
 
 export function buildDeveloperWhatsAppLink(title = "a property") {
   return `https://wa.me/${DEVELOPER_WHATSAPP}?text=${encodeURIComponent(`Hello EdgeSpark, I would like to ask about the availability of ${title}.`)}`;
