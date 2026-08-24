@@ -11,6 +11,7 @@ import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _localAuthSchemaReady = false;
+let _lastAuthSchemaError = "";
 
 let _fullSchemaReady = false;
 
@@ -53,7 +54,7 @@ export async function getDb() {
   }
   if (_db && !_localAuthSchemaReady) {
     try { await ensurePostgresSchema(_db); }
-    catch (error) { _localAuthSchemaReady = false; console.error("[Database] PostgreSQL schema setup failed:", error instanceof Error ? error.message : error); }
+    catch (error) { _localAuthSchemaReady = false; _lastAuthSchemaError = error instanceof Error ? error.message : String(error); console.error("[Database] PostgreSQL schema setup failed:", _lastAuthSchemaError); }
   }
   return _db;
 }
@@ -72,9 +73,18 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   values.lastSignedIn ??= new Date(); updateSet.lastSignedIn ??= new Date();
   await db.insert(users).values(values).onConflictDoUpdate({ target: users.openId, set: updateSet });
 }
+export function getAuthSchemaDiagnostic() {
+  const raw = _lastAuthSchemaError.toLowerCase();
+  if (/password authentication failed|authentication failed|password/.test(raw)) return "The Supabase database password was rejected.";
+  if (/enotfound|could not translate|name or service not known|connect eai_again/.test(raw)) return "The Supabase database host could not be found.";
+  if (/timeout|timed out|etimedout|econnrefused|connection terminated/.test(raw)) return "Hostinger could not connect to the Supabase database. Use the Supabase Session Pooler URL and confirm the pooler is reachable.";
+  if (/permission denied|must be owner|not enough privileges|insufficient privilege/.test(raw)) return "The Supabase database user does not have permission to create or alter the required tables.";
+  if (/migration file is missing/.test(raw)) return "The PostgreSQL migration file is missing from the deployed bundle.";
+  return "The Supabase database connection or schema initialization failed. Check Hostinger Runtime logs for the first PostgreSQL error.";
+}
 export async function ensureAuthTables(db: any) {
   try { await ensurePostgresSchema(db); }
-  catch (error) { console.error("[Database] Required PostgreSQL schema is unavailable:", error instanceof Error ? error.message : error); throw new Error("AUTH_SCHEMA_NOT_READY"); }
+  catch (error) { _lastAuthSchemaError = error instanceof Error ? error.message : String(error); console.error("[Database] Required PostgreSQL schema is unavailable:", _lastAuthSchemaError); throw new Error("AUTH_SCHEMA_NOT_READY"); }
 }
 
 export async function getUserByOpenId(openId: string) { const db = await getDb(); if (!db) return undefined; try { await ensureAuthTables(db); } catch { return undefined; } try { const result = await db.select({ id: users.id, openId: users.openId, name: users.name, email: users.email, loginMethod: users.loginMethod, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.openId, openId)).limit(1); if (result[0]) return result[0] as any; } catch (error) { console.warn("[Database] Legacy users lookup failed; using localUsers:", error instanceof Error ? error.message : error); } try { const localResult = await db.select().from(localUsers).where(eq(localUsers.openId, openId)).limit(1); return localResult[0] as any; } catch (error) { console.warn("[Database] No localUsers fallback available:", error instanceof Error ? error.message : error); return undefined; } }
