@@ -55,6 +55,7 @@ import {
   getPropertyLocationExactness,
   getPropertyMapCenter,
 } from "@shared/types";
+import { INTERNATIONAL_MARKETS } from "@shared/internationalMarkets";
 import { trpc } from "@/lib/trpc";
 import {
   appendTag,
@@ -2412,6 +2413,47 @@ function PartnerPage() {
   const whatsapp = `https://wa.me/2348141997159?text=${encodeURIComponent(`Hello EdgePark Estate, I need help with a ${roleDetails[role].title} partnership application.`)}`;
   return <div><div className="bg-[#173b46] pb-20 pt-28 text-white"><Header dark /><div className="container"><div className="eyebrow text-[#d59462]">Partnerships, thoughtfully structured</div><h1 className="mt-5 max-w-4xl font-display text-5xl leading-tight md:text-7xl">The best opportunities are built together.</h1><p className="mt-6 max-w-2xl text-lg leading-8 text-white/65">Choose the path that describes you. Each application captures the information our team needs to respond with a useful next step.</p></div></div><main className="container py-16"><div className="grid gap-4 md:grid-cols-5">{roles.map(({ id, title, desc, icon: Icon }) => <button type="button" key={id} onClick={() => { setRole(id); setErrors([]); }} className={`rounded-[1.2rem] p-5 text-left ${role === id ? "bg-[#bd7b4b] text-white" : "bg-[#ebe9e1] text-[#173b46]"}`}><Icon className="h-6 w-6" /><div className="mt-8 font-display text-xl">{title}</div><p className={`mt-3 text-xs leading-5 ${role === id ? "text-white/75" : "text-[#6c7776]"}`}>{desc}</p></button>)}</div><div className="mt-12 grid gap-10 lg:grid-cols-[.9fr_1.1fr]"><div><div className="eyebrow">{roleDetails[role].title} pathway</div><h2 className="mt-4 font-display text-4xl text-[#173b46]">A different brief for a better conversation.</h2><p className="mt-5 text-base leading-8 text-[#6c7776]">{roleDetails[role].prompt} We keep your application in the admin partnership inbox for a considered follow-up.</p><a href={whatsapp} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center rounded-full border border-[#173b46]/20 px-5 py-3 text-sm font-semibold text-[#173b46]">Need help? Continue on WhatsApp <ArrowRight className="ml-2 h-4 w-4" /></a></div><form onSubmit={submit} noValidate className="rounded-[1.5rem] border border-[#deded5] bg-white p-7 shadow-sm"><div className="eyebrow">{roleDetails[role].title} application</div><div className="mt-6 grid gap-4"><Input required aria-label="Full name" placeholder="Full name *" value={form.name} onChange={e => setField("name", e.target.value)} /><Input required type="email" aria-label="Email address" placeholder="Email address *" value={form.email} onChange={e => setField("email", e.target.value)} /><Input required aria-label="Phone" placeholder="Phone / WhatsApp *" value={form.phone} onChange={e => setField("phone", e.target.value)} /><Input placeholder="Company / organization" value={form.company} onChange={e => setField("company", e.target.value)} />{roleDetails[role].fields.map(key => <Input key={key} required placeholder={`${detailLabels[key]} *`} value={(form as any)[key]} onChange={e => setField(key, e.target.value)} />)}<Input placeholder="Proposal or pitch-deck link (optional)" value={form.proposalLink} onChange={e => setField("proposalLink", e.target.value)} /><Textarea required rows={6} placeholder="Describe the opportunity or request *" value={form.message} onChange={e => setField("message", e.target.value)} />{errors.length > 0 && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700"><div className="font-semibold">Please complete the following:</div><ul className="mt-2 list-disc pl-5">{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}<Button type="submit" disabled={mutation.isPending} className="rounded-full bg-[#173b46] py-6 text-white">{mutation.isPending ? "Submitting…" : "Submit partnership application"}<ArrowRight className="ml-2 h-4 w-4" /></Button><a href={whatsapp} target="_blank" rel="noreferrer" className="text-center text-sm font-semibold text-[#bd7b4b]">Prefer to send details on WhatsApp?</a></div></form></div></main><Footer /></div>;
 }
+function InternationalProspectingPanel() {
+  const [query, setQuery] = useState("real estate developers");
+  const [countryCode, setCountryCode] = useState("GB");
+  const [results, setResults] = useState<any[]>([]);
+  const [searchMessage, setSearchMessage] = useState("");
+  const search = trpc.international.search.useQuery({ query, countryCode }, { enabled: false });
+  const { data: saved = [], refetch: refetchSaved } = trpc.international.saved.useQuery();
+  const save = trpc.international.save.useMutation({ onSuccess: () => { refetchSaved(); toast.success("Prospect saved to pipeline"); } });
+  const update = trpc.international.update.useMutation({ onSuccess: () => { refetchSaved(); toast.success("Prospect updated"); } });
+  const grouped = ["Europe", "Asia", "Americas"].map(region => ({ region, markets: INTERNATIONAL_MARKETS.filter(market => market.region === region) }));
+  const runSearch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (query.trim().length < 2) { setSearchMessage("Enter at least two characters, such as property developers or housing funds."); return; }
+    setSearchMessage("");
+    const response = await search.refetch();
+    setResults(response.data || []);
+    if (!response.data?.length) setSearchMessage("No matching businesses were returned. Try a broader category or another country.");
+  };
+  const pitchLink = (business: any) => {
+    const subject = `International partnership proposal — EdgePark Estate & ${business.name}`;
+    const body = `Hello ${business.name} team,\\n\\nI am reaching out from EdgePark Estate in Nigeria. We are exploring a strong international partnership around real estate development, property management, housing opportunities, and digital visibility.\\n\\nI would welcome a short conversation about how we could create growth together in ${business.address || "your market"}.\\n\\nKind regards,\\nEdgePark Estate`;
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+  return <section className="mt-8 rounded-[1.4rem] border border-[#173b46]/15 bg-[#173b46] p-6 text-white shadow-sm md:p-8">
+    <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+      <div><div className="eyebrow text-[#d59462]">International partnerships</div><h2 className="mt-2 font-display text-3xl">Find your next strategic partner.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">Search public business listings across Europe, Asia, and the Americas. Contact details are shown live from Google Maps and are not stored in the EdgePark database.</p></div>
+      <Badge className="w-fit bg-[#d59462] text-white">Admin only · 3 regions</Badge>
+    </div>
+    <form onSubmit={runSearch} className="mt-6 grid gap-3 rounded-2xl bg-white/10 p-4 lg:grid-cols-[1.2fr_.8fr_auto]">
+      <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. property managers, housing funds, real estate developers" className="border-white/20 bg-white text-[#173b46]" aria-label="Business search" />
+      <select value={countryCode} onChange={e => setCountryCode(e.target.value)} className="h-10 rounded-md border border-white/20 bg-white px-3 text-sm text-[#173b46]" aria-label="International country">
+        {grouped.map(group => <optgroup key={group.region} label={group.region}>{group.markets.map(market => <option key={market.code} value={market.code}>{market.name}</option>)}</optgroup>)}
+      </select>
+      <Button type="submit" disabled={search.isFetching} className="rounded-full bg-[#d59462] text-white hover:bg-[#bd7b4b]">{search.isFetching ? "Searching…" : "Search businesses"}<Search className="ml-2 h-4 w-4" /></Button>
+    </form>
+    {searchMessage && <div className="mt-4 rounded-xl bg-[#f4dfce] p-4 text-sm text-[#7d4b2d]">{searchMessage}</div>}
+    {results.length > 0 && <div className="mt-6"><div className="flex items-center justify-between"><h3 className="font-display text-xl">Live results</h3><span className="text-xs text-white/55">{results.length} prospects · Google Maps data</span></div><div className="mt-3 grid gap-3 lg:grid-cols-2">{results.map(business => <article key={business.placeId} className="rounded-2xl bg-white p-5 text-[#173b46]"><div className="flex items-start justify-between gap-3"><div><h4 className="font-semibold">{business.name}</h4><p className="mt-1 text-xs leading-5 text-[#6c7776]">{business.address || "Address unavailable"}</p></div><Badge className="bg-[#d9e4df] text-[#173b46]">{business.countryCode}</Badge></div><div className="mt-4 grid gap-2 text-sm">{business.phone ? <a href={`tel:${business.phone}`} className="font-semibold text-[#bd7b4b]">{business.phone}</a> : <span className="text-[#8a918e]">Phone not listed</span>}{business.website ? <a href={business.website} target="_blank" rel="noreferrer" className="truncate text-[#173b46] underline">{business.website}</a> : <span className="text-[#8a918e]">Website not listed</span>}</div><div className="mt-4 flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => save.mutate({ placeId: business.placeId, region: business.region, countryCode: business.countryCode })} className="rounded-full bg-[#173b46] text-white">Save prospect</Button><a href={pitchLink(business)} className="inline-flex h-9 items-center rounded-full border border-[#173b46]/15 px-3 text-xs font-semibold">Prepare email <Mail className="ml-2 h-3.5 w-3.5" /></a>{business.mapsUrl && <a href={business.mapsUrl} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center rounded-full border border-[#173b46]/15 px-3 text-xs font-semibold">Google Maps <ArrowUpRight className="ml-2 h-3.5 w-3.5" /></a>}</div></article>)}</div><p className="mt-3 text-[11px] text-white/45">Google Maps attribution: business information is provided by Google Maps. Verify details before outreach and follow applicable privacy, marketing, and platform policies.</p></div>}
+    <div className="mt-8 border-t border-white/15 pt-6"><div className="flex items-center justify-between"><h3 className="font-display text-xl">Saved outreach pipeline</h3><span className="text-xs text-white/55">{saved.length} saved</span></div>{saved.length ? <div className="mt-3 grid gap-3 lg:grid-cols-2">{saved.map((prospect: any) => <div key={prospect.id} className="rounded-2xl bg-white/10 p-4"><div className="flex items-center justify-between gap-3"><div><div className="font-semibold">Place ID {prospect.placeId}</div><div className="mt-1 text-xs text-white/55">{prospect.region} · {prospect.countryCode}</div></div><select value={prospect.status} onChange={e => update.mutate({ id: prospect.id, status: e.target.value as any })} className="h-9 rounded-md border-0 bg-white px-2 text-xs text-[#173b46]"><option value="new">New</option><option value="researching">Researching</option><option value="contacted">Contacted</option><option value="meeting">Meeting</option><option value="won">Won</option><option value="archived">Archived</option></select></div><Textarea defaultValue={prospect.notes || ""} placeholder="Add research notes…" className="mt-3 min-h-16 border-white/15 bg-white/10 text-white placeholder:text-white/40" onBlur={e => { if (e.target.value !== (prospect.notes || "")) update.mutate({ id: prospect.id, notes: e.target.value }); }} /></div>)}</div> : <p className="mt-3 text-sm text-white/55">Save a result to begin tracking research, outreach, meetings, and partnership outcomes.</p>}</div>
+  </section>;
+}
+
 function AdminPage() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
@@ -2557,6 +2599,7 @@ function AdminPage() {
             </div>
           </div>
         </div>
+        <InternationalProspectingPanel />
         <section className="mt-8 rounded-[1.4rem] border border-[#deded5] bg-white p-6">
           <div className="eyebrow">Account directory</div>
           <h2 className="mt-2 font-display text-2xl text-[#173b46]">

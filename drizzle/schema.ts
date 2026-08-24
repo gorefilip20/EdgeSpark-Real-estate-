@@ -22,6 +22,18 @@ export const localAccounts = mysqlTable("localAccounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const internationalProspects = mysqlTable("internationalProspects", {
+  id: int("id").autoincrement().primaryKey(),
+  placeId: varchar("placeId", { length: 180 }).notNull().unique(),
+  region: varchar("region", { length: 32 }).notNull(),
+  countryCode: varchar("countryCode", { length: 2 }).notNull(),
+  status: mysqlEnum("status", ["new", "researching", "contacted", "meeting", "won", "archived"]).default("new").notNull(),
+  notes: text("notes"),
+  pitchAngle: text("pitchAngle"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const properties = mysqlTable("properties", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 180 }).notNull(),
@@ -123,6 +135,7 @@ export const inquiryRelations = relations(inquiries, ({ one }) => ({ property: o
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
+export type InternationalProspect = typeof internationalProspects.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;

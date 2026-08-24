@@ -16,6 +16,10 @@ import {
   listLeads,
   listPublishedProperties,
   listUsers,
+  listInternationalProspects,
+  saveInternationalProspect,
+  searchInternationalBusinesses,
+  updateInternationalProspect,
   removeFavorite,
   saveFavorite,
   updateFavoriteMetadata,
@@ -152,6 +156,18 @@ export const appRouter = router({
         );
         return { success: true };
       }),
+  }),
+  international: router({
+    search: adminOnly.input(z.object({ query: z.string().min(2).max(120), countryCode: z.string().length(2) })).query(async ({ input }) => {
+      try {
+        return await searchInternationalBusinesses(input.query.trim(), input.countryCode.toUpperCase());
+      } catch (error) {
+        throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "International business search is unavailable" });
+      }
+    }),
+    saved: adminOnly.query(() => listInternationalProspects()),
+    save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() })),
+    update: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["new", "researching", "contacted", "meeting", "won", "archived"]).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => updateInternationalProspect(input)),
   }),
   properties: router({
     list: publicProcedure

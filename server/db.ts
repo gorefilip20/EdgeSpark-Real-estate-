@@ -1,7 +1,9 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { sql } from "drizzle-orm";
-import { InsertUser, favorites, inquiries, localAccounts, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
+import { InsertUser, favorites, inquiries, internationalProspects, localAccounts, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
+import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
+import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -13,6 +15,7 @@ export async function getDb() {
   if (_db && !_localAuthSchemaReady) {
     try {
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
+      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspects (id INT AUTO_INCREMENT PRIMARY KEY, placeId VARCHAR(180) NOT NULL UNIQUE, region VARCHAR(32) NOT NULL, countryCode VARCHAR(2) NOT NULL, status ENUM('new','researching','contacted','meeting','won','archived') NOT NULL DEFAULT 'new', notes TEXT NULL, pitchAngle TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
     } catch (error) {
       console.warn("[Database] Local account table setup failed:", error);
     }
@@ -52,4 +55,25 @@ export async function removeFavorite(userId: number, propertyId: number) { const
 export async function updateFavoriteMetadata(userId: number, propertyId: number, notes: string | null, tags: string | null) { const db = await getDb(); if (!db) return; await db.update(favorites).set({ notes, tags } as any).where(and(eq(favorites.userId, userId), eq(favorites.propertyId, propertyId))); }
 export async function listUsers() { const db = await getDb(); if (!db) return []; return db.select({ id: users.id, name: users.name, email: users.email, role: users.role, loginMethod: users.loginMethod, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).orderBy(desc(users.lastSignedIn)); }
 export async function listLeads() { const db = await getDb(); if (!db) return { inquiries: [], partnerships: [] }; const [inquiryRows, partnershipRows] = await Promise.all([db.select().from(inquiries).orderBy(desc(inquiries.createdAt)), db.select().from(partnershipApplications).orderBy(desc(partnershipApplications.createdAt))]); return { inquiries: inquiryRows, partnerships: partnershipRows }; }
-export { favorites, inquiries, localAccounts, partnershipApplications, properties, propertyMedia, users };
+
+export async function searchInternationalBusinesses(query: string, countryCode: string) {
+  const market = getInternationalMarket(countryCode);
+  if (!market || !INTERNATIONAL_MARKET_CODES.has(countryCode)) throw new Error("International search is limited to Europe, Asia, and the Americas.");
+  const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `${query} in ${market.name}`, type: "real_estate_agency" });
+  const candidates = (search.results || []).slice(0, 8);
+  const enriched = await Promise.all(candidates.map(async place => {
+    try {
+      const detail = await makeRequest<PlaceDetailsResult>("/maps/api/place/details/json", { place_id: place.place_id, fields: "place_id,name,formatted_address,international_phone_number,website,url,rating,user_ratings_total,business_status,geometry,types" });
+      const result = (detail.result || {}) as PlaceDetailsResult["result"] & { url?: string; business_status?: string; types?: string[] };
+      return { placeId: place.place_id, name: result.name || place.name, address: result.formatted_address || place.formatted_address, phone: result.international_phone_number, website: result.website, mapsUrl: result.url, rating: result.rating, userRatings: result.user_ratings_total, businessStatus: result.business_status, types: result.types || place.types, region: market.region, countryCode: market.code };
+    } catch {
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, region: market.region, countryCode: market.code };
+    }
+  }));
+  return enriched;
+}
+
+export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select().from(internationalProspects).orderBy(desc(internationalProspects.updatedAt)); }
+export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspects).values(input).onDuplicateKeyUpdate({ set: { notes: input.notes, pitchAngle: input.pitchAngle } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
+export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, ...changes } = input; await db.update(internationalProspects).set(changes).where(eq(internationalProspects.id, id)); return { success: true }; }
+export { favorites, inquiries, internationalProspects, localAccounts, partnershipApplications, properties, propertyMedia, users };
