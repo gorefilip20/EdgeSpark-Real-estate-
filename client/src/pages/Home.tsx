@@ -2422,7 +2422,7 @@ function InternationalProspectingPanel() {
   const { data: saved = [], refetch: refetchSaved } = trpc.international.saved.useQuery();
   const save = trpc.international.save.useMutation({ onSuccess: () => { refetchSaved(); toast.success("Prospect saved to pipeline"); } });
   const update = trpc.international.update.useMutation({ onSuccess: () => { refetchSaved(); toast.success("Prospect updated"); } });
-  const grouped = ["Europe", "Asia", "Americas"].map(region => ({ region, markets: INTERNATIONAL_MARKETS.filter(market => market.region === region) }));
+  const grouped = ["Europe", "Asia", "Americas", "Africa"].map(region => ({ region, markets: INTERNATIONAL_MARKETS.filter(market => market.region === region) }));
   const runSearch = async (event: React.FormEvent) => {
     event.preventDefault();
     if (query.trim().length < 2) { setSearchMessage("Enter at least two characters, such as property developers or housing funds."); return; }
@@ -2438,8 +2438,8 @@ function InternationalProspectingPanel() {
   };
   return <section className="mt-8 rounded-[1.4rem] border border-[#173b46]/15 bg-[#173b46] p-6 text-white shadow-sm md:p-8">
     <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-      <div><div className="eyebrow text-[#d59462]">International partnerships</div><h2 className="mt-2 font-display text-3xl">Find your next strategic partner.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">Search public business listings across Europe, Asia, and the Americas. Contact details are shown live from Google Maps and are not stored in the EdgePark database.</p></div>
-      <Badge className="w-fit bg-[#d59462] text-white">Admin only · 3 regions</Badge>
+      <div><div className="eyebrow text-[#d59462]">International partnerships</div><h2 className="mt-2 font-display text-3xl">Find your next strategic partner.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">Search public business listings across Europe, Asia, the Americas, and Africa. Contact details are shown live from Google Maps and are not stored in the EdgePark database.</p></div>
+      <Badge className="w-fit bg-[#d59462] text-white">Admin only · 4 regions</Badge>
     </div>
     <form onSubmit={runSearch} className="mt-6 grid gap-3 rounded-2xl bg-white/10 p-4 lg:grid-cols-[1.2fr_.8fr_auto]">
       <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="e.g. property managers, housing funds, real estate developers" className="border-white/20 bg-white text-[#173b46]" aria-label="Business search" />

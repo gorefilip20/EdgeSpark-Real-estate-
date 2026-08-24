@@ -1,4 +1,4 @@
-export type InternationalRegion = "Europe" | "Asia" | "Americas";
+export type InternationalRegion = "Europe" | "Asia" | "Americas" | "Africa";
 
 export type InternationalMarket = {
   code: string;
@@ -16,6 +16,9 @@ export const INTERNATIONAL_MARKETS: InternationalMarket[] = [
   ...[
     ["AG", "Antigua and Barbuda"], ["AR", "Argentina"], ["BS", "Bahamas"], ["BB", "Barbados"], ["BZ", "Belize"], ["BO", "Bolivia"], ["BR", "Brazil"], ["CA", "Canada"], ["CL", "Chile"], ["CO", "Colombia"], ["CR", "Costa Rica"], ["CU", "Cuba"], ["DM", "Dominica"], ["DO", "Dominican Republic"], ["EC", "Ecuador"], ["SV", "El Salvador"], ["GD", "Grenada"], ["GT", "Guatemala"], ["GY", "Guyana"], ["HT", "Haiti"], ["HN", "Honduras"], ["JM", "Jamaica"], ["MX", "Mexico"], ["NI", "Nicaragua"], ["PA", "Panama"], ["PY", "Paraguay"], ["PE", "Peru"], ["KN", "Saint Kitts and Nevis"], ["LC", "Saint Lucia"], ["VC", "Saint Vincent and the Grenadines"], ["SR", "Suriname"], ["TT", "Trinidad and Tobago"], ["US", "United States"], ["UY", "Uruguay"], ["VE", "Venezuela"],
   ].map(([code, name]) => ({ code, name, region: "Americas" as const })),
+  ...[
+    ["DZ", "Algeria"], ["AO", "Angola"], ["BJ", "Benin"], ["BW", "Botswana"], ["BF", "Burkina Faso"], ["BI", "Burundi"], ["CV", "Cabo Verde"], ["CM", "Cameroon"], ["CF", "Central African Republic"], ["TD", "Chad"], ["KM", "Comoros"], ["CG", "Republic of the Congo"], ["CD", "Democratic Republic of the Congo"], ["CI", "Côte d’Ivoire"], ["DJ", "Djibouti"], ["EG", "Egypt"], ["GQ", "Equatorial Guinea"], ["ER", "Eritrea"], ["SZ", "Eswatini"], ["ET", "Ethiopia"], ["GA", "Gabon"], ["GM", "Gambia"], ["GH", "Ghana"], ["GN", "Guinea"], ["GW", "Guinea-Bissau"], ["KE", "Kenya"], ["LS", "Lesotho"], ["LR", "Liberia"], ["LY", "Libya"], ["MG", "Madagascar"], ["MW", "Malawi"], ["ML", "Mali"], ["MR", "Mauritania"], ["MU", "Mauritius"], ["MA", "Morocco"], ["MZ", "Mozambique"], ["NA", "Namibia"], ["NE", "Niger"], ["NG", "Nigeria"], ["RW", "Rwanda"], ["ST", "São Tomé and Príncipe"], ["SN", "Senegal"], ["SC", "Seychelles"], ["SL", "Sierra Leone"], ["SO", "Somalia"], ["ZA", "South Africa"], ["SS", "South Sudan"], ["SD", "Sudan"], ["TZ", "Tanzania"], ["TG", "Togo"], ["TN", "Tunisia"], ["UG", "Uganda"], ["ZM", "Zambia"], ["ZW", "Zimbabwe"],
+  ].map(([code, name]) => ({ code, name, region: "Africa" as const })),
 ];
 
 export const INTERNATIONAL_MARKET_CODES = new Set(INTERNATIONAL_MARKETS.map(market => market.code));
