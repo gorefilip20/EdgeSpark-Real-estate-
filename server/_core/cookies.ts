@@ -42,7 +42,9 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    // The public site, admin login, and API share the same site. Lax keeps the
+    // session cookie compatible with mobile browsers and local HTTP development.
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }
