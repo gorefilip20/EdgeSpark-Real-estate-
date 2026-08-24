@@ -16,9 +16,7 @@ let _lastAuthSchemaError = "";
 let _fullSchemaReady = false;
 
 async function ensureRequiredAuthSchema(db: any) {
-  try { await db.execute(sql.raw(`CREATE TYPE "role_user_admin_enum" AS ENUM ('user', 'admin')`)); }
-  catch (error) { const message = error instanceof Error ? error.message : String(error); if (!/already exists|duplicate object/i.test(message)) throw error; }
-  await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "users" ("id" SERIAL PRIMARY KEY NOT NULL, "openId" VARCHAR(64) NOT NULL UNIQUE, "name" TEXT, "email" VARCHAR(320), "loginMethod" VARCHAR(64), "passwordHash" TEXT, "role" "role_user_admin_enum" DEFAULT 'user' NOT NULL, "createdAt" TIMESTAMP DEFAULT now() NOT NULL, "updatedAt" TIMESTAMP DEFAULT now() NOT NULL, "lastSignedIn" TIMESTAMP DEFAULT now() NOT NULL)`));
+  await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "users" ("id" SERIAL PRIMARY KEY NOT NULL, "openId" VARCHAR(64) NOT NULL UNIQUE, "name" TEXT, "email" VARCHAR(320), "loginMethod" VARCHAR(64), "passwordHash" TEXT, "role" VARCHAR(16) DEFAULT 'user' NOT NULL, "createdAt" TIMESTAMP DEFAULT now() NOT NULL, "updatedAt" TIMESTAMP DEFAULT now() NOT NULL, "lastSignedIn" TIMESTAMP DEFAULT now() NOT NULL)`));
   await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "localAccounts" ("id" SERIAL PRIMARY KEY NOT NULL, "userId" INTEGER NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "createdAt" TIMESTAMP DEFAULT now() NOT NULL, "updatedAt" TIMESTAMP DEFAULT now() NOT NULL)`));
   _localAuthSchemaReady = true;
 }
