@@ -974,13 +974,33 @@ function LocalAccountForm({ admin = false }: { admin?: boolean }) {
   const register = trpc.auth.register.useMutation();
   const login = trpc.auth.login.useMutation();
   const pending = register.isPending || login.isPending;
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const submittedName = String(formData.get("name") || name).trim();
+    const submittedEmail = String(formData.get("email") || email).trim().toLowerCase();
+    const submittedPassword = String(formData.get("password") || password);
+    setName(submittedName);
+    setEmail(submittedEmail);
+    setPassword(submittedPassword);
+    if (mode === "register" && submittedName.length < 2) {
+      setError("Enter your full name.");
+      return;
+    }
+    if (!submittedEmail || !/^\S+@\S+\.\S+$/.test(submittedEmail)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (submittedPassword.length < 8) {
+      setError(mode === "register" ? "Choose a password with at least 8 characters." : "Enter your password before signing in.");
+      return;
+    }
     try {
       const result = mode === "register"
-        ? await register.mutateAsync({ name, email, password })
-        : await login.mutateAsync({ email, password });
+        ? await register.mutateAsync({ name: submittedName, email: submittedEmail, password: submittedPassword })
+        : await login.mutateAsync({ email: submittedEmail, password: submittedPassword });
       await utils.auth.me.invalidate();
       if (admin && result.role !== "admin") {
         setError("This account is not an administrator. Use the owner email configured in Hostinger.");
@@ -992,9 +1012,9 @@ function LocalAccountForm({ admin = false }: { admin?: boolean }) {
     }
   };
   return <form onSubmit={submit} className="mt-7 space-y-4" noValidate>
-    {mode === "register" && <Input required minLength={2} value={name} onChange={e => setName(e.target.value)} placeholder="Full name" autoComplete="name" />}
-    <Input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" autoComplete="email" />
-    <Input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password (8+ characters)" autoComplete={mode === "register" ? "new-password" : "current-password"} />
+    {mode === "register" && <Input required minLength={2} name="name" value={name} onChange={e => setName(e.target.value)} placeholder="Full name" autoComplete="name" />}
+    <Input required name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" autoComplete="email" />
+    <Input required minLength={8} name="password" type="password" value={password} onChange={e => setPassword(e.target.value)} onInput={e => setPassword(e.currentTarget.value)} placeholder="Password (8+ characters)" autoComplete={mode === "register" ? "new-password" : "current-password"} autoCapitalize="none" spellCheck={false} />
     {error ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
     <Button type="submit" disabled={pending} className="w-full rounded-full bg-[#bd7b4b] py-6 text-white">
       {pending ? "Please wait…" : mode === "register" ? "Create account" : admin ? "Sign in as admin" : "Sign in"}
