@@ -12,23 +12,38 @@ import { ENV } from "./_core/env";
 let _db: ReturnType<typeof drizzle> | null = null;
 let _localAuthSchemaReady = false;
 
-async function ensurePostgresSchema(db: any) {
-  if (_localAuthSchemaReady) return;
-  const migrationPath = path.resolve(process.cwd(), "drizzle-pg/0000_supabase_initial.sql");
-  const migration = readFileSync(migrationPath, "utf8");
-  const statements = migration.split(/--> statement-breakpoint/).map(statement => statement.trim()).filter(Boolean);
-  for (const statement of statements) {
-    if (statement.startsWith("CREATE TYPE ")) {
-      try { await db.execute(sql.raw(statement)); }
-      catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (!/already exists|duplicate object/i.test(message)) throw error;
-      }
-    } else {
-      await db.execute(sql.raw(statement));
-    }
-  }
+let _fullSchemaReady = false;
+
+async function ensureRequiredAuthSchema(db: any) {
+  try { await db.execute(sql.raw(`CREATE TYPE "role_user_admin_enum" AS ENUM ('user', 'admin')`)); }
+  catch (error) { const message = error instanceof Error ? error.message : String(error); if (!/already exists|duplicate object/i.test(message)) throw error; }
+  await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "users" ("id" SERIAL PRIMARY KEY NOT NULL, "openId" VARCHAR(64) NOT NULL UNIQUE, "name" TEXT, "email" VARCHAR(320), "loginMethod" VARCHAR(64), "passwordHash" TEXT, "role" "role_user_admin_enum" DEFAULT 'user' NOT NULL, "createdAt" TIMESTAMP DEFAULT now() NOT NULL, "updatedAt" TIMESTAMP DEFAULT now() NOT NULL, "lastSignedIn" TIMESTAMP DEFAULT now() NOT NULL)`));
+  await db.execute(sql.raw(`CREATE TABLE IF NOT EXISTS "localAccounts" ("id" SERIAL PRIMARY KEY NOT NULL, "userId" INTEGER NOT NULL UNIQUE, "passwordHash" VARCHAR(255) NOT NULL, "createdAt" TIMESTAMP DEFAULT now() NOT NULL, "updatedAt" TIMESTAMP DEFAULT now() NOT NULL)`));
   _localAuthSchemaReady = true;
+}
+
+async function ensurePostgresSchema(db: any) {
+  await ensureRequiredAuthSchema(db);
+  if (_fullSchemaReady) return;
+  try {
+    const candidates = [path.resolve(process.cwd(), "drizzle-pg/0000_supabase_initial.sql"), path.resolve(process.cwd(), "dist/drizzle-pg/0000_supabase_initial.sql")];
+    const migrationPath = candidates.find(candidate => { try { readFileSync(candidate); return true; } catch { return false; } });
+    if (!migrationPath) throw new Error("PostgreSQL migration file is missing from the deployment bundle");
+    const migration = readFileSync(migrationPath, "utf8");
+    const statements = migration.split(/--> statement-breakpoint/).map((statement: string) => statement.trim()).filter(Boolean);
+    for (const statement of statements) {
+      if (statement.startsWith("CREATE TYPE ")) {
+        try { await db.execute(sql.raw(statement)); }
+        catch (error) { const message = error instanceof Error ? error.message : String(error); if (!/already exists|duplicate object/i.test(message)) throw error; }
+      } else {
+        try { await db.execute(sql.raw(statement)); }
+        catch (error) { console.warn("[Database] Optional PostgreSQL migration statement skipped:", error instanceof Error ? error.message : error); }
+      }
+    }
+  } catch (error) {
+    console.error("[Database] Optional PostgreSQL schema migration incomplete; authentication remains available:", error instanceof Error ? error.message : error);
+  }
+  _fullSchemaReady = true;
 }
 
 export async function getDb() {
