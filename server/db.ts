@@ -18,10 +18,15 @@ async function ensurePostgresSchema(db: any) {
   const migration = readFileSync(migrationPath, "utf8");
   const statements = migration.split(/--> statement-breakpoint/).map(statement => statement.trim()).filter(Boolean);
   for (const statement of statements) {
-    const safeStatement = statement.startsWith("CREATE TYPE ")
-      ? `DO $$ BEGIN ${statement} EXCEPTION WHEN duplicate_object THEN NULL; END $$;`
-      : statement;
-    await db.execute(sql.raw(safeStatement));
+    if (statement.startsWith("CREATE TYPE ")) {
+      try { await db.execute(sql.raw(statement)); }
+      catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!/already exists|duplicate object/i.test(message)) throw error;
+      }
+    } else {
+      await db.execute(sql.raw(statement));
+    }
   }
   _localAuthSchemaReady = true;
 }
