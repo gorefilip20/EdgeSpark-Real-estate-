@@ -121,7 +121,7 @@ export const appRouter = router({
       const actual = scryptSync(input.password, salt, 32);
       if (!expected || !timingSafeEqual(actual, Buffer.from(expected, "hex"))) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect" });
       const role = ENV.ownerEmail && email === ENV.ownerEmail.toLowerCase() ? "admin" : user.role;
-      await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
+      await db.update(users).set({ lastSignedIn: new Date(), role }).where(eq(users.id, user.id));
       const token = await sdk.createSessionToken(user.openId, { name: user.name || email });
       ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
       return { ...user, role };
