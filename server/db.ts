@@ -78,9 +78,12 @@ export function getAuthSchemaDiagnostic() {
   if (/password authentication failed|authentication failed|password/.test(raw)) return "The Supabase database password was rejected.";
   if (/enotfound|could not translate|name or service not known|connect eai_again/.test(raw)) return "The Supabase database host could not be found.";
   if (/timeout|timed out|etimedout|econnrefused|connection terminated/.test(raw)) return "Hostinger could not connect to the Supabase database. Use the Supabase Session Pooler URL and confirm the pooler is reachable.";
+  if (/self[- ]signed certificate|certificate verify failed|ssl/.test(raw)) return "The Supabase SSL connection failed. Use the Supabase PostgreSQL Session Pooler URI and confirm it includes the correct host and port.";
+  if (/database .*does not exist|3d000/.test(raw)) return "The database named in DATABASE_URL does not exist. Copy the PostgreSQL URI from the correct Supabase project.";
   if (/permission denied|must be owner|not enough privileges|insufficient privilege/.test(raw)) return "The Supabase database user does not have permission to create or alter the required tables.";
   if (/migration file is missing/.test(raw)) return "The PostgreSQL migration file is missing from the deployed bundle.";
-  return "The Supabase database connection or schema initialization failed. Check Hostinger Runtime logs for the first PostgreSQL error.";
+  const code = _lastAuthSchemaError.match(/\b[0-9A-Z]{5}\b/)?.[0];
+  return `Supabase schema initialization failed${code ? ` (PostgreSQL code ${code})` : ""}. Open Hostinger Runtime logs and check the first PostgreSQL error.`;
 }
 export async function ensureAuthTables(db: any) {
   try { await ensurePostgresSchema(db); }
