@@ -1001,12 +1001,12 @@ function LocalAccountForm({ admin = false }: { admin?: boolean }) {
       const result = mode === "register"
         ? await register.mutateAsync({ name: submittedName, email: submittedEmail, password: submittedPassword })
         : await login.mutateAsync({ email: submittedEmail, password: submittedPassword });
-      await utils.auth.me.invalidate();
       if (admin && result.role !== "admin") {
         setError("This account is not an administrator. Use the owner email configured in Hostinger.");
         return;
       }
-      navigate(admin ? "/admin" : "/account");
+      utils.auth.me.setData(undefined, result as any);
+      window.location.assign(admin ? "/admin" : "/account");
     } catch (err: any) {
       setError(err?.message || "We could not complete that request. Please try again.");
     }
