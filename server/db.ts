@@ -48,7 +48,7 @@ async function ensurePostgresSchema(db: any) {
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    try { _db = drizzle(new Pool({ connectionString: process.env.DATABASE_URL, max: 5, idleTimeoutMillis: 30000 })); }
+    try { _db = drizzle(new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 5, idleTimeoutMillis: 30000 })); }
     catch (error) { console.warn("[Database] Failed to connect:", error); }
   }
   if (_db && !_localAuthSchemaReady) {
