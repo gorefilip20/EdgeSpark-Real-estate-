@@ -1,7 +1,7 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { sql } from "drizzle-orm";
-import { InsertUser, favorites, inquiries, internationalProspects, localAccounts, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
+import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
 import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
 import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
 import { ENV } from "./_core/env";
@@ -16,6 +16,7 @@ export async function getDb() {
     try {
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspects (id INT AUTO_INCREMENT PRIMARY KEY, placeId VARCHAR(180) NOT NULL UNIQUE, region VARCHAR(32) NOT NULL, countryCode VARCHAR(2) NOT NULL, status ENUM('new','researching','contacted','meeting','won','archived') NOT NULL DEFAULT 'new', notes TEXT NULL, pitchAngle TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
+      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspectContacts (id INT AUTO_INCREMENT PRIMARY KEY, prospectId INT NOT NULL UNIQUE, contactName VARCHAR(180) NULL, contactRole VARCHAR(180) NULL, email VARCHAR(320) NULL, phone VARCHAR(80) NULL, website TEXT NULL, bookingUrl TEXT NULL, sourceUrl TEXT NULL, fetchedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, meetingAt TIMESTAMP NULL, meetingNotes TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
     } catch (error) {
       console.warn("[Database] Local account table setup failed:", error);
     }
@@ -73,7 +74,29 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   return enriched;
 }
 
-export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select().from(internationalProspects).orderBy(desc(internationalProspects.updatedAt)); }
+function uniqueMatches(values: string[]) { return Array.from(new Set(values.map(value => value.trim()).filter(Boolean))); }
+function safePublicUrl(value: string) { try { const url = new URL(value); if (!['http:', 'https:'].includes(url.protocol)) return null; const host = url.hostname.toLowerCase(); if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local') || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return null; return url; } catch { return null; } }
+export async function enrichPublicWebsite(website: string) {
+  const source = safePublicUrl(website);
+  if (!source) throw new Error("Only a public HTTPS website can be enriched.");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+  try {
+    const response = await fetch(source, { signal: controller.signal, headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0" } });
+    if (!response.ok) throw new Error("The public website could not be reached.");
+    const html = (await response.text()).slice(0, 900_000);
+    const emails = uniqueMatches(Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")).filter(email => /@/.test(email)));
+    const phones = uniqueMatches(Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])));
+    const bookingUrls = uniqueMatches(Array.from(html.matchAll(/https?:\/\/[^\"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
+    const text = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const contactRole = /(partnership|business development|strategic alliance)/i.test(text) ? "Partnerships / Business Development" : /(investor relations|investor)/i.test(text) ? "Investor Relations" : "Business Development / Partnerships team";
+    const contactPage = Array.from(html.matchAll(/href=[\"']([^\"']+)[\"']/gi), match => match[1]).map(href => { try { return new URL(href, source).toString(); } catch { return ""; } }).find(url => /(contact|about|team|leadership|partnership)/i.test(url));
+    return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: text.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
+  } finally { clearTimeout(timeout); }
+}
+export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select({ prospect: internationalProspects, contact: internationalProspectContacts }).from(internationalProspects).leftJoin(internationalProspectContacts, eq(internationalProspects.id, internationalProspectContacts.prospectId)).orderBy(desc(internationalProspects.updatedAt)).then(rows => rows.map(({ prospect, contact }) => ({ ...prospect, contact }))); }
 export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspects).values(input).onDuplicateKeyUpdate({ set: { notes: input.notes, pitchAngle: input.pitchAngle } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
+export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspectContacts).values(input).onDuplicateKeyUpdate({ set: { ...input, prospectId: undefined } }); return { success: true }; }
 export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, ...changes } = input; await db.update(internationalProspects).set(changes).where(eq(internationalProspects.id, id)); return { success: true }; }
-export { favorites, inquiries, internationalProspects, localAccounts, partnershipApplications, properties, propertyMedia, users };
+export async function updateInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspectContacts).values(input).onDuplicateKeyUpdate({ set: { ...input, prospectId: undefined } }); return { success: true }; }
+export { favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, partnershipApplications, properties, propertyMedia, users };

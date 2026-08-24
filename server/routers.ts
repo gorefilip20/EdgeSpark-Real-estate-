@@ -16,10 +16,13 @@ import {
   listLeads,
   listPublishedProperties,
   listUsers,
+  enrichPublicWebsite,
   listInternationalProspects,
   saveInternationalProspect,
+  saveInternationalProspectContact,
   searchInternationalBusinesses,
   updateInternationalProspect,
+  updateInternationalProspectContact,
   removeFavorite,
   saveFavorite,
   updateFavoriteMetadata,
@@ -32,6 +35,7 @@ import {
 } from "./db";
 import { storagePut } from "./storage";
 import { ENV } from "./_core/env";
+import { invokeLLM } from "./_core/llm";
 
 const propertyInput = z.object({
   title: z.string().min(4),
@@ -166,8 +170,20 @@ export const appRouter = router({
       }
     }),
     saved: adminOnly.query(() => listInternationalProspects()),
+    enrichWebsite: adminOnly.input(z.object({ website: z.string().url().max(1000) })).mutation(({ input }) => enrichPublicWebsite(input.website)),
+    generateDraft: adminOnly.input(z.object({ businessName: z.string().min(2).max(200), address: z.string().max(400).optional(), website: z.string().url().max(1000).optional(), phone: z.string().max(100).optional(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), websiteSummary: z.string().max(6000).optional(), sector: z.string().max(300).optional(), objective: z.enum(["strategic partnership", "bring customers", "list the business online", "real estate development", "property management", "solar and energy partnership", "other"]), offer: z.string().min(10).max(1200), tone: z.enum(["professional", "warm", "direct"]).default("professional") })).mutation(async ({ input }) => {
+      const response = await invokeLLM({ messages: [
+        { role: "system", content: "You write concise, credible B2B partnership outreach for EdgePark Estate in Nigeria. Use only the supplied facts about the recipient. Never invent a person, email address, booking link, clients, revenue, projects, awards, or capabilities. If a contact name is missing, address the relevant team or role. Make the proposal mutually beneficial, specific, respectful, and easy to reply to. Return JSON only." },
+        { role: "user", content: JSON.stringify({ task: "Create an editable first-contact email plus fact-based company intelligence and a practical deal-closing conversation plan", company: input.businessName, address: input.address, website: input.website, phone: input.phone, contactName: input.contactName, contactRole: input.contactRole, websiteSummary: input.websiteSummary, sector: input.sector, objective: input.objective, edgeParkOffer: input.offer, tone: input.tone }) },
+      ], responseFormat: { type: "json_schema", json_schema: { name: "outreach_draft", strict: true, schema: { type: "object", properties: { subject: { type: "string" }, greeting: { type: "string" }, body: { type: "string" }, callToAction: { type: "string" }, companySummary: { type: "string" }, recommendedContact: { type: "string" }, whyThisFit: { type: "string" }, proposalAngle: { type: "string" }, talkingPoints: { type: "array", items: { type: "string" } }, objectionsAndResponses: { type: "array", items: { type: "object", properties: { objection: { type: "string" }, response: { type: "string" } }, required: ["objection", "response"], additionalProperties: false } }, nextStep: { type: "string" }, factCheckNote: { type: "string" } }, required: ["subject", "greeting", "body", "callToAction", "companySummary", "recommendedContact", "whyThisFit", "proposalAngle", "talkingPoints", "objectionsAndResponses", "nextStep", "factCheckNote"], additionalProperties: false } } }, maxTokens: 2600 });
+      const content = response.choices[0]?.message?.content;
+      if (!content || typeof content !== "string") throw new TRPCError({ code: "BAD_GATEWAY", message: "The AI draft service returned no usable content" });
+      try { return JSON.parse(content); } catch { throw new TRPCError({ code: "BAD_GATEWAY", message: "The AI draft service returned an invalid draft" }); }
+    }),
     save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() })),
     update: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["new", "researching", "contacted", "meeting", "won", "archived"]).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => updateInternationalProspect(input)),
+    saveContact: adminOnly.input(z.object({ prospectId: z.number().int(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), email: z.string().email().max(320).optional(), phone: z.string().max(80).optional(), website: z.string().url().max(1000).optional(), bookingUrl: z.string().url().max(1000).optional(), sourceUrl: z.string().url().max(1000).optional(), meetingAt: z.coerce.date().optional(), meetingNotes: z.string().max(4000).optional() })).mutation(({ input }) => saveInternationalProspectContact(input)),
+    updateContact: adminOnly.input(z.object({ prospectId: z.number().int(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), email: z.string().email().max(320).optional(), phone: z.string().max(80).optional(), website: z.string().url().max(1000).optional(), bookingUrl: z.string().url().max(1000).optional(), meetingAt: z.coerce.date().optional(), meetingNotes: z.string().max(4000).optional() })).mutation(({ input }) => updateInternationalProspectContact(input)),
   }),
   properties: router({
     list: publicProcedure

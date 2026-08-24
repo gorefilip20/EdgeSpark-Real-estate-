@@ -34,6 +34,23 @@ export const internationalProspects = mysqlTable("internationalProspects", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const internationalProspectContacts = mysqlTable("internationalProspectContacts", {
+  id: int("id").autoincrement().primaryKey(),
+  prospectId: int("prospectId").notNull().unique(),
+  contactName: varchar("contactName", { length: 180 }),
+  contactRole: varchar("contactRole", { length: 180 }),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 80 }),
+  website: text("website"),
+  bookingUrl: text("bookingUrl"),
+  sourceUrl: text("sourceUrl"),
+  fetchedAt: timestamp("fetchedAt").defaultNow().notNull(),
+  meetingAt: timestamp("meetingAt"),
+  meetingNotes: text("meetingNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const properties = mysqlTable("properties", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 180 }).notNull(),
@@ -136,6 +153,7 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
 export type InternationalProspect = typeof internationalProspects.$inferSelect;
+export type InternationalProspectContact = typeof internationalProspectContacts.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;
