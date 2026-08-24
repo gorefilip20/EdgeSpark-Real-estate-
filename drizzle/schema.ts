@@ -1,54 +1,64 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { integer, pgEnum, pgTable, text, timestamp, varchar, numeric, serial } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+export const role_user_admin_enum = pgEnum("role_user_admin_enum", ["user", "admin"]);
+export const status_new_researching_contacted_meeting_won_archived_enum = pgEnum("status_new_researching_contacted_meeting_won_archived_enum", ["new", "researching", "contacted", "meeting", "won", "archived"]);
+export const status_draft_available_under_offer_sold_off_market_enum = pgEnum("status_draft_available_under_offer_sold_off_market_enum", ["draft", "available", "under_offer", "sold", "off_market"]);
+export const propertyType_apartment_duplex_bungalow_land_commercial_other_enum = pgEnum("propertyType_apartment_duplex_bungalow_land_commercial_other_enum", ["apartment", "duplex", "bungalow", "land", "commercial", "other"]);
+export const verificationStatus_unverified_under_review_verified_enum = pgEnum("verificationStatus_unverified_under_review_verified_enum", ["unverified", "under_review", "verified"]);
+export const status_new_contacted_qualified_closed_enum = pgEnum("status_new_contacted_qualified_closed_enum", ["new", "contacted", "qualified", "closed"]);
+export const leadType_inquiry_partnership_enum = pgEnum("leadType_inquiry_partnership_enum", ["inquiry", "partnership"]);
+export const role_investor_owner_agent_developer_realtor_enum = pgEnum("role_investor_owner_agent_developer_realtor_enum", ["investor", "owner", "agent", "developer", "realtor"]);
+export const status_new_reviewed_contacted_approved_declined_enum = pgEnum("status_new_reviewed_contacted_approved_declined_enum", ["new", "reviewed", "contacted", "approved", "declined"]);
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   passwordHash: text("passwordHash"),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: role_user_admin_enum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
-export const localUsers = mysqlTable("localUsers", {
-  id: int("id").autoincrement().primaryKey(),
+export const localUsers = pgTable("localUsers", {
+  id: serial("id").primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }).notNull().unique(),
   loginMethod: varchar("loginMethod", { length: 64 }).default("email").notNull(),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: role_user_admin_enum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
-export const localAccounts = mysqlTable("localAccounts", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().unique(),
+export const localAccounts = pgTable("localAccounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export const internationalProspects = mysqlTable("internationalProspects", {
-  id: int("id").autoincrement().primaryKey(),
+export const internationalProspects = pgTable("internationalProspects", {
+  id: serial("id").primaryKey(),
   placeId: varchar("placeId", { length: 180 }).notNull().unique(),
   region: varchar("region", { length: 32 }).notNull(),
   countryCode: varchar("countryCode", { length: 2 }).notNull(),
-  status: mysqlEnum("status", ["new", "researching", "contacted", "meeting", "won", "archived"]).default("new").notNull(),
+  status: status_new_researching_contacted_meeting_won_archived_enum("status").default("new").notNull(),
   notes: text("notes"),
   pitchAngle: text("pitchAngle"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export const internationalProspectContacts = mysqlTable("internationalProspectContacts", {
-  id: int("id").autoincrement().primaryKey(),
-  prospectId: int("prospectId").notNull().unique(),
+export const internationalProspectContacts = pgTable("internationalProspectContacts", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospectId").notNull().unique(),
   contactName: varchar("contactName", { length: 180 }),
   contactRole: varchar("contactRole", { length: 180 }),
   email: varchar("email", { length: 320 }),
@@ -60,16 +70,16 @@ export const internationalProspectContacts = mysqlTable("internationalProspectCo
   meetingAt: timestamp("meetingAt"),
   meetingNotes: text("meetingNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export const properties = mysqlTable("properties", {
-  id: int("id").autoincrement().primaryKey(),
+export const properties = pgTable("properties", {
+  id: serial("id").primaryKey(),
   title: varchar("title", { length: 180 }).notNull(),
   slug: varchar("slug", { length: 220 }).notNull().unique(),
   description: text("description").notNull(),
-  status: mysqlEnum("status", ["draft", "available", "under_offer", "sold", "off_market"]).default("draft").notNull(),
-  propertyType: mysqlEnum("propertyType", ["apartment", "duplex", "bungalow", "land", "commercial", "other"]).default("other").notNull(),
+  status: status_draft_available_under_offer_sold_off_market_enum("status").default("draft").notNull(),
+  propertyType: propertyType_apartment_duplex_bungalow_land_commercial_other_enum("propertyType").default("other").notNull(),
   address: varchar("address", { length: 240 }).notNull(),
   city: varchar("city", { length: 120 }).notNull(),
   state: varchar("state", { length: 120 }).notNull(),
@@ -79,81 +89,81 @@ export const properties = mysqlTable("properties", {
   agentWhatsapp: varchar("agentWhatsapp", { length: 40 }),
   developerName: varchar("developerName", { length: 180 }),
   developerWhatsapp: varchar("developerWhatsapp", { length: 40 }),
-  latitude: decimal("latitude", { precision: 10, scale: 7 }),
-  longitude: decimal("longitude", { precision: 10, scale: 7 }),
-  price: int("price").notNull(),
-  bedrooms: int("bedrooms"),
-  bathrooms: int("bathrooms"),
-  areaSqm: int("areaSqm"),
-  projectedRoi: decimal("projectedRoi", { precision: 5, scale: 2 }),
-  projectedYield: decimal("projectedYield", { precision: 5, scale: 2 }),
-  featured: int("featured").default(0).notNull(),
-  published: int("published").default(0).notNull(),
-  isDemo: int("isDemo").default(0).notNull(),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }),
+  price: integer("price").notNull(),
+  bedrooms: integer("bedrooms"),
+  bathrooms: integer("bathrooms"),
+  areaSqm: integer("areaSqm"),
+  projectedRoi: numeric("projectedRoi", { precision: 5, scale: 2 }),
+  projectedYield: numeric("projectedYield", { precision: 5, scale: 2 }),
+  featured: integer("featured").default(0).notNull(),
+  published: integer("published").default(0).notNull(),
+  isDemo: integer("isDemo").default(0).notNull(),
   sourceLabel: varchar("sourceLabel", { length: 180 }),
-  verificationStatus: mysqlEnum("verificationStatus", ["unverified", "under_review", "verified"]).default("unverified").notNull(),
+  verificationStatus: verificationStatus_unverified_under_review_verified_enum("verificationStatus").default("unverified").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export const favorites = mysqlTable("favorites", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  propertyId: int("propertyId").notNull(),
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  propertyId: integer("propertyId").notNull(),
   notes: text("notes"),
   tags: text("tags"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const propertyMedia = mysqlTable("propertyMedia", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),
+export const propertyMedia = pgTable("propertyMedia", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("propertyId").notNull(),
   url: text("url").notNull(),
   storageKey: text("storageKey").notNull(),
   fileName: varchar("fileName", { length: 255 }),
   mimeType: varchar("mimeType", { length: 120 }),
-  sortOrder: int("sortOrder").default(0).notNull(),
-  isHero: int("isHero").default(0).notNull(),
+  sortOrder: integer("sortOrder").default(0).notNull(),
+  isHero: integer("isHero").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const inquiries = mysqlTable("inquiries", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId"),
-  userId: int("userId"),
+export const inquiries = pgTable("inquiries", {
+  id: serial("id").primaryKey(),
+  propertyId: integer("propertyId"),
+  userId: integer("userId"),
   propertyTitle: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 60 }),
   message: text("message").notNull(),
-  status: mysqlEnum("status", ["new", "contacted", "qualified", "closed"]).default("new").notNull(),
+  status: status_new_contacted_qualified_closed_enum("status").default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export const leadStatusHistory = mysqlTable("leadStatusHistory", {
-  id: int("id").autoincrement().primaryKey(),
-  leadType: mysqlEnum("leadType", ["inquiry", "partnership"]).notNull(),
-  leadId: int("leadId").notNull(),
+export const leadStatusHistory = pgTable("leadStatusHistory", {
+  id: serial("id").primaryKey(),
+  leadType: leadType_inquiry_partnership_enum("leadType").notNull(),
+  leadId: integer("leadId").notNull(),
   fromStatus: varchar("fromStatus", { length: 40 }),
   toStatus: varchar("toStatus", { length: 40 }).notNull(),
   note: text("note"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const partnershipApplications = mysqlTable("partnershipApplications", {
-  id: int("id").autoincrement().primaryKey(),
-  role: mysqlEnum("role", ["investor", "owner", "agent", "developer", "realtor"]).notNull(),
-  userId: int("userId"),
+export const partnershipApplications = pgTable("partnershipApplications", {
+  id: serial("id").primaryKey(),
+  role: role_investor_owner_agent_developer_realtor_enum("role").notNull(),
+  userId: integer("userId"),
   name: varchar("name", { length: 160 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 60 }),
   company: varchar("company", { length: 180 }),
   investmentRange: varchar("investmentRange", { length: 120 }),
   message: text("message").notNull(),
-  status: mysqlEnum("status", ["new", "reviewed", "contacted", "approved", "declined"]).default("new").notNull(),
+  status: status_new_reviewed_contacted_approved_declined_enum("status").default("new").notNull(),
   adminNotes: text("adminNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export const propertiesRelations = relations(properties, ({ many }) => ({ media: many(propertyMedia), inquiries: many(inquiries), favorites: many(favorites) }));

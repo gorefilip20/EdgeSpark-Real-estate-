@@ -1,6 +1,9 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { sql } from "drizzle-orm";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
 import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
 import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
@@ -8,25 +11,33 @@ import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _localAuthSchemaReady = false;
+
+async function ensurePostgresSchema(db: any) {
+  if (_localAuthSchemaReady) return;
+  const migrationPath = path.resolve(process.cwd(), "drizzle-pg/0000_supabase_initial.sql");
+  const migration = readFileSync(migrationPath, "utf8");
+  const statements = migration.split(/--> statement-breakpoint/).map(statement => statement.trim()).filter(Boolean);
+  for (const statement of statements) {
+    const safeStatement = statement.startsWith("CREATE TYPE ")
+      ? `DO $$ BEGIN ${statement} EXCEPTION WHEN duplicate_object THEN NULL; END $$;`
+      : statement;
+    await db.execute(sql.raw(safeStatement));
+  }
+  _localAuthSchemaReady = true;
+}
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    try { _db = drizzle(process.env.DATABASE_URL); } catch (error) { console.warn("[Database] Failed to connect:", error); }
+    try { _db = drizzle(new Pool({ connectionString: process.env.DATABASE_URL, max: 5, idleTimeoutMillis: 30000 })); }
+    catch (error) { console.warn("[Database] Failed to connect:", error); }
   }
   if (_db && !_localAuthSchemaReady) {
-    try {
-      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
-      _localAuthSchemaReady = true;
-      try { await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localUsers (id INT AUTO_INCREMENT PRIMARY KEY, openId VARCHAR(64) NOT NULL UNIQUE, name TEXT NULL, email VARCHAR(320) NOT NULL UNIQUE, loginMethod VARCHAR(64) NOT NULL DEFAULT 'email', role ENUM('user','admin') NOT NULL DEFAULT 'user', createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, lastSignedIn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")); } catch (error) { console.warn("[Database] Optional localUsers compatibility table was not created:", error instanceof Error ? error.message : error); }
-      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspects (id INT AUTO_INCREMENT PRIMARY KEY, placeId VARCHAR(180) NOT NULL UNIQUE, region VARCHAR(32) NOT NULL, countryCode VARCHAR(2) NOT NULL, status ENUM('new','researching','contacted','meeting','won','archived') NOT NULL DEFAULT 'new', notes TEXT NULL, pitchAngle TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
-      await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspectContacts (id INT AUTO_INCREMENT PRIMARY KEY, prospectId INT NOT NULL UNIQUE, contactName VARCHAR(180) NULL, contactRole VARCHAR(180) NULL, email VARCHAR(320) NULL, phone VARCHAR(80) NULL, website TEXT NULL, bookingUrl TEXT NULL, sourceUrl TEXT NULL, fetchedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, meetingAt TIMESTAMP NULL, meetingNotes TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
-      _localAuthSchemaReady = true;
-    } catch (error) {
-      _localAuthSchemaReady = false;
-      console.error("[Database] Local authentication schema setup failed. The database user must be allowed to CREATE TABLE:", error instanceof Error ? error.message : error);
-    }
+    try { await ensurePostgresSchema(_db); }
+    catch (error) { _localAuthSchemaReady = false; console.error("[Database] PostgreSQL schema setup failed:", error instanceof Error ? error.message : error); }
   }
   return _db;
 }
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb(); if (!db) return;
@@ -39,17 +50,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (user.role) { values.role = user.role; updateSet.role = user.role; }
   else if (user.openId === ENV.ownerOpenId || (ENV.ownerEmail && user.email === ENV.ownerEmail)) { values.role = "admin"; updateSet.role = "admin"; }
   values.lastSignedIn ??= new Date(); updateSet.lastSignedIn ??= new Date();
-  try {
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-  } catch (error) {
-    const localUpdate: Record<string, unknown> = { lastSignedIn: values.lastSignedIn ?? new Date() };
-    if (values.name !== undefined) localUpdate.name = values.name;
-    if (values.email !== undefined && values.email !== null) localUpdate.email = values.email;
-    if (values.role !== undefined) localUpdate.role = values.role;
-    await db.update(localUsers).set(localUpdate).where(eq(localUsers.openId, user.openId));
-  }
+  await db.insert(users).values(values).onConflictDoUpdate({ target: users.openId, set: updateSet });
 }
-export async function ensureAuthTables(db: any) { try { await db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)")); } catch (error) { console.error("[Database] Required localAccounts table is unavailable:", error instanceof Error ? error.message : error); throw new Error("AUTH_SCHEMA_NOT_READY"); } try { await db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localUsers (id INT AUTO_INCREMENT PRIMARY KEY, openId VARCHAR(64) NOT NULL UNIQUE, name TEXT NULL, email VARCHAR(320) NOT NULL UNIQUE, loginMethod VARCHAR(64) NOT NULL DEFAULT 'email', role ENUM('user','admin') NOT NULL DEFAULT 'user', createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, lastSignedIn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)")); } catch (error) { console.warn("[Database] Optional localUsers table unavailable; continuing with users/localAccounts auth:", error instanceof Error ? error.message : error); } }
+export async function ensureAuthTables(db: any) {
+  try { await ensurePostgresSchema(db); }
+  catch (error) { console.error("[Database] Required PostgreSQL schema is unavailable:", error instanceof Error ? error.message : error); throw new Error("AUTH_SCHEMA_NOT_READY"); }
+}
+
 export async function getUserByOpenId(openId: string) { const db = await getDb(); if (!db) return undefined; try { await ensureAuthTables(db); } catch { return undefined; } try { const result = await db.select({ id: users.id, openId: users.openId, name: users.name, email: users.email, loginMethod: users.loginMethod, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.openId, openId)).limit(1); if (result[0]) return result[0] as any; } catch (error) { console.warn("[Database] Legacy users lookup failed; using localUsers:", error instanceof Error ? error.message : error); } try { const localResult = await db.select().from(localUsers).where(eq(localUsers.openId, openId)).limit(1); return localResult[0] as any; } catch (error) { console.warn("[Database] No localUsers fallback available:", error instanceof Error ? error.message : error); return undefined; } }
 async function withMedia(rows: any[]) { const db = await getDb(); if (!db || !rows.length) return rows.map((row) => ({ ...row, media: [] })); const ids = rows.map((row) => row.id); const media = await db.select().from(propertyMedia); return rows.map((row) => ({ ...row, media: media.filter((item) => ids.includes(item.propertyId)) })); }
 export async function listPublishedProperties(filters?: { search?: string; type?: string; status?: string }) {
@@ -107,8 +114,8 @@ export async function enrichPublicWebsite(website: string) {
   } finally { clearTimeout(timeout); }
 }
 export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select({ prospect: internationalProspects, contact: internationalProspectContacts }).from(internationalProspects).leftJoin(internationalProspectContacts, eq(internationalProspects.id, internationalProspectContacts.prospectId)).orderBy(desc(internationalProspects.updatedAt)).then(rows => rows.map(({ prospect, contact }) => ({ ...prospect, contact }))); }
-export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspects).values(input).onDuplicateKeyUpdate({ set: { notes: input.notes, pitchAngle: input.pitchAngle } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
-export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspectContacts).values(input).onDuplicateKeyUpdate({ set: { ...input, prospectId: undefined } }); return { success: true }; }
+export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspects).values(input).onConflictDoUpdate({ target: internationalProspects.placeId, set: { notes: input.notes, pitchAngle: input.pitchAngle } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
+export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values(input).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: contactUpdate }); return { success: true }; }
 export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, ...changes } = input; await db.update(internationalProspects).set(changes).where(eq(internationalProspects.id, id)); return { success: true }; }
-export async function updateInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspectContacts).values(input).onDuplicateKeyUpdate({ set: { ...input, prospectId: undefined } }); return { success: true }; }
+export async function updateInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values(input).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: contactUpdate }); return { success: true }; }
 export { favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users };

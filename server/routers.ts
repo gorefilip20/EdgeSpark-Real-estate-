@@ -227,7 +227,7 @@ export const appRouter = router({
           featured: input.featured ? 1 : 0,
           published: input.published ? 1 : 0,
         })
-        .$returningId();
+        .returning({ id: properties.id });
       return created;
     }),
     update: adminOnly
