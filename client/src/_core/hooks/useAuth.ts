@@ -18,6 +18,10 @@ export function useAuth(options?: UseAuthOptions) {
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
+    // Keep a just-verified login result during the /admin/login -> /admin
+    // transition. A full page load still starts with an empty cache.
+    staleTime: 30_000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 

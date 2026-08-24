@@ -1014,7 +1014,9 @@ function LocalAccountForm({ admin = false }: { admin?: boolean }) {
         } catch {}
       }
       utils.auth.me.setData(undefined, result as any);
-      window.location.assign(admin ? "/admin" : "/account");
+      // Keep the authenticated query cache during the route transition. A full
+      // reload can race the Set-Cookie response on Hostinger/mobile browsers.
+      navigate(admin ? "/admin" : "/account");
     } catch (err: any) {
       setError(err?.message || "We could not complete that request. Please try again.");
     }
