@@ -107,18 +107,22 @@ export async function updateFavoriteMetadata(userId: number, propertyId: number,
 export async function listUsers() { const db = await getDb(); if (!db) return []; try { return await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, loginMethod: users.loginMethod, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).orderBy(desc(users.lastSignedIn)); } catch { return db.select({ id: localUsers.id, name: localUsers.name, email: localUsers.email, role: localUsers.role, loginMethod: localUsers.loginMethod, createdAt: localUsers.createdAt, lastSignedIn: localUsers.lastSignedIn }).from(localUsers).orderBy(desc(localUsers.lastSignedIn)); } }
 export async function listLeads() { const db = await getDb(); if (!db) return { inquiries: [], partnerships: [] }; const [inquiryRows, partnershipRows] = await Promise.all([db.select().from(inquiries).orderBy(desc(inquiries.createdAt)), db.select().from(partnershipApplications).orderBy(desc(partnershipApplications.createdAt))]); return { inquiries: inquiryRows, partnerships: partnershipRows }; }
 
-export async function searchInternationalBusinesses(query: string, countryCode: string) {
-  const market = getInternationalMarket(countryCode);
-  if (!market || !INTERNATIONAL_MARKET_CODES.has(countryCode)) throw new Error("International search is limited to Europe, Asia, and the Americas.");
-  const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `${query} in ${market.name}`, type: "real_estate_agency" });
-  const candidates = (search.results || []).slice(0, 8);
+export async function searchInternationalBusinesses(query: string, countryCode: string, category = "real estate developer") {
+  const market = getInternationalMarket(countryCode.toUpperCase());
+  if (!market || !INTERNATIONAL_MARKET_CODES.has(market.code)) throw new Error("Choose a supported country from Europe, Asia, the Americas, or Africa.");
+  const normalizedCategory = category.trim() || "real estate developer";
+  // Text search is deliberately used without a fixed Places `type`. The fixed
+  // real_estate_agency type silently excluded portfolio managers, investors,
+  // agents, brokers, solar companies, and other partnership targets.
+  const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `${normalizedCategory} ${query.trim()} in ${market.name}` });
+  const candidates = (search.results || []).slice(0, 12);
   const enriched = await Promise.all(candidates.map(async place => {
     try {
       const detail = await makeRequest<PlaceDetailsResult>("/maps/api/place/details/json", { place_id: place.place_id, fields: "place_id,name,formatted_address,international_phone_number,website,url,rating,user_ratings_total,business_status,geometry,types" });
       const result = (detail.result || {}) as PlaceDetailsResult["result"] & { url?: string; business_status?: string; types?: string[] };
-      return { placeId: place.place_id, name: result.name || place.name, address: result.formatted_address || place.formatted_address, phone: result.international_phone_number, website: result.website, mapsUrl: result.url, rating: result.rating, userRatings: result.user_ratings_total, businessStatus: result.business_status, types: result.types || place.types, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: result.name || place.name, address: result.formatted_address || place.formatted_address, phone: result.international_phone_number || result.formatted_phone_number, website: result.website, mapsUrl: result.url, rating: result.rating, userRatings: result.user_ratings_total, businessStatus: result.business_status, types: result.types || place.types, category: normalizedCategory, region: market.region, countryCode: market.code };
     } catch {
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, category: normalizedCategory, region: market.region, countryCode: market.code };
     }
   }));
   return enriched;
