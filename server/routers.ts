@@ -10,6 +10,7 @@ import { notifyOwner } from "./_core/notification";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import {
   getDb,
+  ensureAuthTables,
   getPropertyBySlug,
   listAdminProperties,
   listFavoritesForUser,
@@ -90,6 +91,7 @@ export const appRouter = router({
     register: publicProcedure.input(z.object({ name: z.string().min(2).max(120), email: z.string().email().max(320), password: z.string().min(8).max(200) })).mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      try { await ensureAuthTables(db); } catch { throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Authentication database is not ready. Please contact the site administrator." }); }
       const email = input.email.trim().toLowerCase();
       const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
       if (existing[0]) throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists" });
@@ -108,6 +110,7 @@ export const appRouter = router({
     login: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1).max(200) })).mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      try { await ensureAuthTables(db); } catch { throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Authentication database is not ready. Please contact the site administrator." }); }
       const email = input.email.trim().toLowerCase();
       const [user] = await db.select({ id: users.id, openId: users.openId, name: users.name, email: users.email, loginMethod: users.loginMethod, role: users.role, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.email, email)).limit(1);
       if (!user) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect" });
