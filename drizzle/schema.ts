@@ -14,6 +14,18 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+export const localUsers = mysqlTable("localUsers", {
+  id: int("id").autoincrement().primaryKey(),
+  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  name: text("name"),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  loginMethod: varchar("loginMethod", { length: 64 }).default("email").notNull(),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+});
+
 export const localAccounts = mysqlTable("localAccounts", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
@@ -150,6 +162,7 @@ export const propertyMediaRelations = relations(propertyMedia, ({ one }) => ({ p
 export const inquiryRelations = relations(inquiries, ({ one }) => ({ property: one(properties, { fields: [inquiries.propertyId], references: [properties.id] }) }));
 
 export type User = typeof users.$inferSelect;
+export type LocalUser = typeof localUsers.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
 export type InternationalProspect = typeof internationalProspects.$inferSelect;

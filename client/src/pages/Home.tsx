@@ -159,8 +159,23 @@ function ImageWithFallback({ src, alt, className, label }: { src?: string; alt: 
   if (!src || failed) return <div className={`${className} flex items-center justify-center bg-gradient-to-br from-[#d7d9d0] via-[#b9c7c0] to-[#31525b] p-6 text-center text-2xl font-semibold text-white/90`}>{label}</div>;
   return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} loading="lazy" />;
 }
-const fmt = (value: number | string | null | undefined) =>
-  `₦${Number(value || 0).toLocaleString("en-NG")}`;
+const getVisitorCurrency = () => {
+  if (typeof navigator === "undefined") return { currency: "NGN", locale: "en-NG", rate: 1 };
+  const languages = [navigator.language, ...(navigator.languages || [])].filter(Boolean).map(value => value.replace("_", "-"));
+  const region = languages.map(value => value.split("-")[1]?.toUpperCase()).find(Boolean) || "NG";
+  const rates: Record<string, { currency: string; locale: string; rate: number }> = {
+    NG: { currency: "NGN", locale: "en-NG", rate: 1 }, GB: { currency: "GBP", locale: "en-GB", rate: 1900 },
+    US: { currency: "USD", locale: "en-US", rate: 1550 }, CA: { currency: "CAD", locale: "en-CA", rate: 1120 },
+    JP: { currency: "JPY", locale: "ja-JP", rate: 10.5 }, CN: { currency: "CNY", locale: "zh-CN", rate: 215 },
+    IN: { currency: "INR", locale: "en-IN", rate: 18.5 }, AU: { currency: "AUD", locale: "en-AU", rate: 1010 },
+  };
+  const euroRegions = new Set(["AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"]);
+  return euroRegions.has(region) ? { currency: "EUR", locale: "de-DE", rate: 1660 } : rates[region] || { currency: "USD", locale: "en-US", rate: 1550 };
+};
+const fmt = (value: number | string | null | undefined) => {
+  const { currency, locale, rate } = getVisitorCurrency();
+  return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(value || 0) / rate);
+};
 const statusLabel = (status: string) => status.replace("_", " ");
 const whatsappLink = (_phone: string | undefined, title: string) =>
   buildDeveloperWhatsAppLink(title);
@@ -274,6 +289,7 @@ function Header({ dark = false }: { dark?: boolean }) {
       {open && (
         <div className="container border-t border-white/10 bg-[#173b46] p-5 text-white shadow-xl lg:hidden">
           <div className="grid gap-4 text-sm">
+            <Link href="/">Home</Link>
             <Link href="/properties">Explore properties</Link>
             <Link href="/about">About us</Link>
             <Link href="/calculator">Deal analyzer</Link>
@@ -1684,20 +1700,6 @@ function ListingsPage() {
                 </div>
               )}
             </div>
-            <Input
-              type="number"
-              value={minPrice || ""}
-              onChange={e => setMinPrice(Number(e.target.value))}
-              placeholder="Min price ₦"
-              className="border-0 bg-[#f8f7f3]"
-            />
-            <Input
-              type="number"
-              value={maxPrice || ""}
-              onChange={e => setMaxPrice(Number(e.target.value))}
-              placeholder="Max price ₦"
-              className="border-0 bg-[#f8f7f3]"
-            />
             <Button
               type="submit"
               className="h-11 rounded-lg bg-[#bd7b4b] px-6 text-white hover:bg-[#a9663b] md:col-span-4"
@@ -1752,7 +1754,7 @@ function ListingsPage() {
                   No matching properties yet.
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[#6c7776]">
-                  Try a broader state or LGA, remove the maximum price, or
+                  Try a broader state or LGA, or
                   search by a neighborhood or street. You can also message the
                   developer directly on WhatsApp.
                 </p>
