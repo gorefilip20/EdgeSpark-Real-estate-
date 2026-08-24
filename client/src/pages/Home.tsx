@@ -2581,7 +2581,7 @@ function AdminPage() {
     longitude: null,
   });
   useEffect(() => {
-    if (!loading && user?.role !== "admin") navigate("/");
+    if (!loading && user?.role !== "admin") navigate("/admin/login");
   }, [loading, user, navigate]);
   if (loading || !user || user.role !== "admin")
     return (
