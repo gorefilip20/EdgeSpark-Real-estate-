@@ -18,10 +18,11 @@ export async function getDb() {
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS localAccounts (id INT AUTO_INCREMENT PRIMARY KEY, userId INT NOT NULL UNIQUE, passwordHash VARCHAR(255) NOT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspects (id INT AUTO_INCREMENT PRIMARY KEY, placeId VARCHAR(180) NOT NULL UNIQUE, region VARCHAR(32) NOT NULL, countryCode VARCHAR(2) NOT NULL, status ENUM('new','researching','contacted','meeting','won','archived') NOT NULL DEFAULT 'new', notes TEXT NULL, pitchAngle TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
       await _db.execute(sql.raw("CREATE TABLE IF NOT EXISTS internationalProspectContacts (id INT AUTO_INCREMENT PRIMARY KEY, prospectId INT NOT NULL UNIQUE, contactName VARCHAR(180) NULL, contactRole VARCHAR(180) NULL, email VARCHAR(320) NULL, phone VARCHAR(80) NULL, website TEXT NULL, bookingUrl TEXT NULL, sourceUrl TEXT NULL, fetchedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, meetingAt TIMESTAMP NULL, meetingNotes TEXT NULL, createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"));
+      _localAuthSchemaReady = true;
     } catch (error) {
-      console.warn("[Database] Local account table setup failed:", error);
+      _localAuthSchemaReady = false;
+      console.error("[Database] Local authentication schema setup failed. The database user must be allowed to CREATE TABLE:", error instanceof Error ? error.message : error);
     }
-    _localAuthSchemaReady = true;
   }
   return _db;
 }
