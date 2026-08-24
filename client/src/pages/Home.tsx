@@ -66,6 +66,7 @@ import {
 } from "@/lib/propertyTags";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
+import { COOKIE_NAME } from "@shared/const";
 import { toast } from "sonner";
 
 const demoProperties = [
@@ -1004,6 +1005,13 @@ function LocalAccountForm({ admin = false }: { admin?: boolean }) {
       if (admin && result.role !== "admin") {
         setError("This account is not an administrator. Use the owner email configured in Hostinger.");
         return;
+      }
+      // Preserve a same-tab bearer fallback if Hostinger or a mobile browser
+      // omits the freshly-set HttpOnly cookie during this navigation.
+      if (result.sessionToken) {
+        try {
+          sessionStorage.setItem("manus-cookie", `${COOKIE_NAME}=${result.sessionToken}`);
+        } catch {}
       }
       utils.auth.me.setData(undefined, result as any);
       window.location.assign(admin ? "/admin" : "/account");

@@ -106,7 +106,7 @@ export const appRouter = router({
       await db.insert(localAccounts).values({ userId: user.id, passwordHash: `${salt}:${hash}` });
       const token = await sdk.createSessionToken(openId, { name: input.name.trim() });
       ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
-      return user;
+      return { ...user, sessionToken: token };
     }),
     login: publicProcedure.input(z.object({ email: z.string().email().max(320), password: z.string().min(1).max(200) })).mutation(async ({ ctx, input }) => {
       const db = await getDb();
@@ -124,7 +124,7 @@ export const appRouter = router({
       await db.update(users).set({ lastSignedIn: new Date(), role }).where(eq(users.id, user.id));
       const token = await sdk.createSessionToken(user.openId, { name: user.name || email });
       ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: ONE_YEAR_MS });
-      return { ...user, role };
+      return { ...user, role, sessionToken: token };
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
