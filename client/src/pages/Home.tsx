@@ -2473,17 +2473,37 @@ function InternationalProspectingPanel() {
     setSearchMessage("");
     try {
       const response = await search.refetch();
-      const nextResults = response.data || [];
+      let nextResults = response.data || [];
+      // The browser fallback bypasses a stale Hostinger backend or a provider
+      // that returns an empty array. It uses public, CORS-readable directories
+      // and never fabricates contact details.
+      if (!nextResults.length) {
+        const market = INTERNATIONAL_MARKETS.find(item => item.code === countryCode);
+        const country = market?.name || countryCode;
+        const text = `${category} ${query.trim()}, ${country}`;
+        try {
+          const osmResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&q=${encodeURIComponent(text)}`, { headers: { Accept: "application/json" } });
+          const osmPlaces = osmResponse.ok ? await osmResponse.json() : [];
+          nextResults = (osmPlaces || []).map((place: any) => ({ placeId: `browser-osm-${place.osm_type}-${place.osm_id}`, name: place.name || String(place.display_name).split(",")[0], address: place.display_name, website: undefined, phone: undefined, mapsUrl: `https://www.openstreetmap.org/${place.osm_type}/${place.osm_id}`, types: [place.type || category], category, source: "OpenStreetMap", region, countryCode }));
+        } catch { /* try Wikipedia below */ }
+        if (!nextResults.length) {
+          try {
+            const wikiResponse = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=8&format=json&origin=*&srsearch=${encodeURIComponent(text)}`);
+            const wikiPayload = wikiResponse.ok ? await wikiResponse.json() : {};
+            nextResults = (wikiPayload?.query?.search || []).map((item: any) => ({ placeId: `browser-wiki-${item.pageid}`, name: item.title, address: country, website: `https://www.google.com/search?q=${encodeURIComponent(`${item.title} ${country}`)}`, phone: undefined, mapsUrl: `https://en.wikipedia.org/?curid=${item.pageid}`, types: [category], category, source: "Wikipedia public research", region, countryCode }));
+          } catch { /* final message below */ }
+        }
+        if (nextResults.length) setSearchMessage("Public research results returned. Verify the company website and contact person before outreach.");
+      }
       setResults(nextResults);
       if (nextResults.length) {
         // Open the first prospect automatically so the AI workspace is visible
         // immediately after Search businesses succeeds.
         selectBusiness(nextResults[0]);
-      }
-      if (!nextResults.length) setSearchMessage("No matching businesses were returned. Try a broader category or another country.");
+      } else setSearchMessage("No public business records were found for this exact phrase. Try a broader term such as company, property, agency, or business.");
     } catch (error: any) {
       setResults([]);
-      setSearchMessage(error?.message || "Search is unavailable. Confirm the built-in Maps integration is enabled and try again.");
+      setSearchMessage(error?.message || "Search is unavailable. Try again with a broader term.");
     }
   };
   const selectBusiness = (business: any) => { setSelectedBusiness(business); setDraft(null); setContactProfile(null); };
