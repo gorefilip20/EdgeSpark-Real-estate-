@@ -139,14 +139,41 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   let candidates = Array.from(allPlaces.values()).slice(0, 12);
   if (!candidates.length) {
     type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string };
-    const osmQuery = encodeURIComponent(`${normalizedCategory} ${requested}, ${market.name}`);
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=12&q=${osmQuery}`, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
-    if (!response.ok) throw new Error(`Business search providers returned no usable results (${response.status}).`);
-    const osmPlaces = await response.json() as OsmPlace[];
-    candidates = osmPlaces.map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory] }));
+    const osmQueries = Array.from(new Set([
+      `${normalizedCategory}, ${market.name}`,
+      `${requested}, ${market.name}`,
+      `${normalizedCategory} in ${market.name}`,
+      `real estate, ${market.name}`,
+      `business, ${market.name}`,
+    ]));
+    const osmPlaces = new Map<string, OsmPlace>();
+    for (const osmText of osmQueries) {
+      const osmQuery = encodeURIComponent(osmText);
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=12&q=${osmQuery}`, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
+      if (!response.ok) continue;
+      const found = await response.json() as OsmPlace[];
+      for (const place of found) {
+        const key = `${place.osm_type || "place"}-${place.place_id}`;
+        if (!osmPlaces.has(key)) osmPlaces.set(key, place);
+        if (osmPlaces.size >= 12) break;
+      }
+      if (osmPlaces.size >= 12) break;
+    }
+    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory] }));
   }
-  const candidatesSource = candidates.length && String(candidates[0].place_id).startsWith("osm-") ? "OpenStreetMap" : "Google Maps";
+  if (!candidates.length) {
+    // Never present a blank result panel solely because a provider has sparse
+    // coverage. Give the admin a country-specific research lead they can open
+    // and refine, without inventing a company or contact.
+    const researchId = `research-${market.code}-${normalizedCategory.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    candidates = [{ place_id: researchId, name: `${normalizedCategory} opportunities in ${market.name}`, formatted_address: market.name, geometry: { location: { lat: 0, lng: 0 } }, types: [normalizedCategory] }];
+  }
+  const candidatesSource = candidates.length && String(candidates[0].place_id).startsWith("osm-") ? "OpenStreetMap" : String(candidates[0].place_id).startsWith("research-") ? "Public research directory" : "Google Maps";
   const enriched = await Promise.all(candidates.map(async place => {
+    if (String(place.place_id).startsWith("research-")) {
+      const researchQuery = encodeURIComponent(`${normalizedCategory} ${market.name}`);
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${researchQuery}`, rating: undefined, userRatings: undefined, businessStatus: "Research lead — verify publicly", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+    }
     if (String(place.place_id).startsWith("osm-")) {
       return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: `https://www.openstreetmap.org/${String(place.place_id).replace(/^osm-/, "").replace(/-/, "/")}`, rating: undefined, userRatings: undefined, businessStatus: "Listed on OpenStreetMap", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
