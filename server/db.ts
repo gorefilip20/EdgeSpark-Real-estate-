@@ -114,8 +114,28 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   // Text search is deliberately used without a fixed Places `type`. The fixed
   // real_estate_agency type silently excluded portfolio managers, investors,
   // agents, brokers, solar companies, and other partnership targets.
-  const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `${normalizedCategory} ${query.trim()} in ${market.name}` });
-  const candidates = (search.results || []).slice(0, 12);
+  const requested = query.trim();
+  const queryVariants = Array.from(new Set([
+    `${normalizedCategory} ${requested} in ${market.name}`,
+    `${requested} in ${market.name}`,
+    `${normalizedCategory} in ${market.name}`,
+    `businesses in ${market.name}`,
+  ]));
+  const allPlaces = new Map<string, PlacesSearchResult["results"][number]>();
+  let lastStatus = "";
+  for (const textQuery of queryVariants) {
+    const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: textQuery });
+    lastStatus = search.status || lastStatus;
+    for (const place of search.results || []) {
+      if (place.place_id) allPlaces.set(place.place_id, place);
+      if (allPlaces.size >= 12) break;
+    }
+    if (allPlaces.size >= 12) break;
+  }
+  if (!allPlaces.size && lastStatus && lastStatus !== "ZERO_RESULTS" && lastStatus !== "OK") {
+    throw new Error(`Business search provider returned ${lastStatus}.`);
+  }
+  const candidates = Array.from(allPlaces.values()).slice(0, 12);
   const enriched = await Promise.all(candidates.map(async place => {
     try {
       const detail = await makeRequest<PlaceDetailsResult>("/maps/api/place/details/json", { place_id: place.place_id, fields: "place_id,name,formatted_address,international_phone_number,website,url,rating,user_ratings_total,business_status,geometry,types" });

@@ -2473,8 +2473,14 @@ function InternationalProspectingPanel() {
     setSearchMessage("");
     try {
       const response = await search.refetch();
-      setResults(response.data || []);
-      if (!response.data?.length) setSearchMessage("No matching businesses were returned. Try a broader category or another country.");
+      const nextResults = response.data || [];
+      setResults(nextResults);
+      if (nextResults.length) {
+        // Open the first prospect automatically so the AI workspace is visible
+        // immediately after Search businesses succeeds.
+        selectBusiness(nextResults[0]);
+      }
+      if (!nextResults.length) setSearchMessage("No matching businesses were returned. Try a broader category or another country.");
     } catch (error: any) {
       setResults([]);
       setSearchMessage(error?.message || "Search is unavailable. Confirm the built-in Maps integration is enabled and try again.");
@@ -2483,10 +2489,15 @@ function InternationalProspectingPanel() {
   const selectBusiness = (business: any) => { setSelectedBusiness(business); setDraft(null); setContactProfile(null); };
   const generateOutreach = async () => {
     if (!selectedBusiness) return;
-    let profile = contactProfile;
-    if (!profile && selectedBusiness.website) { try { profile = await enrich.mutateAsync({ website: selectedBusiness.website }); setContactProfile(profile); } catch { profile = null; } }
-    const result = await generateDraft.mutateAsync({ businessName: selectedBusiness.name, address: selectedBusiness.address, website: selectedBusiness.website, phone: selectedBusiness.phone, contactName: profile?.contactName || undefined, contactRole: profile?.contactRole || "Business Development / Partnerships team", websiteSummary: profile?.publicSummary || undefined, sector: selectedBusiness.types?.join(", "), objective: objective as any, offer, tone: "professional" });
-    setDraft(result);
+    try {
+      let profile = contactProfile;
+      if (!profile && selectedBusiness.website) { try { profile = await enrich.mutateAsync({ website: selectedBusiness.website }); setContactProfile(profile); } catch { profile = null; } }
+      const result = await generateDraft.mutateAsync({ businessName: selectedBusiness.name, address: selectedBusiness.address, website: selectedBusiness.website, phone: selectedBusiness.phone, contactName: profile?.contactName || undefined, contactRole: profile?.contactRole || "Business Development / Partnerships team", websiteSummary: profile?.publicSummary || undefined, sector: selectedBusiness.types?.join(", "), objective: objective as any, offer, tone: "professional" });
+      setDraft(result);
+      setSearchMessage("");
+    } catch (error: any) {
+      setSearchMessage(error?.message || "AI analysis is unavailable. Confirm the built-in AI integration is enabled in Hostinger.");
+    }
   };
   const draftMailto = draft && selectedBusiness ? `mailto:${contactProfile?.email || ""}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(`${draft.greeting}\\n\\n${draft.body}\\n\\n${draft.callToAction}\\n\\nBest regards,\\nEdgePark Estate`)}` : "#";
   const pitchLink = (business: any) => {
