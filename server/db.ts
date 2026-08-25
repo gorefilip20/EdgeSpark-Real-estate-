@@ -162,14 +162,37 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
     candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory] }));
   }
   if (!candidates.length) {
+    type WikiSearch = { pageid: number; title: string };
+    const wikiQueries = Array.from(new Set([`${normalizedCategory} ${market.name}`, `${requested} ${market.name}`, `${normalizedCategory} companies ${market.name}`]));
+    const wikiPlaces = new Map<number, WikiSearch>();
+    for (const wikiText of wikiQueries) {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(wikiText)}&srlimit=8&format=json&origin=*`;
+      const response = await fetch(url, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
+      if (!response.ok) continue;
+      const payload = await response.json() as { query?: { search?: WikiSearch[] } };
+      for (const item of payload.query?.search || []) {
+        if (item.pageid && !wikiPlaces.has(item.pageid)) wikiPlaces.set(item.pageid, item);
+        if (wikiPlaces.size >= 8) break;
+      }
+      if (wikiPlaces.size >= 8) break;
+    }
+    candidates = Array.from(wikiPlaces.values()).map(item => ({ place_id: `wiki-${item.pageid}`, name: item.title, formatted_address: market.name, geometry: { location: { lat: 0, lng: 0 } }, types: [normalizedCategory] }));
+  }
+  if (!candidates.length) {
     // Never present a blank result panel solely because a provider has sparse
     // coverage. Give the admin a country-specific research lead they can open
     // and refine, without inventing a company or contact.
     const researchId = `research-${market.code}-${normalizedCategory.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
     candidates = [{ place_id: researchId, name: `${normalizedCategory} opportunities in ${market.name}`, formatted_address: market.name, geometry: { location: { lat: 0, lng: 0 } }, types: [normalizedCategory] }];
   }
-  const candidatesSource = candidates.length && String(candidates[0].place_id).startsWith("osm-") ? "OpenStreetMap" : String(candidates[0].place_id).startsWith("research-") ? "Public research directory" : "Google Maps";
+  const firstId = String(candidates[0].place_id);
+  const candidatesSource = firstId.startsWith("osm-") ? "OpenStreetMap" : firstId.startsWith("wiki-") ? "Wikipedia public research" : firstId.startsWith("research-") ? "Public research directory" : "Google Maps";
   const enriched = await Promise.all(candidates.map(async place => {
+    if (String(place.place_id).startsWith("wiki-")) {
+      const title = encodeURIComponent(place.name);
+      const researchQuery = encodeURIComponent(`${place.name} ${market.name}`);
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://en.wikipedia.org/w/index.php?search=${title}`, rating: undefined, userRatings: undefined, businessStatus: "Public research lead — verify company details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+    }
     if (String(place.place_id).startsWith("research-")) {
       const researchQuery = encodeURIComponent(`${normalizedCategory} ${market.name}`);
       return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${researchQuery}`, rating: undefined, userRatings: undefined, businessStatus: "Research lead — verify publicly", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
