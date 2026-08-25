@@ -123,26 +123,39 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   ]));
   const allPlaces = new Map<string, PlacesSearchResult["results"][number]>();
   let lastStatus = "";
-  for (const textQuery of queryVariants) {
-    const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: textQuery });
-    lastStatus = search.status || lastStatus;
-    for (const place of search.results || []) {
-      if (place.place_id) allPlaces.set(place.place_id, place);
+  try {
+    for (const textQuery of queryVariants) {
+      const search = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: textQuery });
+      lastStatus = search.status || lastStatus;
+      for (const place of search.results || []) {
+        if (place.place_id) allPlaces.set(place.place_id, place);
+        if (allPlaces.size >= 12) break;
+      }
       if (allPlaces.size >= 12) break;
     }
-    if (allPlaces.size >= 12) break;
+  } catch (error) {
+    console.warn("[International search] Maps provider unavailable; using OpenStreetMap fallback:", error instanceof Error ? error.message : error);
   }
-  if (!allPlaces.size && lastStatus && lastStatus !== "ZERO_RESULTS" && lastStatus !== "OK") {
-    throw new Error(`Business search provider returned ${lastStatus}.`);
+  let candidates = Array.from(allPlaces.values()).slice(0, 12);
+  if (!candidates.length) {
+    type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string };
+    const osmQuery = encodeURIComponent(`${normalizedCategory} ${requested}, ${market.name}`);
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=12&q=${osmQuery}`, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
+    if (!response.ok) throw new Error(`Business search providers returned no usable results (${response.status}).`);
+    const osmPlaces = await response.json() as OsmPlace[];
+    candidates = osmPlaces.map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory] }));
   }
-  const candidates = Array.from(allPlaces.values()).slice(0, 12);
+  const candidatesSource = candidates.length && String(candidates[0].place_id).startsWith("osm-") ? "OpenStreetMap" : "Google Maps";
   const enriched = await Promise.all(candidates.map(async place => {
+    if (String(place.place_id).startsWith("osm-")) {
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: `https://www.openstreetmap.org/${String(place.place_id).replace(/^osm-/, "").replace(/-/, "/")}`, rating: undefined, userRatings: undefined, businessStatus: "Listed on OpenStreetMap", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+    }
     try {
       const detail = await makeRequest<PlaceDetailsResult>("/maps/api/place/details/json", { place_id: place.place_id, fields: "place_id,name,formatted_address,international_phone_number,website,url,rating,user_ratings_total,business_status,geometry,types" });
       const result = (detail.result || {}) as PlaceDetailsResult["result"] & { url?: string; business_status?: string; types?: string[] };
-      return { placeId: place.place_id, name: result.name || place.name, address: result.formatted_address || place.formatted_address, phone: result.international_phone_number || result.formatted_phone_number, website: result.website, mapsUrl: result.url, rating: result.rating, userRatings: result.user_ratings_total, businessStatus: result.business_status, types: result.types || place.types, category: normalizedCategory, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: result.name || place.name, address: result.formatted_address || place.formatted_address, phone: result.international_phone_number || result.formatted_phone_number, website: result.website, mapsUrl: result.url, rating: result.rating, userRatings: result.user_ratings_total, businessStatus: result.business_status, types: result.types || place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     } catch {
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, category: normalizedCategory, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
   }));
   return enriched;
