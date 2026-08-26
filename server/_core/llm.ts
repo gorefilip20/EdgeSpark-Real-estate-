@@ -212,10 +212,19 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const resolveApiUrl = () => {
+  const fallback = "https://forge.manus.im/v1/chat/completions";
+  const configured = ENV.forgeApiUrl?.trim();
+  if (!configured) return fallback;
+  try {
+    const base = new URL(configured);
+    if (!["http:", "https:"].includes(base.protocol)) return fallback;
+    return `${base.toString().replace(/\/$/, "")}/v1/chat/completions`;
+  } catch {
+    console.warn("[LLM] Invalid BUILT_IN_FORGE_API_URL; using the official Forge endpoint.");
+    return fallback;
+  }
+};
 
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
