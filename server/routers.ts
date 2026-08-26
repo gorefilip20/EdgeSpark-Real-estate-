@@ -39,6 +39,7 @@ import {
 import { storagePut } from "./storage";
 import { ENV } from "./_core/env";
 import { invokeLLM } from "./_core/llm";
+import { sendEdgeParkEmail } from "./email";
 
 const propertyInput = z.object({
   title: z.string().min(4),
@@ -190,6 +191,9 @@ export const appRouter = router({
         console.warn("[International outreach] AI proxy unavailable; returning safe structured fallback:", error instanceof Error ? error.message : error);
         return fallback();
       }
+    }),
+    sendEmail: adminOnly.input(z.object({ to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ input }) => {
+      try { return await sendEdgeParkEmail(input); } catch (error) { throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "Email could not be sent" }); }
     }),
     save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() })),
     update: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["new", "researching", "contacted", "meeting", "won", "archived"]).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ input }) => updateInternationalProspect(input)),
