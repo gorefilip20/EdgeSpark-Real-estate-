@@ -17,9 +17,9 @@ export async function sendEdgeParkEmail(input: { to: string; companyName: string
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error("Enter a valid recipient email address.");
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT || 465);
-  const user = asText(process.env.SMTP_USER);
+  const user = asText(process.env.SMTP_USER) || "edgesparkbusiness@gmail.com";
   const pass = asText(process.env.SMTP_PASS);
-  const from = asText(process.env.EMAIL_FROM) || user;
+  const from = asText(process.env.EMAIL_FROM) || "edgesparkbusiness@gmail.com";
   if (!user || !pass || !from) throw new Error("Email is not configured. Add SMTP_USER, SMTP_PASS, and EMAIL_FROM in Hostinger.");
   const transporter = nodemailer.createTransport({ host, port, secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === "true" : port === 465, auth: { user, pass } });
   await transporter.sendMail({ from, to, subject: input.subject, text: `${input.greeting}\n\n${input.body}\n\n${input.callToAction}\n\nKind regards,\nEdgePark Estate`, html: buildEdgeParkEmail(input) });
