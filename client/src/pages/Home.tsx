@@ -341,6 +341,10 @@ function Footer() {
           >
             Open a conversation <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
+          <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+            <a href="https://x.com/EDGESPARKdu" target="_blank" rel="noreferrer" aria-label="EdgePark Estate on X" className="inline-flex items-center gap-2 text-[#173b46] hover:text-[#bd7b4b]"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#173b46] text-xs font-bold text-white">X</span>Follow us on X</a>
+            <a href="https://www.linkedin.com/in/edgespark-realestate-95a232431/" target="_blank" rel="noreferrer" aria-label="EdgePark Estate on LinkedIn" className="inline-flex items-center gap-2 text-[#173b46] hover:text-[#bd7b4b]"><Linkedin className="h-7 w-7 rounded-full bg-[#173b46] p-1.5 text-white" />LinkedIn</a>
+          </div>
         </div>
       </div>
       <div className="container mt-10 border-t border-[#deded5] pt-5 text-xs text-[#6c7776]">
