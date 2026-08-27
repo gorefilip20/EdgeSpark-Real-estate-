@@ -68,7 +68,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { COOKIE_NAME } from "@shared/const";
 import { toast } from "sonner";
-
+const PUBLIC_GUIDES = [
+  { title: "How to Make Money in Real Estate — EdgeSpark Estate", description: "Profit models, cash flow, financing, partnerships, and responsible investment decisions.", href: "/downloads/how-to-make-money-real-estate-edgespark-estate.pdf" },
+  { title: "How to Source a Good Property and Verify Ownership — EdgeSpark Estate", description: "A practical checklist for title, seller identity, surveys, approvals, inspections, and documents.", href: "/downloads/how-to-source-verify-property-edgespark-estate.pdf" },
+  { title: "How to Attract Buyers — EdgeSpark Estate", description: "Build trust, present property well, qualify enquiries, follow up, and improve conversion.", href: "/downloads/how-to-attract-buyers-edgespark-estate.pdf" },
+  { title: "How to Build a Good Portfolio and Measure Return on Investment — EdgeSpark Estate", description: "Allocation, diversification, income, ROI measures, scenario analysis, reserves, and reporting.", href: "/downloads/how-to-build-portfolio-roi-edgespark-estate.pdf" },
+  { title: "How to Market Real Estate to a Wider Audience — EdgeSpark Estate", description: "Brand, content, search, social media, partnerships, email, campaigns, and measurement.", href: "/downloads/how-to-market-real-estate-edgespark-estate.pdf" },
+  { title: "About EdgePark Estate — EdgeSpark Estate", description: "Our customer promise, partnership model, responsible approach, and growth vision.", href: "/downloads/about-edgepark-estate.pdf" },
+];
 const demoProperties = [
   {
     id: 1,
@@ -319,7 +326,7 @@ function Footer() {
           <div className="mt-4 grid gap-3 text-sm">
             <Link href="/properties">Properties</Link>
             <Link href="/calculator">Deal analyzer</Link>
-            <a href="/downloads/edgespark-real-estate-field-guide.pdf" download>Download field guide</a>
+            <a href="#guides">Download guides</a>
           </div>
         </div>
         <div>
@@ -1517,14 +1524,11 @@ function HomePage() {
           </div>
         </div>
       </section>
-      <section className="bg-[#173b46] py-16 text-white">
-        <div className="container flex flex-col items-start justify-between gap-7 md:flex-row md:items-center">
-          <div className="max-w-2xl">
-            <div className="eyebrow text-[#d59462]">Free field guide</div>
-            <h2 className="mt-3 font-display text-3xl leading-tight sm:text-4xl">Make your next property decision with more clarity.</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-white/65">Download the EdgePark Real Estate Field Guide for practical questions on location, budgets, due diligence, rental economics, and resilience.</p>
-          </div>
-          <a href="/downloads/edgespark-real-estate-field-guide.pdf" download className="inline-flex shrink-0 items-center rounded-full bg-[#bd7b4b] px-5 py-3 text-sm font-semibold text-white hover:bg-[#a9663b]">Download the guide <ArrowDownToLine className="ml-2 h-4 w-4" /></a>
+      <section id="guides" className="bg-[#173b46] py-16 text-white">
+        <div className="container">
+          <div className="eyebrow text-[#d59462]">Free EdgePark library</div>
+          <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><h2 className="font-display text-3xl leading-tight sm:text-4xl">Practical guides for better property decisions.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">Download the six-part EdgePark Estate library for investing, sourcing, buyer attraction, portfolio planning, marketing, and our company story.</p></div></div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{PUBLIC_GUIDES.map((guide, index) => <article key={guide.href} className="flex flex-col justify-between rounded-2xl bg-white/10 p-5"><div><div className="text-xs font-semibold uppercase tracking-[.16em] text-[#d59462]">Guide {index + 1}</div><h3 className="mt-3 font-display text-xl leading-tight">{guide.title}</h3><p className="mt-3 text-sm leading-6 text-white/65">{guide.description}</p></div><a href={guide.href} download className="mt-5 inline-flex w-fit items-center rounded-full bg-[#bd7b4b] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#a9663b]">Download PDF <ArrowDownToLine className="ml-2 h-4 w-4" /></a></article>)}</div>
         </div>
       </section>
       <FounderSection />
