@@ -55,6 +55,7 @@ import {
   buildGoogleMapsDirectionsUrl,
   getPropertyLocationExactness,
   getPropertyMapCenter,
+  normalizeEdgeParkWhatsApp,
 } from "@shared/types";
 import { INTERNATIONAL_MARKETS } from "@shared/internationalMarkets";
 import { trpc } from "@/lib/trpc";
@@ -3322,7 +3323,7 @@ function AdminPage() {
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <a href={buildLeadEmailLink(lead)} className="inline-flex items-center rounded-full bg-[#173b46] px-4 py-2 text-xs font-semibold text-white hover:bg-[#102d36]"><Mail className="mr-2 h-3.5 w-3.5" />Email this lead</a>
-                      {lead.phone ? <a href={`https://wa.me/${String(lead.phone).replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-full border border-[#deded5] px-4 py-2 text-xs font-semibold text-[#173b46] hover:bg-[#ebe9e1]"><MessageCircle className="mr-2 h-3.5 w-3.5" />WhatsApp</a> : null}
+                      {lead.phone ? <a href={`https://wa.me/${normalizeEdgeParkWhatsApp(lead.phone)}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-full border border-[#deded5] px-4 py-2 text-xs font-semibold text-[#173b46] hover:bg-[#ebe9e1]"><MessageCircle className="mr-2 h-3.5 w-3.5" />WhatsApp</a> : null}
                     </div>
                   </div>
                 ))}

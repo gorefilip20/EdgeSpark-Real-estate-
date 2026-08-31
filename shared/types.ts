@@ -30,6 +30,9 @@ export function buildPropertySearchInput(filters: Pick<PropertyFilterDraft, "sea
 }
 
 export const DEVELOPER_WHATSAPP = "2349120045510";
+export function normalizeEdgeParkWhatsApp(_phone?: string | null) {
+  return DEVELOPER_WHATSAPP;
+}
 
 export function buildDeveloperWhatsAppLink(title = "a property") {
   return `https://wa.me/${DEVELOPER_WHATSAPP}?text=${encodeURIComponent(`Hello EdgeSpark, I would like to ask about the availability of ${title}.`)}`;
