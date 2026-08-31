@@ -86,7 +86,7 @@ const demoProperties = [
     propertyType: "duplex",
     transactionType: "buy",
     status: "available",
-    price: 185000000,
+    price: 542500000, // $350,000 base price at the app's NGN/USD reference rate
     bedrooms: 4,
     bathrooms: 5,
     areaSqm: 420,
@@ -98,9 +98,9 @@ const demoProperties = [
     description:
       "TEST LISTING — verify title, price, ownership, and availability before publishing. A private residence concept for premium rental demand and long-term appreciation.",
     media: [
-      { url: "/manus-storage/edgespark-lagos-house_0089859c.jpg" },
-      { url: "/manus-storage/edgespark-house-gallery-01_a3391b93.jpg" },
-      { url: "/manus-storage/edgespark-house-gallery-04_835a7c5f.jpg" },
+      { url: "/properties/lagos-waterfront.jpg" },
+      { url: "/properties/lagos-waterfront.jpg" },
+      { url: "/properties/ikoyi-land.jpg" },
     ],
   },
   {
@@ -112,7 +112,7 @@ const demoProperties = [
     propertyType: "apartment",
     transactionType: "rent",
     status: "available",
-    price: 92000000,
+    price: 697500000, // $450,000 base price at the app's NGN/USD reference rate
     bedrooms: 3,
     bathrooms: 3,
     areaSqm: 210,
@@ -124,13 +124,38 @@ const demoProperties = [
     description:
       "TEST LISTING — verify title, price, ownership, and availability before publishing. A refined urban apartment concept for a high-demand diplomatic corridor.",
     media: [
-      { url: "/manus-storage/edgespark-abuja-apartment_42bedea8.jpg" },
-      { url: "/manus-storage/edgespark-house-gallery-02_5965af11.jpg" },
-      { url: "/manus-storage/edgespark-house-gallery-03_292c1683.jpg" },
+      { url: "/properties/abuja-civic.jpg" },
+      { url: "/properties/abuja-civic.jpg" },
+      { url: "/properties/enugu-residence.jpg" },
     ],
   },
   {
     id: 3,
+    slug: "enugu-garden-residence",
+    title: "Enugu Garden Residence",
+    city: "Enugu",
+    state: "Enugu",
+    propertyType: "apartment",
+    transactionType: "buy",
+    status: "available",
+    price: 302250000, // $195,000 base price at the app's NGN/USD reference rate
+    bedrooms: 4,
+    bathrooms: 4,
+    areaSqm: 280,
+    projectedRoi: "24",
+    projectedYield: "10",
+    featured: 1,
+    published: 1,
+    demo: true,
+    description: "TEST LISTING — verify title, price, ownership, and availability before publishing. A modern Enugu residence concept for family living and long-term rental demand.",
+    media: [
+      { url: "/properties/enugu-residence.jpg" },
+      { url: "/properties/enugu-residence.jpg" },
+      { url: "/properties/abuja-civic.jpg" },
+    ],
+  },
+  {
+    id: 4,
     slug: "ikoyi-development-parcel",
     title: "Ikoyi Development Parcel",
     city: "Ikoyi",
@@ -150,12 +175,18 @@ const demoProperties = [
     description:
       "TEST LISTING — verify title, price, ownership, and availability before publishing. A land parcel concept for boutique residential or hospitality development.",
     media: [
-      { url: "/manus-storage/edgespark-nigeria-land_4cf2be9b.jpg" },
-      { url: "/manus-storage/edgespark-land-gallery-01_5cbf2d8f.jpg" },
-      { url: "/manus-storage/edgespark-nigeria-land_4cf2be9b.jpg" },
+      { url: "/properties/ikoyi-land.jpg" },
+      { url: "/properties/ikoyi-land.jpg" },
+      { url: "/properties/lagos-waterfront.jpg" },
     ],
   },
 ];
+const REQUESTED_CITY_BASE_PRICES: Record<string, number> = { lagos: 542500000, abuja: 697500000, enugu: 302250000 };
+function withRequestedCityPrice(property: any) {
+  const location = `${property?.city || ""} ${property?.state || ""}`.toLowerCase();
+  const city = location.includes("lagos") ? "lagos" : location.includes("abuja") || location.includes("fct") || location.includes("maitama") ? "abuja" : location.includes("enugu") ? "enugu" : null;
+  return city ? { ...property, price: REQUESTED_CITY_BASE_PRICES[city] } : property;
+}
 const dayOfYear = () =>
   Math.floor(
     (Date.now() - new Date(new Date().getUTCFullYear(), 0, 0).getTime()) /
@@ -1366,7 +1397,7 @@ function AboutPage() {
 }
 function HomePage() {
   const { data } = trpc.properties.featured.useQuery();
-  const properties = (data?.length ? data : demoProperties).slice(0, 3);
+  const properties = (data?.length ? data : demoProperties).map(withRequestedCityPrice).slice(0, 3);
   return (
     <div>
       <section className="relative overflow-hidden bg-[#173b46] text-white lg:min-h-[730px]">
@@ -1597,7 +1628,7 @@ function ListingsPage() {
   const { data } = trpc.properties.list.useQuery(
     buildPropertySearchInput(submitted)
   );
-  const filtered = (data?.length ? data : demoProperties).filter((p: any) =>
+  const filtered = (data?.length ? data : demoProperties).map(withRequestedCityPrice).filter((p: any) =>
     matchesPropertyFilters(p, submitted)
   );
   const pageSize = 6;
@@ -2075,10 +2106,11 @@ function PropertyPage() {
   const { data } = trpc.properties.bySlug.useQuery({
     slug: params?.slug || "",
   });
-  const property =
+  const property = withRequestedCityPrice(
     data ||
-    demoProperties.find(p => p.slug === params?.slug) ||
-    demoProperties[0];
+      demoProperties.find(p => p.slug === params?.slug) ||
+      demoProperties[0]
+  );
   const locationCenter = getPropertyMapCenter(property);
   const locationExactness = getPropertyLocationExactness(property);
   const directionsUrl = buildGoogleMapsDirectionsUrl(property);
