@@ -240,6 +240,22 @@ export async function enrichPublicWebsite(website: string) {
     return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: text.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
   } finally { clearTimeout(timeout); }
 }
+export async function discoverPublicContacts(input: { businessName: string; country?: string; category?: string }) {
+  const query = [input.businessName, input.category, input.country].filter(Boolean).join(" ").trim();
+  if (!query) throw new Error("A business name is required to discover public contacts.");
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  const response = await fetch(searchUrl, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0", Accept: "text/html" } });
+  if (!response.ok) throw new Error("The public contact search provider could not be reached.");
+  const html = (await response.text()).slice(0, 500_000);
+  const links = uniqueMatches(Array.from(html.matchAll(/uddg=([^&\"']+)/gi), match => { try { return decodeURIComponent(match[1]); } catch { return ""; } }).map(link => link.replace(/&amp;/g, "&"))).map(link => safePublicUrl(link)).filter((url): url is URL => Boolean(url)).filter(url => !/(duckduckgo|google|bing|yahoo|wikipedia|openstreetmap)\./i.test(url.hostname));
+  const profiles = [];
+  for (const url of links.slice(0, 5)) {
+    try { profiles.push(await enrichPublicWebsite(url.toString())); } catch { /* Continue to the next public result. */ }
+    if (profiles.some(profile => profile.email || profile.phone)) break;
+  }
+  const best = profiles.sort((a, b) => Number(Boolean(b.email)) + Number(Boolean(b.phone)) - Number(Boolean(a.email)) - Number(Boolean(a.phone)))[0];
+  return best ? { ...best, searchedFor: query, sources: profiles.map(profile => profile.sourceUrl).filter(Boolean) } : { contactName: null, contactRole: "Business Development / Partnerships team", email: null, phone: null, website: null, bookingUrl: null, sourceUrl: null, publicSummary: null, additionalEmails: [], additionalPhones: [], searchedFor: query, sources: [] };
+}
 export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select({ prospect: internationalProspects, contact: internationalProspectContacts }).from(internationalProspects).leftJoin(internationalProspectContacts, eq(internationalProspects.id, internationalProspectContacts.prospectId)).orderBy(desc(internationalProspects.updatedAt)).then(rows => rows.map(({ prospect, contact }) => ({ ...prospect, contact }))); }
 export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; notes?: string; pitchAngle?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); await db.insert(internationalProspects).values(input).onConflictDoUpdate({ target: internationalProspects.placeId, set: { notes: input.notes, pitchAngle: input.pitchAngle } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
 export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values(input).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: contactUpdate }); return { success: true }; }
