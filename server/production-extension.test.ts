@@ -72,7 +72,7 @@ describe("submitted search and partnership lead contracts", () => {
 
   it("routes the developer contact action to the requested WhatsApp inbox", () => {
     const link = buildDeveloperWhatsAppLink("Lagos Waterfront Residence");
-    expect(link).toContain("https://wa.me/2348141997159");
+    expect(link).toContain("https://wa.me/2349120045510");
     expect(decodeURIComponent(link)).toContain("Lagos Waterfront Residence");
   });
 
