@@ -138,7 +138,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   }
   let candidates = Array.from(allPlaces.values()).slice(0, 12);
   if (!candidates.length) {
-    type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string };
+    type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string; extratags?: Record<string, string> };
     const osmQueries = Array.from(new Set([
       `${normalizedCategory}, ${market.name}`,
       `${requested}, ${market.name}`,
@@ -149,7 +149,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
     const osmPlaces = new Map<string, OsmPlace>();
     for (const osmText of osmQueries) {
       const osmQuery = encodeURIComponent(osmText);
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=12&q=${osmQuery}`, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=12&q=${osmQuery}`, { headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0 (contact@edgesparkestate.site)", Accept: "application/json" } });
       if (!response.ok) continue;
       const found = await response.json() as OsmPlace[];
       for (const place of found) {
@@ -159,7 +159,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       }
       if (osmPlaces.size >= 12) break;
     }
-    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory] }));
+    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory], phone: place.extratags?.phone || place.extratags?.contact_phone, website: place.extratags?.website || place.extratags?.contact_website, email: place.extratags?.email || place.extratags?.contact_email, contact_name: place.extratags?.contact_name, contact_role: place.extratags?.contact_role }));
   }
   if (!candidates.length) {
     type WikiSearch = { pageid: number; title: string };
@@ -198,7 +198,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${researchQuery}`, rating: undefined, userRatings: undefined, businessStatus: "Research lead — verify publicly", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
     if (String(place.place_id).startsWith("osm-")) {
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: `https://www.openstreetmap.org/${String(place.place_id).replace(/^osm-/, "").replace(/-/, "/")}`, rating: undefined, userRatings: undefined, businessStatus: "Listed on OpenStreetMap", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: (place as any).phone, email: (place as any).email, contactName: (place as any).contact_name || null, contactRole: (place as any).contact_role || "Business Development / Partnerships team", website: (place as any).website, mapsUrl: `https://www.openstreetmap.org/${String(place.place_id).replace(/^osm-/, "").replace(/-/, "/")}`, rating: undefined, userRatings: undefined, businessStatus: "Listed on OpenStreetMap — verify details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
     try {
       const detail = await makeRequest<PlaceDetailsResult>("/maps/api/place/details/json", { place_id: place.place_id, fields: "place_id,name,formatted_address,international_phone_number,website,url,rating,user_ratings_total,business_status,geometry,types" });
@@ -222,10 +222,19 @@ export async function enrichPublicWebsite(website: string) {
     const response = await fetch(source, { signal: controller.signal, headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0" } });
     if (!response.ok) throw new Error("The public website could not be reached.");
     const html = (await response.text()).slice(0, 900_000);
-    const emails = uniqueMatches(Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")).filter(email => /@/.test(email)));
-    const phones = uniqueMatches(Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])));
+    const visibleText = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+    const emails = uniqueMatches([
+      ...Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")),
+      ...Array.from(visibleText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi), match => match[0]),
+      ...Array.from(html.matchAll(/(?:email|e-mail|contact)[^<]{0,80}?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi), match => match[1]),
+    ].filter(email => /@/.test(email)));
+    const phones = uniqueMatches([
+      ...Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])),
+      ...Array.from(visibleText.matchAll(/(?:\+?\d[\d .()\-]{7,}\d)/g), match => match[0].trim()),
+      ...Array.from(html.matchAll(/(?:phone|telephone|mobile|whatsapp)[^<]{0,100}?((?:\+?\d[\d .()\-]{7,}\d))/gi), match => match[1].trim()),
+    ]);
     const bookingUrls = uniqueMatches(Array.from(html.matchAll(/https?:\/\/[^\"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
-    const text = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const text = visibleText;
     const contactRole = /(partnership|business development|strategic alliance)/i.test(text) ? "Partnerships / Business Development" : /(investor relations|investor)/i.test(text) ? "Investor Relations" : "Business Development / Partnerships team";
     const contactPage = Array.from(html.matchAll(/href=[\"']([^\"']+)[\"']/gi), match => match[1]).map(href => { try { return new URL(href, source).toString(); } catch { return ""; } }).find(url => /(contact|about|team|leadership|partnership)/i.test(url));
     return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: text.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
