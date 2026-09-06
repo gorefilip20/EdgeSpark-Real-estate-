@@ -208,7 +208,35 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, mapsUrl: undefined, rating: place.rating, userRatings: place.user_ratings_total, businessStatus: place.business_status, types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
   }));
-  return enriched;
+  const hydrated = await Promise.all(enriched.slice(0, 8).map(async (result: any) => {
+    let profile: any = null;
+    const officialWebsite = safePublicUrl(result.website || "");
+    if (officialWebsite) {
+      try { profile = await enrichPublicWebsite(officialWebsite.toString()); } catch { profile = null; }
+    }
+    if (!profile?.email && !profile?.phone) {
+      try {
+        profile = await discoverPublicContacts({ businessName: result.name, country: market.name, category: normalizedCategory });
+      } catch { profile = profile || null; }
+    }
+    return {
+      ...result,
+      email: result.email || profile?.email || undefined,
+      phone: result.phone || profile?.phone || undefined,
+      contactName: result.contactName || profile?.contactName || null,
+      contactRole: result.contactRole || profile?.contactRole || "Business Development / Partnerships team",
+      bookingUrl: profile?.bookingUrl || undefined,
+      contactPage: profile?.sourceUrl || undefined,
+      additionalEmails: profile?.additionalEmails || [],
+      additionalPhones: profile?.additionalPhones || [],
+      contactStatus: profile?.email || profile?.phone || result.email || result.phone ? "Public contact found — verify before outreach" : "No public phone/email found — verify website",
+      contactSource: profile?.sourceUrl || result.website || result.mapsUrl || null,
+    };
+  }));
+  return [...hydrated, ...enriched.slice(8)].sort((a: any, b: any) => {
+    const score = (item: any) => Number(Boolean(item.email)) * 4 + Number(Boolean(item.phone)) * 3 + Number(Boolean(item.website)) * 2 + Number(Boolean(item.contactPage));
+    return score(b) - score(a);
+  });
 }
 
 function uniqueMatches(values: string[]) { return Array.from(new Set(values.map(value => value.trim()).filter(Boolean))); }
