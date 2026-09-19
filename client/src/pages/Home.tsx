@@ -1206,6 +1206,15 @@ function FounderSection() {
       linkedin: "https://www.linkedin.com/in/ben-ikwuagwu-52918a306",
       image: "/team/benjamin.jpg",
     },
+    {
+      initials: "AH",
+      name: "Husein Al Hilou",
+      role: "Property Consultant · Tanami Properties L.L.C.",
+      bio: "Consultant collaborator supporting United Emirates housing and properties initiatives. Broker Card No. 98288 · valid 30 June 2026 – 30 June 2027.",
+      email: "",
+      linkedin: "/corporate-profile.html#consulting-collaboration",
+      image: "/partner/tanami-broker-card.jpg",
+    },
   ];
   return (
     <section className="bg-[#173b46] py-24 text-white">
@@ -1243,23 +1252,22 @@ function FounderSection() {
                 {founder.bio}
               </p>
               <div className="mt-7 flex flex-wrap gap-3 border-t border-white/10 pt-5">
-                <a
+                {founder.email ? <a
                   href={`mailto:${founder.email}`}
                   className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-[#d59462] hover:text-[#d59462]"
                   aria-label={`Email ${founder.name}`}
                 >
                   <Mail className="h-4 w-4" />
                   Email
-                </a>
+                </a> : null}
                 <a
                   href={founder.linkedin}
-                  target="_blank"
-                  rel="noreferrer"
+                  target={founder.email ? "_blank" : undefined}
+                  rel={founder.email ? "noreferrer" : undefined}
                   className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-[#d59462] hover:text-[#d59462]"
-                  aria-label={`Open LinkedIn for ${founder.name}`}
+                  aria-label={founder.email ? `Open LinkedIn for ${founder.name}` : `View collaboration profile for ${founder.name}`}
                 >
-                  <Linkedin className="h-4 w-4" />
-                  LinkedIn
+                  {founder.email ? <><Linkedin className="h-4 w-4" /> LinkedIn</> : <>View profile</>}
                 </a>
               </div>
             </article>
