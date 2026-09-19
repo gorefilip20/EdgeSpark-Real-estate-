@@ -1213,7 +1213,7 @@ function FounderSection() {
       bio: "Consultant collaborator supporting United Emirates housing and properties initiatives. Broker Card No. 98288 · valid 30 June 2026 – 30 June 2027.",
       email: "",
       linkedin: "/corporate-profile.html#consulting-collaboration",
-      image: "/partner/tanami-broker-card.jpg",
+      image: "/partner/husein-al-hilou.jpg",
     },
   ];
   return (
@@ -1277,24 +1277,33 @@ function FounderSection() {
     </section>
   );
 }
+const PHONE_COUNTRIES = [
+  ["NG", "Nigeria", "+234"], ["US", "United States", "+1"], ["AE", "United Arab Emirates", "+971"], ["GB", "United Kingdom", "+44"], ["CA", "Canada", "+1"], ["AU", "Australia", "+61"], ["ZA", "South Africa", "+27"], ["GH", "Ghana", "+233"], ["KE", "Kenya", "+254"], ["TZ", "Tanzania", "+255"], ["UG", "Uganda", "+256"], ["RW", "Rwanda", "+250"], ["EG", "Egypt", "+20"], ["MA", "Morocco", "+212"], ["SA", "Saudi Arabia", "+966"], ["QA", "Qatar", "+974"], ["KW", "Kuwait", "+965"], ["BH", "Bahrain", "+973"], ["IN", "India", "+91"], ["PK", "Pakistan", "+92"], ["BD", "Bangladesh", "+880"], ["CN", "China", "+86"], ["JP", "Japan", "+81"], ["SG", "Singapore", "+65"], ["MY", "Malaysia", "+60"], ["DE", "Germany", "+49"], ["FR", "France", "+33"], ["IT", "Italy", "+39"], ["ES", "Spain", "+34"], ["NL", "Netherlands", "+31"], ["CH", "Switzerland", "+41"], ["SE", "Sweden", "+46"], ["NO", "Norway", "+47"], ["BR", "Brazil", "+55"], ["MX", "Mexico", "+52"], ["AR", "Argentina", "+54"], ["CL", "Chile", "+56"], ["TR", "Türkiye", "+90"], ["IL", "Israel", "+972"], ["KR", "South Korea", "+82"], ["NZ", "New Zealand", "+64"], ["Other", "Other country", "+"] as const,
+];
+const detectPhoneCountry = () => {
+  if (typeof navigator === "undefined") return "NG";
+  const region = (navigator.language.split("-")[1] || "NG").toUpperCase();
+  return PHONE_COUNTRIES.some(([code]) => code === region) ? region : "NG";
+};
 function BookingSection() {
   const submitBooking = trpc.leads.submitPartnership.useMutation({
     onSuccess: () => {
       toast.success("Thanks — the EdgeSpark team will be in touch soon.");
-      setForm({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "" });
+      setForm({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "", preferredTime: "" });
     },
     onError: error => toast.error(error.message || "We could not send your request."),
   });
-  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "" });
+  const [phoneCountry, setPhoneCountry] = useState(detectPhoneCountry);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "", preferredTime: "" });
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     submitBooking.mutate({
       role: "investor",
       name: form.name,
       email: form.email,
-      phone: form.phone || undefined,
+      phone: form.phone ? `${PHONE_COUNTRIES.find(([code]) => code === phoneCountry)?.[2] || ""} ${form.phone}`.trim() : undefined,
       company: form.company || undefined,
-      message: `Booking request${form.preferredDate ? ` · Preferred date: ${form.preferredDate}` : ""}\n\n${form.message}`,
+      message: `Booking request${form.preferredDate ? ` · Preferred date: ${form.preferredDate}` : ""}${form.preferredTime ? ` · Preferred time: ${form.preferredTime}` : ""}\n\n${form.message}`,
     });
   };
   return (
@@ -1314,9 +1323,10 @@ function BookingSection() {
           <div className="grid gap-5 md:grid-cols-2">
             <label className="text-sm font-semibold text-[#173b46]">Full name<input required value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Your name" /></label>
             <label className="text-sm font-semibold text-[#173b46]">Email address<input required type="email" value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="you@example.com" /></label>
-            <label className="text-sm font-semibold text-[#173b46]">Phone / WhatsApp<input value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="+234 …" /></label>
+            <label className="text-sm font-semibold text-[#173b46] md:col-span-2">Phone / WhatsApp<div className="mt-2 flex gap-2"><select value={phoneCountry} onChange={event => setPhoneCountry(event.target.value)} className="w-[46%] rounded-xl border border-[#deded5] bg-white px-3 py-3 font-normal outline-none transition focus:border-[#bd7b4b] sm:w-[42%]">{PHONE_COUNTRIES.map(([code, name, dial]) => <option key={code} value={code}>{name} {dial !== "+" ? `(${dial})` : ""}</option>)}</select><input value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value.replace(/[^0-9\s()-]/g, "") })} className="min-w-0 flex-1 rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Local number" inputMode="tel" /></div><span className="mt-2 block text-xs font-normal text-[#6c7776]">Country code is set from the visitor’s browser region and can be changed anytime.</span></label>
             <label className="text-sm font-semibold text-[#173b46]">Company or organisation<input value={form.company} onChange={event => setForm({ ...form, company: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Optional" /></label>
             <label className="text-sm font-semibold text-[#173b46]">Preferred date<input type="date" value={form.preferredDate} onChange={event => setForm({ ...form, preferredDate: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" /></label>
+            <label className="text-sm font-semibold text-[#173b46]">Preferred time<select value={form.preferredTime} onChange={event => setForm({ ...form, preferredTime: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]"><option value="">Select a time</option>{Array.from({ length: 22 }, (_, index) => { const minutes = 8 * 60 + index * 30; const hour = Math.floor(minutes / 60); const minute = minutes % 60; const label = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`; return <option key={label} value={label}>{label}</option>; })}</select></label>
             <label className="text-sm font-semibold text-[#173b46] md:col-span-2">What would you like to discuss?<textarea required minLength={10} value={form.message} onChange={event => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-28 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Property, investment, housing project, or consulting request" /></label>
           </div>
           <button type="submit" disabled={submitBooking.isPending} className="mt-6 inline-flex items-center rounded-full bg-[#bd7b4b] px-6 py-3 font-semibold text-white transition hover:bg-[#a9663b] disabled:cursor-not-allowed disabled:opacity-60">{submitBooking.isPending ? "Sending request…" : "Request a booking"}<ArrowRight className="ml-2 h-4 w-4" /></button>
