@@ -498,7 +498,7 @@ a{text-decoration:none;color:inherit}
   <div class="container">
     <div class="reveal" style="text-align:center;margin-bottom:3rem"><span class="type-overline">The Founding Team</span><h2 class="type-h1" style="margin-top:.75rem">Meet the Founders</h2><p class="type-body" style="margin-top:.75rem;max-width:600px;margin:0 auto">Two founders with complementary strengths covering the full deal lifecycle.</p></div>
     <div class="team-grid">
-      <div class="founder-card reveal"><div class="founder-top"><div class="founder-avatar">EU</div><div><div class="founder-name">Evarestus Chinecherem Ugwuokanya</div><div class="founder-role">Founder & Managing Director</div></div></div><p class="founder-bio">Leads deal sourcing, property acquisition, and all on-the-ground operations across Nigerian cities.</p><div class="founder-contact"><a href="mailto:evarestuschinecherem@gmail.com">evarestuschinecherem@gmail.com</a></div></div>
+      <div class="founder-card reveal"><div class="founder-top"><div class="founder-avatar">EU</div><div><div class="founder-name">Evarestus Chinecherem Ugwuokanya</div><div class="founder-role">Founder & Managing Director</div></div></div><p class="founder-bio">Leads deal sourcing, property acquisition, and all on-the-ground operations across Nigerian cities.</p><div class="founder-contact"><a href="mailto:edgesparkbusiness@gmail.com">edgesparkbusiness@gmail.com</a></div></div>
       <div class="founder-card reveal reveal-d1"><div class="founder-top"><div class="founder-avatar">BI</div><div><div class="founder-name">Benjamin Chisom Ikwuagwu</div><div class="founder-role">Co-Founder</div></div></div><p class="founder-bio">Drives financial analysis, investor relations, and deal structuring for full transparency.</p><div class="founder-contact"><a href="mailto:Benjamin.c.ikwuagwu@gmail.com">Benjamin.c.ikwuagwu@gmail.com</a></div></div>
     </div>
   </div>
@@ -525,7 +525,7 @@ a{text-decoration:none;color:inherit}
       <div class="reveal"><span class="type-overline">Get In Touch</span><h2 class="type-h1" style="margin-top:.75rem">Request the full deck</h2><p class="type-body" style="margin-top:1rem">Tell us about yourself and we'll share the complete pitch deck — no obligation.</p>
         <div style="margin-top:2rem">
           <div class="contact-info-item"><div class="contact-info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="contact-info-label">Head Office</div><div class="contact-info-value">Enugu, Nigeria</div></div></div>
-          <div class="contact-info-item"><div class="contact-info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></div><div><div class="contact-info-label">Email</div><div class="contact-info-value">evarestuschinecherem@gmail.com</div></div></div>
+          <div class="contact-info-item"><div class="contact-info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></div><div><div class="contact-info-label">Email</div><div class="contact-info-value">edgesparkbusiness@gmail.com</div></div></div>
         </div>
       </div>
       <form class="reveal reveal-d1" id="contactForm">
@@ -555,7 +555,7 @@ a{text-decoration:none;color:inherit}
       <div><div class="brand" style="margin-bottom:1rem"><span class="brand-mark"><svg viewBox="0 0 40 40" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="6" fill="#0F1729"/><path d="M20 8L10 19h20z" fill="#C9A24B"/><rect x="14" y="21" width="12" height="11" rx="1" fill="#C9A24B"/><rect x="17.5" y="24" width="5" height="8" rx=".5" fill="#0F1729"/></svg></span><span class="brand-text"><span class="brand-name" style="color:#fff">EdgeSpark</span></span></div><p style="font-size:.85rem;line-height:1.7;max-width:300px;margin-bottom:1rem">A real estate investment vehicle operated by Evarestus Company Ltd.</p><p class="footer-reg">Evarestus Company Ltd<br>RC 8864759 · CAC Registered<br>Enugu, Nigeria</p></div>
       <div><h4>Explore</h4><a href="#opportunity">The Opportunity</a><a href="#how">How It Works</a><a href="#protection">Capital Protection</a><a href="#team">Our Team</a></div>
       <div><h4>Learn</h4><a href="#">Buy · Add Value · Resell</a><a href="#">Deal Analyzer Guide</a><a href="#">Joint Ventures 101</a><a href="#">Investor Glossary</a></div>
-      <div><h4>Contact</h4><a href="mailto:evarestuschinecherem@gmail.com">Email Us</a><a href="#contact">Request the Deck</a></div>
+      <div><h4>Contact</h4><a href="mailto:edgesparkbusiness@gmail.com">Email Us</a><a href="#contact">Request the Deck</a></div>
     </div>
     <div class="footer-disclaimer"><strong>Disclaimer:</strong> This website is for informational purposes and does not constitute legal or investment advice. All investments carry risk.</div>
     <div class="footer-bottom"><span>&copy; 2026 Evarestus Company Ltd. All rights reserved.</span><span>EdgeSpark</span></div>
@@ -1440,7 +1440,7 @@ async function loadProperty(){
         '<h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem">Capital Protection</h3>'+
         '<ol class="protection-list"><li>Title-verified at Land Registry</li><li>Written JV agreement</li><li>Full Deal Analyzer transparency</li><li>Start small, build trust</li></ol>'+
         (isSold?'':'<button class="cta-btn" onclick="window.location=\'/api/public/page/register\'">Express Interest →</button>')+
-        '<div class="contact-info">Questions? <a href="mailto:evarestuschinecherem@gmail.com">evarestuschinecherem@gmail.com</a></div>'+
+        '<div class="contact-info">Questions? <a href="mailto:edgesparkbusiness@gmail.com">edgesparkbusiness@gmail.com</a></div>'+
       '</div>'+
       '<div>'+
         '<div class="deal-card" id="dealAnalyzer"><h2>Deal Analyzer</h2><p style="color:#A8A29E">Loading deal data...</p></div>'+

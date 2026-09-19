@@ -1193,7 +1193,7 @@ function FounderSection() {
       name: "Evarestus Chinecherem Ugwuokanya",
       role: "Founder & Managing Director",
       bio: "Leads deal sourcing, property acquisition, and on-the-ground operations, bringing disciplined diligence to each opportunity.",
-      email: "evarestusuchinecherem@gmail.com",
+      email: "edgesparkbusiness@gmail.com",
       linkedin: "https://www.linkedin.com/in/evarestus-chinecherem-4269a5363",
       image: "/team/evaristus-chinyere.jpg",
     },
@@ -1273,6 +1273,54 @@ function FounderSection() {
             </article>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+function BookingSection() {
+  const submitBooking = trpc.leads.submitPartnership.useMutation({
+    onSuccess: () => {
+      toast.success("Thanks — the EdgeSpark team will be in touch soon.");
+      setForm({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "" });
+    },
+    onError: error => toast.error(error.message || "We could not send your request."),
+  });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", company: "", message: "", preferredDate: "" });
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submitBooking.mutate({
+      role: "investor",
+      name: form.name,
+      email: form.email,
+      phone: form.phone || undefined,
+      company: form.company || undefined,
+      message: `Booking request${form.preferredDate ? ` · Preferred date: ${form.preferredDate}` : ""}\n\n${form.message}`,
+    });
+  };
+  return (
+    <section id="booking" className="bg-[#f1f0ea] py-20">
+      <div className="container grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
+        <div>
+          <div className="eyebrow text-[#bd7b4b]">Book a conversation</div>
+          <h2 className="mt-4 font-display text-4xl leading-tight text-[#173b46] md:text-5xl">Speak with EdgeSpark Estate.</h2>
+          <p className="mt-5 max-w-md text-base leading-7 text-[#6c7776]">Book a practical conversation about a property opportunity, an investment mandate, a United Emirates housing project, or a consulting collaboration.</p>
+          <div className="mt-8 rounded-2xl bg-[#173b46] p-6 text-white">
+            <div className="text-xs font-bold uppercase tracking-[.16em] text-[#d59462]">Direct contact</div>
+            <a href="mailto:edgesparkbusiness@gmail.com" className="mt-3 block font-display text-xl hover:text-[#d59462]">edgesparkbusiness@gmail.com</a>
+            <p className="mt-2 text-sm leading-6 text-white/60">Tell us what you are exploring and the right member of the team will respond.</p>
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="rounded-[1.4rem] border border-[#deded5] bg-white p-6 shadow-sm md:p-8">
+          <div className="grid gap-5 md:grid-cols-2">
+            <label className="text-sm font-semibold text-[#173b46]">Full name<input required value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Your name" /></label>
+            <label className="text-sm font-semibold text-[#173b46]">Email address<input required type="email" value={form.email} onChange={event => setForm({ ...form, email: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="you@example.com" /></label>
+            <label className="text-sm font-semibold text-[#173b46]">Phone / WhatsApp<input value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="+234 …" /></label>
+            <label className="text-sm font-semibold text-[#173b46]">Company or organisation<input value={form.company} onChange={event => setForm({ ...form, company: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Optional" /></label>
+            <label className="text-sm font-semibold text-[#173b46]">Preferred date<input type="date" value={form.preferredDate} onChange={event => setForm({ ...form, preferredDate: event.target.value })} className="mt-2 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" /></label>
+            <label className="text-sm font-semibold text-[#173b46] md:col-span-2">What would you like to discuss?<textarea required minLength={10} value={form.message} onChange={event => setForm({ ...form, message: event.target.value })} className="mt-2 min-h-28 w-full rounded-xl border border-[#deded5] px-4 py-3 font-normal outline-none transition focus:border-[#bd7b4b]" placeholder="Property, investment, housing project, or consulting request" /></label>
+          </div>
+          <button type="submit" disabled={submitBooking.isPending} className="mt-6 inline-flex items-center rounded-full bg-[#bd7b4b] px-6 py-3 font-semibold text-white transition hover:bg-[#a9663b] disabled:cursor-not-allowed disabled:opacity-60">{submitBooking.isPending ? "Sending request…" : "Request a booking"}<ArrowRight className="ml-2 h-4 w-4" /></button>
+        </form>
       </div>
     </section>
   );
@@ -1574,6 +1622,7 @@ function HomePage() {
         </div>
       </section>
       <FounderSection />
+      <BookingSection />
       <section className="bg-[#bd7b4b] py-20 text-white">
         <div className="container flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
           <div>
