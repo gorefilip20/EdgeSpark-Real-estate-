@@ -41,6 +41,8 @@ import { storagePut } from "./storage";
 import { ENV } from "./_core/env";
 import { invokeLLM } from "./_core/llm";
 import { sendEdgeParkEmail } from "./email";
+import { verifyCacBusiness } from "./integrations/cacVas";
+import { createDealFromInquiry, createOwnerProfile, createVerificationCheck, getOwnerProfileForUser, linkOwnerProperty, listDeals, listOwnerProfiles, listVerificationChecks, updateDealStatus, updateVerificationCheck } from "./verification";
 
 const propertyInput = z.object({
   title: z.string().min(4),
@@ -370,6 +372,23 @@ export const appRouter = router({
           .where((await import("drizzle-orm")).eq(properties.id, input.id));
         return { success: true };
       }),
+  }),
+  owners: router({
+    createProfile: protectedProcedure.input(z.object({ ownerType: z.enum(["individual", "company", "agent", "developer", "representative"]), legalName: z.string().min(2).max(180), displayName: z.string().min(2).max(180), companyName: z.string().max(180).optional(), cacNumber: z.string().max(80).optional(), lasreraNumber: z.string().max(80).optional(), state: z.string().max(80).optional(), city: z.string().max(100).optional(), email: z.string().email(), phone: z.string().max(60).optional(), publicEmailAllowed: z.boolean().default(false), publicPhoneAllowed: z.boolean().default(false), marketingOptIn: z.boolean().default(false) })).mutation(({ ctx, input }) => createOwnerProfile(ctx.user.id, input)),
+    mine: protectedProcedure.query(({ ctx }) => getOwnerProfileForUser(ctx.user.id)),
+    linkProperty: protectedProcedure.input(z.object({ ownerProfileId: z.number().int(), propertyId: z.number().int(), relationshipType: z.string().min(2).max(60) })).mutation(({ input }) => linkOwnerProperty(input)),
+    adminList: adminOnly.query(() => listOwnerProfiles()),
+  }),
+  verification: router({
+    adminList: adminOnly.input(z.object({ ownerProfileId: z.number().int().optional() }).optional()).query(({ input }) => listVerificationChecks(input?.ownerProfileId)),
+    create: adminOnly.input(z.object({ ownerProfileId: z.number().int(), propertyId: z.number().int().optional(), checkType: z.enum(["contact_email", "contact_phone", "cac_business", "lasrera_practitioner", "property_authority", "identity", "manual_review"]), provider: z.string().min(2).max(80), resultSummary: z.string().max(4000).optional(), providerReference: z.string().max(180).optional(), status: z.enum(["pending", "verified", "failed", "expired"]).default("pending"), expiresAt: z.coerce.date().optional() })).mutation(({ ctx, input }) => createVerificationCheck({ ...input, reviewerId: ctx.user.id })),
+    runCac: adminOnly.input(z.object({ ownerProfileId: z.number().int(), registrationNumber: z.string().min(2).max(80), entityName: z.string().max(180).optional() })).mutation(async ({ ctx, input }) => { const result = await verifyCacBusiness(input); return createVerificationCheck({ ownerProfileId: input.ownerProfileId, checkType: "cac_business", provider: result.provider, status: result.status === "verified" ? "verified" : result.status === "manual_review" ? "pending" : "failed", resultSummary: result.resultSummary, providerReference: result.providerReference, reviewerId: ctx.user.id, expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) }); }),
+    update: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["pending", "verified", "failed", "expired"]), reviewerNotes: z.string().max(4000).optional(), resultSummary: z.string().max(4000).optional() })).mutation(({ ctx, input }) => updateVerificationCheck({ ...input, reviewerId: ctx.user.id })),
+  }),
+  deals: router({
+    adminList: adminOnly.query(() => listDeals()),
+    createFromInquiry: adminOnly.input(z.object({ inquiryId: z.number().int(), ownerProfileId: z.number().int().optional(), propertyId: z.number().int().optional() })).mutation(({ ctx, input }) => createDealFromInquiry({ ...input, assignedAdminId: ctx.user.id })),
+    updateStatus: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["new", "qualified", "owner_contacted", "client_contacted", "viewing_scheduled", "offer", "negotiation", "won", "lost", "on_hold"]), note: z.string().max(4000).optional(), nextActionAt: z.coerce.date().optional() })).mutation(({ ctx, input }) => updateDealStatus({ ...input, actorId: ctx.user.id })),
   }),
   leads: router({
     submitInquiry: publicProcedure

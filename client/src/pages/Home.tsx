@@ -306,6 +306,7 @@ function Header({ dark = false }: { dark?: boolean }) {
           <Link href="/about">About us</Link>
           <Link href="/calculator">Deal analyzer</Link>
           <Link href="/partner">Partner with us</Link>
+          <Link href="/owner/onboard">List a property</Link>
           <Link href="/account">Account</Link>
           <Link href="/shortlist">Shortlist</Link>
         </nav>
@@ -334,6 +335,7 @@ function Header({ dark = false }: { dark?: boolean }) {
             <Link href="/about">About us</Link>
             <Link href="/calculator">Deal analyzer</Link>
             <Link href="/partner">Partner with us</Link>
+            <Link href="/owner/onboard">List a property</Link>
             <Link href="/account">Account</Link>
             <Link href="/shortlist">Shortlist</Link>
           </div>
@@ -367,6 +369,7 @@ function Footer() {
             <Link href="/partner">Investors</Link>
             <Link href="/partner">Owners & developers</Link>
             <Link href="/partner">Agents & realtors</Link>
+            <Link href="/owner/onboard">List a property</Link>
           </div>
         </div>
         <div>

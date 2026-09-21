@@ -10,6 +10,11 @@ export const status_new_contacted_qualified_closed_enum = pgEnum("status_new_con
 export const leadType_inquiry_partnership_enum = pgEnum("leadType_inquiry_partnership_enum", ["inquiry", "partnership"]);
 export const role_investor_owner_agent_developer_realtor_enum = pgEnum("role_investor_owner_agent_developer_realtor_enum", ["investor", "owner", "agent", "developer", "realtor"]);
 export const status_new_reviewed_contacted_approved_declined_enum = pgEnum("status_new_reviewed_contacted_approved_declined_enum", ["new", "reviewed", "contacted", "approved", "declined"]);
+export const ownerType_individual_company_agent_developer_representative_enum = pgEnum("ownerType_individual_company_agent_developer_representative_enum", ["individual", "company", "agent", "developer", "representative"]);
+export const ownerApplicationStatus_draft_submitted_under_review_needs_information_approved_published_suspended_rejected_expired_disputed_enum = pgEnum("ownerApplicationStatus_draft_submitted_under_review_needs_information_approved_published_suspended_rejected_expired_disputed_enum", ["draft", "submitted", "under_review", "needs_information", "approved", "published", "suspended", "rejected", "expired", "disputed"]);
+export const verificationCheckType_contact_email_contact_phone_cac_business_lasrera_practitioner_property_authority_identity_manual_review_enum = pgEnum("verificationCheckType_contact_email_contact_phone_cac_business_lasrera_practitioner_property_authority_identity_manual_review_enum", ["contact_email", "contact_phone", "cac_business", "lasrera_practitioner", "property_authority", "identity", "manual_review"]);
+export const verificationCheckStatus_pending_verified_failed_expired_enum = pgEnum("verificationCheckStatus_pending_verified_failed_expired_enum", ["pending", "verified", "failed", "expired"]);
+export const dealStatus_new_qualified_owner_contacted_client_contacted_viewing_scheduled_offer_negotiation_won_lost_on_hold_enum = pgEnum("dealStatus_new_qualified_owner_contacted_client_contacted_viewing_scheduled_offer_negotiation_won_lost_on_hold_enum", ["new", "qualified", "owner_contacted", "client_contacted", "viewing_scheduled", "offer", "negotiation", "won", "lost", "on_hold"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -166,6 +171,41 @@ export const partnershipApplications = pgTable("partnershipApplications", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
+export const ownerProfiles = pgTable("ownerProfiles", {
+  id: serial("id").primaryKey(), userId: integer("userId"),
+  ownerType: ownerType_individual_company_agent_developer_representative_enum("ownerType").notNull(),
+  legalName: varchar("legalName", { length: 180 }).notNull(), displayName: varchar("displayName", { length: 180 }).notNull(),
+  companyName: varchar("companyName", { length: 180 }), cacNumber: varchar("cacNumber", { length: 80 }), lasreraNumber: varchar("lasreraNumber", { length: 80 }),
+  state: varchar("state", { length: 80 }), city: varchar("city", { length: 100 }), email: varchar("email", { length: 320 }).notNull(), phone: varchar("phone", { length: 60 }),
+  status: ownerApplicationStatus_draft_submitted_under_review_needs_information_approved_published_suspended_rejected_expired_disputed_enum("status").default("draft").notNull(),
+  publicEmailAllowed: integer("publicEmailAllowed").default(0).notNull(), publicPhoneAllowed: integer("publicPhoneAllowed").default(0).notNull(), marketingOptIn: integer("marketingOptIn").default(0).notNull(), privacyNoticeVersion: varchar("privacyNoticeVersion", { length: 40 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const ownerProperties = pgTable("ownerProperties", {
+  id: serial("id").primaryKey(), ownerProfileId: integer("ownerProfileId").notNull(), propertyId: integer("propertyId").notNull(), relationshipType: varchar("relationshipType", { length: 60 }).notNull(), authorityStatus: varchar("authorityStatus", { length: 40 }).default("pending").notNull(), isPrimaryContact: integer("isPrimaryContact").default(1).notNull(), createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const ownerConsents = pgTable("ownerConsents", {
+  id: serial("id").primaryKey(), ownerProfileId: integer("ownerProfileId").notNull(), purpose: varchar("purpose", { length: 80 }).notNull(), fieldsAllowed: text("fieldsAllowed").notNull(), lawfulBasis: varchar("lawfulBasis", { length: 60 }).notNull(), privacyNoticeVersion: varchar("privacyNoticeVersion", { length: 40 }).notNull(), grantedAt: timestamp("grantedAt").defaultNow().notNull(), withdrawnAt: timestamp("withdrawnAt"),
+});
+
+export const verificationChecks = pgTable("verificationChecks", {
+  id: serial("id").primaryKey(), ownerProfileId: integer("ownerProfileId").notNull(), propertyId: integer("propertyId"), checkType: verificationCheckType_contact_email_contact_phone_cac_business_lasrera_practitioner_property_authority_identity_manual_review_enum("checkType").notNull(), provider: varchar("provider", { length: 80 }).notNull(), status: verificationCheckStatus_pending_verified_failed_expired_enum("status").default("pending").notNull(), resultSummary: text("resultSummary"), providerReference: varchar("providerReference", { length: 180 }), checkedAt: timestamp("checkedAt"), expiresAt: timestamp("expiresAt"), reviewerId: integer("reviewerId"), reviewerNotes: text("reviewerNotes"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const verificationAuditEvents = pgTable("verificationAuditEvents", {
+  id: serial("id").primaryKey(), actorId: integer("actorId"), action: varchar("action", { length: 80 }).notNull(), entityType: varchar("entityType", { length: 60 }).notNull(), entityId: integer("entityId").notNull(), fromStatus: varchar("fromStatus", { length: 60 }), toStatus: varchar("toStatus", { length: 60 }), metadata: text("metadata"), createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const deals = pgTable("deals", {
+  id: serial("id").primaryKey(), inquiryId: integer("inquiryId").notNull(), ownerProfileId: integer("ownerProfileId"), propertyId: integer("propertyId"), assignedAdminId: integer("assignedAdminId"), status: dealStatus_new_qualified_owner_contacted_client_contacted_viewing_scheduled_offer_negotiation_won_lost_on_hold_enum("status").default("new").notNull(), nextActionAt: timestamp("nextActionAt"), lastContactedAt: timestamp("lastContactedAt"), wonAt: timestamp("wonAt"), lostReason: text("lostReason"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const dealActivities = pgTable("dealActivities", {
+  id: serial("id").primaryKey(), dealId: integer("dealId").notNull(), actorId: integer("actorId"), activityType: varchar("activityType", { length: 60 }).notNull(), note: text("note"), contactChannel: varchar("contactChannel", { length: 40 }), nextActionAt: timestamp("nextActionAt"), occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+});
+
 export const propertiesRelations = relations(properties, ({ many }) => ({ media: many(propertyMedia), inquiries: many(inquiries), favorites: many(favorites) }));
 export const favoritesRelations = relations(favorites, ({ one }) => ({ property: one(properties, { fields: [favorites.propertyId], references: [properties.id] }), user: one(users, { fields: [favorites.userId], references: [users.id] }) }));
 export const propertyMediaRelations = relations(propertyMedia, ({ one }) => ({ property: one(properties, { fields: [propertyMedia.propertyId], references: [properties.id] }) }));
@@ -182,3 +222,6 @@ export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;
 export type PartnershipApplication = typeof partnershipApplications.$inferSelect;
 export type LeadStatusHistory = typeof leadStatusHistory.$inferSelect;
+export type OwnerProfile = typeof ownerProfiles.$inferSelect;
+export type VerificationCheck = typeof verificationChecks.$inferSelect;
+export type Deal = typeof deals.$inferSelect;
