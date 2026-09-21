@@ -9,6 +9,29 @@ import {
   verificationAuditEvents,
   verificationChecks,
 } from "../drizzle/schema";
+import { sendEdgeParkEmail } from "./email";
+
+async function notifyOwnerVerificationStatus(input: { ownerProfileId: number; checkType: string; status: string; resultSummary?: string | null; reviewerNotes?: string | null }) {
+  const db = await getDb();
+  if (!db) return;
+  const [owner] = await db.select().from(ownerProfiles).where(eq(ownerProfiles.id, input.ownerProfileId)).limit(1);
+  if (!owner?.email) return;
+  const label = input.checkType.replaceAll("_", " ");
+  const statusLabel = input.status.replaceAll("_", " ");
+  try {
+    await sendEdgeParkEmail({
+      to: owner.email,
+      companyName: owner.companyName || owner.displayName,
+      subject: `EdgeSparkEstate verification update: ${statusLabel}`,
+      greeting: `Hello ${owner.displayName},`,
+      body: `Your ${label} verification record has been updated to “${statusLabel}”.${input.resultSummary ? `\n\nResult: ${input.resultSummary}` : ""}${input.reviewerNotes ? `\n\nReviewer note: ${input.reviewerNotes}` : ""}`,
+      callToAction: "Sign in to your EdgeSparkEstate account or contact the review team if you need to provide more information.",
+    });
+  } catch (error) {
+    // Email delivery must not roll back a successful verification decision.
+    console.error("[VerificationNotifications] owner email failed", { ownerProfileId: input.ownerProfileId, error });
+  }
+}
 
 export type OwnerOnboardingInput = {
   ownerType: "individual" | "company" | "agent" | "developer" | "representative";
@@ -78,6 +101,7 @@ export async function createVerificationCheck(input: { ownerProfileId: number; p
   if (!db) throw new Error("Database unavailable");
   const [check] = await db.insert(verificationChecks).values({ ...input, status: input.status ?? "pending", checkedAt: input.status && input.status !== "pending" ? new Date() : undefined }).returning();
   await db.insert(verificationAuditEvents).values({ actorId: input.reviewerId, action: "verification_created", entityType: "verification", entityId: check.id, toStatus: check.status, metadata: JSON.stringify({ checkType: check.checkType, provider: check.provider }) });
+  if (check.status !== "pending") void notifyOwnerVerificationStatus({ ownerProfileId: check.ownerProfileId, checkType: check.checkType, status: check.status, resultSummary: check.resultSummary, reviewerNotes: check.reviewerNotes });
   return check;
 }
 
@@ -88,6 +112,7 @@ export async function updateVerificationCheck(input: { id: number; status: "pend
   if (!current) throw new Error("Verification check not found");
   const [updated] = await db.update(verificationChecks).set({ status: input.status, reviewerId: input.reviewerId, reviewerNotes: input.reviewerNotes, resultSummary: input.resultSummary, checkedAt: input.status === "pending" ? current.checkedAt : new Date(), updatedAt: new Date() }).where(eq(verificationChecks.id, input.id)).returning();
   await db.insert(verificationAuditEvents).values({ actorId: input.reviewerId, action: "verification_status_changed", entityType: "verification", entityId: input.id, fromStatus: current.status, toStatus: input.status, metadata: JSON.stringify({ notes: input.reviewerNotes }) });
+  if (current.status !== updated.status) void notifyOwnerVerificationStatus({ ownerProfileId: updated.ownerProfileId, checkType: updated.checkType, status: updated.status, resultSummary: updated.resultSummary, reviewerNotes: updated.reviewerNotes });
   return updated;
 }
 
