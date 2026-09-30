@@ -127,7 +127,7 @@ export const properties = pgTable("properties", {
   buyerCosts: text("buyerCosts"),
   availabilityDate: timestamp("availabilityDate"),
   contactPermission: integer("contactPermission").default(0).notNull(),
-  reviewState: varchar("reviewState", { length: 40 }).default("approved").notNull(),
+  reviewState: varchar("reviewState", { length: 40 }).default("needs_review").notNull(),
   submittedBy: integer("submittedBy"),
   approvedBy: integer("approvedBy"),
   approvedAt: timestamp("approvedAt"),

@@ -77,117 +77,8 @@ const PUBLIC_GUIDES = [
   { title: "How to Market Real Estate to a Wider Audience — EdgeSpark Estate", description: "Brand, content, search, social media, partnerships, email, campaigns, and measurement.", href: "/downloads/how-to-market-real-estate-edgespark-estate.pdf" },
   { title: "About EdgePark Estate — EdgeSpark Estate", description: "Our customer promise, partnership model, responsible approach, and growth vision.", href: "/downloads/about-edgepark-estate.pdf" },
 ];
-const demoProperties = [
-  {
-    id: 1,
-    slug: "lagos-waterfront-residence",
-    title: "Lagos Waterfront Residence",
-    city: "Lekki",
-    state: "Lagos",
-    propertyType: "duplex",
-    transactionType: "buy",
-    status: "available",
-    price: 542500000, // $350,000 base price at the app's NGN/USD reference rate
-    bedrooms: 4,
-    bathrooms: 5,
-    areaSqm: 420,
-    projectedRoi: "28",
-    projectedYield: "11",
-    featured: 1,
-    published: 1,
-    demo: true,
-    description:
-      "TEST LISTING — verify title, price, ownership, and availability before publishing. A private residence concept for premium rental demand and long-term appreciation.",
-    media: [
-      { url: "/properties/lagos-waterfront.jpg" },
-      { url: "/properties/lagos-waterfront.jpg" },
-      { url: "/properties/ikoyi-land.jpg" },
-    ],
-  },
-  {
-    id: 2,
-    slug: "abuja-civic-apartments",
-    title: "Abuja Civic Apartments",
-    city: "Maitama",
-    state: "FCT",
-    propertyType: "apartment",
-    transactionType: "rent",
-    status: "available",
-    price: 697500000, // $450,000 base price at the app's NGN/USD reference rate
-    bedrooms: 3,
-    bathrooms: 3,
-    areaSqm: 210,
-    projectedRoi: "22",
-    projectedYield: "9",
-    featured: 1,
-    published: 1,
-    demo: true,
-    description:
-      "TEST LISTING — verify title, price, ownership, and availability before publishing. A refined urban apartment concept for a high-demand diplomatic corridor.",
-    media: [
-      { url: "/properties/abuja-civic.jpg" },
-      { url: "/properties/abuja-civic.jpg" },
-      { url: "/properties/enugu-residence.jpg" },
-    ],
-  },
-  {
-    id: 3,
-    slug: "enugu-garden-residence",
-    title: "Enugu Garden Residence",
-    city: "Enugu",
-    state: "Enugu",
-    propertyType: "apartment",
-    transactionType: "buy",
-    status: "available",
-    price: 302250000, // $195,000 base price at the app's NGN/USD reference rate
-    bedrooms: 4,
-    bathrooms: 4,
-    areaSqm: 280,
-    projectedRoi: "24",
-    projectedYield: "10",
-    featured: 1,
-    published: 1,
-    demo: true,
-    description: "TEST LISTING — verify title, price, ownership, and availability before publishing. A modern Enugu residence concept for family living and long-term rental demand.",
-    media: [
-      { url: "/properties/enugu-residence.jpg" },
-      { url: "/properties/enugu-residence.jpg" },
-      { url: "/properties/abuja-civic.jpg" },
-    ],
-  },
-  {
-    id: 4,
-    slug: "ikoyi-development-parcel",
-    title: "Ikoyi Development Parcel",
-    city: "Ikoyi",
-    state: "Lagos",
-    propertyType: "land",
-    transactionType: "buy",
-    status: "under_offer",
-    price: 310000000,
-    bedrooms: 0,
-    bathrooms: 0,
-    areaSqm: 850,
-    projectedRoi: "35",
-    projectedYield: "14",
-    featured: 1,
-    published: 1,
-    demo: true,
-    description:
-      "TEST LISTING — verify title, price, ownership, and availability before publishing. A land parcel concept for boutique residential or hospitality development.",
-    media: [
-      { url: "/properties/ikoyi-land.jpg" },
-      { url: "/properties/ikoyi-land.jpg" },
-      { url: "/properties/lagos-waterfront.jpg" },
-    ],
-  },
-];
-const REQUESTED_CITY_BASE_PRICES: Record<string, number> = { lagos: 542500000, abuja: 697500000, enugu: 302250000 };
-function withRequestedCityPrice(property: any) {
-  const location = `${property?.city || ""} ${property?.state || ""}`.toLowerCase();
-  const city = location.includes("lagos") ? "lagos" : location.includes("abuja") || location.includes("fct") || location.includes("maitama") ? "abuja" : location.includes("enugu") ? "enugu" : null;
-  return city ? { ...property, price: REQUESTED_CITY_BASE_PRICES[city] } : property;
-}
+const demoProperties: any[] = [];
+const withRequestedCityPrice = (property: any) => property;
 const dayOfYear = () =>
   Math.floor(
     (Date.now() - new Date(new Date().getUTCFullYear(), 0, 0).getTime()) /
@@ -1470,7 +1361,7 @@ function AboutPage() {
 }
 function HomePage() {
   const { data } = trpc.properties.featured.useQuery();
-  const properties = (data?.length ? data : demoProperties).map(withRequestedCityPrice).slice(0, 3);
+  const properties = (data || []).map(withRequestedCityPrice).slice(0, 3);
   return (
     <div>
       <section className="relative overflow-hidden bg-[#173b46] text-white lg:min-h-[730px]">
@@ -1702,7 +1593,7 @@ function ListingsPage() {
   const { data } = trpc.properties.list.useQuery(
     buildPropertySearchInput(submitted)
   );
-  const filtered = (data?.length ? data : demoProperties).map(withRequestedCityPrice).filter((p: any) =>
+  const filtered = (data || []).map(withRequestedCityPrice).filter((p: any) =>
     matchesPropertyFilters(p, submitted)
   );
   const pageSize = 6;
@@ -2180,11 +2071,7 @@ function PropertyPage() {
   const { data } = trpc.properties.bySlug.useQuery({
     slug: params?.slug || "",
   });
-  const property = withRequestedCityPrice(
-    data ||
-      demoProperties.find(p => p.slug === params?.slug) ||
-      demoProperties[0]
-  );
+  const property = withRequestedCityPrice(data || { slug: params?.slug || "", title: "Property unavailable", description: "This listing is not currently published or available.", status: "off_market", propertyType: "other", address: "", city: "", state: "", country: "Nigeria", countryCode: "NG", currencyCode: "NGN", price: 0, media: [] });
   const locationCenter = getPropertyMapCenter(property);
   const locationExactness = getPropertyLocationExactness(property);
   const directionsUrl = buildGoogleMapsDirectionsUrl(property);

@@ -26,6 +26,11 @@ import {
   searchInternationalBusinesses,
   updateInternationalProspect,
   updateInternationalProspectContact,
+  createPropertyWithAudit,
+  updatePropertyWithAudit,
+  reviewPropertyWithAudit,
+  getInternationalSuppressionByEmail,
+  setInternationalSuppression,
   removeFavorite,
   saveFavorite,
   updateFavoriteMetadata,
@@ -40,6 +45,7 @@ import {
 import { verificationAuditEvents } from "../drizzle/schema";
 import { storagePut } from "./storage";
 import { ENV } from "./_core/env";
+import { validateMarketCodes, validatePriceRange } from "./marketValidation";
 import { invokeLLM } from "./_core/llm";
 import { sendEdgeParkEmail } from "./email";
 import { verifyCacBusiness } from "./integrations/cacVas";
@@ -207,12 +213,14 @@ export const appRouter = router({
         return fallback();
       }
     }),
-    sendEmail: adminOnly.input(z.object({ to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ input }) => {
+    sendEmail: adminOnly.input(z.object({ to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
+      if (await getInternationalSuppressionByEmail(input.to)) { throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This recipient is suppressed and cannot receive outreach." }); }
       try { return await sendEdgeParkEmail(input); } catch (error) { throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "Email could not be sent" }); }
     }),
-    save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), category: z.string().max(120).optional(), website: z.string().url().max(1000).optional(), sourceType: z.string().max(80).optional(), sourceUrl: z.string().url().max(1000).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional(), doNotContact: z.boolean().optional() })).mutation(({ input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() })),
+    setSuppression: adminOnly.input(z.object({ prospectId: z.number().int(), doNotContact: z.boolean(), reason: z.string().min(3).max(1000) })).mutation(({ ctx, input }) => setInternationalSuppression({ ...input, actorId: ctx.user.id })),
+    save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), category: z.string().max(120).optional(), website: z.string().url().max(1000).optional(), sourceType: z.string().max(80).optional(), sourceUrl: z.string().url().max(1000).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ ctx, input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() }, ctx.user.id)),
     update: adminOnly.input(z.object({ id: z.number().int(), status: z.enum(["new", "researching", "contacted", "meeting", "won", "archived"]).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional(), nextStep: z.string().max(2000).optional(), nextStepAt: z.coerce.date().optional(), doNotContact: z.boolean().optional() })).mutation(({ input }) => updateInternationalProspect(input)),
-    saveContact: adminOnly.input(z.object({ prospectId: z.number().int(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), email: z.string().email().max(320).optional(), phone: z.string().max(80).optional(), website: z.string().url().max(1000).optional(), bookingUrl: z.string().url().max(1000).optional(), sourceUrl: z.string().url().max(1000).optional(), sourceType: z.string().max(80).optional(), confidence: z.string().max(40).optional(), doNotContact: z.boolean().optional(), meetingAt: z.coerce.date().optional(), meetingNotes: z.string().max(4000).optional() })).mutation(({ input }) => saveInternationalProspectContact(input)),
+    saveContact: adminOnly.input(z.object({ prospectId: z.number().int(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), email: z.string().email().max(320).optional(), phone: z.string().max(80).optional(), website: z.string().url().max(1000).optional(), bookingUrl: z.string().url().max(1000).optional(), sourceUrl: z.string().url().max(1000).optional(), sourceType: z.string().max(80).optional(), confidence: z.string().max(40).optional(), doNotContact: z.boolean().optional(), meetingAt: z.coerce.date().optional(), meetingNotes: z.string().max(4000).optional() })).mutation(({ ctx, input }) => saveInternationalProspectContact(input, ctx.user.id)),
     updateContact: adminOnly.input(z.object({ prospectId: z.number().int(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), email: z.string().email().max(320).optional(), phone: z.string().max(80).optional(), website: z.string().url().max(1000).optional(), bookingUrl: z.string().url().max(1000).optional(), meetingAt: z.coerce.date().optional(), meetingNotes: z.string().max(4000).optional() })).mutation(({ input }) => updateInternationalProspectContact(input)),
   }),
   properties: router({
@@ -230,7 +238,7 @@ export const appRouter = router({
           })
           .optional()
       )
-      .query(({ input }) => listPublishedProperties(input)),
+      .query(({ input }) => { if (input?.countryCode && input?.currencyCode) validateMarketCodes(input.countryCode, input.currencyCode); validatePriceRange(input?.minPrice, input?.maxPrice); return listPublishedProperties(input); }),
     bySlug: publicProcedure
       .input(z.object({ slug: z.string() }))
       .query(({ input }) => getPropertyBySlug(input.slug)),
@@ -241,71 +249,21 @@ export const appRouter = router({
     providerStatus: adminOnly.query(() => ({ configured: Boolean(ENV.externalListingsProviderUrl && ENV.externalListingsProviderKey), provider: ENV.externalListingsProviderName || "Not configured", message: "No external listings provider is enabled. Configure an owner-approved lawful API or licensed feed before live discovery." })),
     users: adminOnly.query(() => listUsers()),
     create: adminOnly.input(propertyInput).mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db)
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Database unavailable",
-        });
-      const [created] = await db
-        .insert(properties)
-        .values({
-          ...input,
-          countryCode: input.countryCode.toUpperCase(),
-          currencyCode: input.currencyCode.toUpperCase(),
-          contactPermission: input.contactPermission ? 1 : 0,
-          published: 0,
-          reviewState: "needs_review",
-          submittedBy: ctx.user.id,
-          latitude: input.latitude?.toString(),
-          longitude: input.longitude?.toString(),
-          projectedRoi: input.projectedRoi?.toString(),
-          projectedYield: input.projectedYield?.toString(),
-          featured: input.featured ? 1 : 0,
-        })
-        .returning({ id: properties.id });
-      if (created) await db.insert(verificationAuditEvents).values({ actorId: ctx.user.id, action: "property_created", entityType: "property", entityId: created.id, toStatus: "needs_review" });
-      return created;
+      const market = validateMarketCodes(input.countryCode, input.currencyCode);
+      const created = await createPropertyWithAudit({ ...input, ...market, featured: input.featured ? 1 : 0, published: 0, reviewState: "needs_review", contactPermission: input.contactPermission ? 1 : 0, submittedBy: ctx.user.id, latitude: input.latitude?.toString(), longitude: input.longitude?.toString(), projectedRoi: input.projectedRoi?.toString(), projectedYield: input.projectedYield?.toString() }, ctx.user.id);
+      return { id: created.id };
     }),
     submit: protectedProcedure.input(propertyInput.omit({ published: true, reviewState: true }).extend({ sourceType: z.enum(["owner_submission", "partner_submission"]).default("owner_submission") })).mutation(async ({ ctx, input }) => {
-      const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const [created] = await db.insert(properties).values({ ...input, countryCode: input.countryCode.toUpperCase(), currencyCode: input.currencyCode.toUpperCase(), featured: input.featured ? 1 : 0, contactPermission: input.contactPermission ? 1 : 0, published: 0, reviewState: "needs_review", submittedBy: ctx.user.id, latitude: input.latitude?.toString(), longitude: input.longitude?.toString(), projectedRoi: input.projectedRoi?.toString(), projectedYield: input.projectedYield?.toString() }).returning({ id: properties.id });
-      if (created) await db.insert(verificationAuditEvents).values({ actorId: ctx.user.id, action: "property_submitted", entityType: "property", entityId: created.id, toStatus: "needs_review" });
-      return created;
+      const market = validateMarketCodes(input.countryCode, input.currencyCode);
+      const created = await createPropertyWithAudit({ ...input, ...market, featured: input.featured ? 1 : 0, contactPermission: input.contactPermission ? 1 : 0, published: 0, reviewState: "needs_review", submittedBy: ctx.user.id, latitude: input.latitude?.toString(), longitude: input.longitude?.toString(), projectedRoi: input.projectedRoi?.toString(), projectedYield: input.projectedYield?.toString() }, ctx.user.id);
+      return { id: created.id };
     }),
-    update: adminOnly
-      .input(propertyInput.extend({ id: z.number().int() }))
-      .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-        const { id, ...rest } = input;
-        await db
-          .update(properties)
-          .set({
-            ...rest,
-            countryCode: rest.countryCode.toUpperCase(),
-            currencyCode: rest.currencyCode.toUpperCase(),
-            contactPermission: rest.contactPermission ? 1 : 0,
-            published: rest.reviewState === "approved" ? 1 : 0,
-            approvedBy: rest.reviewState === "approved" ? ctx.user.id : null,
-            approvedAt: rest.reviewState === "approved" ? new Date() : null,
-            lastReviewedAt: new Date(),
-            latitude: rest.latitude?.toString(),
-            longitude: rest.longitude?.toString(),
-            projectedRoi: rest.projectedRoi?.toString(),
-            projectedYield: rest.projectedYield?.toString(),
-            featured: rest.featured ? 1 : 0,
-          })
-          .where((await import("drizzle-orm")).eq(properties.id, id));
-        await db.insert(verificationAuditEvents).values({ actorId: ctx.user.id, action: "property_updated", entityType: "property", entityId: id, toStatus: rest.reviewState });
-        return { success: true };
-      }),
-    approve: adminOnly.input(z.object({ id: z.number().int(), reviewState: z.enum(["approved", "rejected", "stale"]), note: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
-      const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.update(properties).set({ reviewState: input.reviewState, published: input.reviewState === "approved" ? 1 : 0, approvedBy: input.reviewState === "approved" ? ctx.user.id : null, approvedAt: input.reviewState === "approved" ? new Date() : null, lastReviewedAt: new Date() }).where(eq(properties.id, input.id));
-      await db.insert(verificationAuditEvents).values({ actorId: ctx.user.id, action: "property_reviewed", entityType: "property", entityId: input.id, toStatus: input.reviewState, metadata: input.note });
-      return { success: true };
+    update: adminOnly.input(propertyInput.extend({ id: z.number().int() })).mutation(async ({ ctx, input }) => {
+      const { id, ...rest } = input; const market = validateMarketCodes(rest.countryCode, rest.currencyCode);
+      const updated = await updatePropertyWithAudit(id, { ...rest, ...market, featured: rest.featured ? 1 : 0, published: rest.reviewState === "approved" ? 1 : 0, contactPermission: rest.contactPermission ? 1 : 0, approvedBy: rest.reviewState === "approved" ? ctx.user.id : null, approvedAt: rest.reviewState === "approved" ? new Date() : null, lastReviewedAt: new Date(), latitude: rest.latitude?.toString(), longitude: rest.longitude?.toString(), projectedRoi: rest.projectedRoi?.toString(), projectedYield: rest.projectedYield?.toString() }, ctx.user.id);
+      return { success: Boolean(updated) };
     }),
+    approve: adminOnly.input(z.object({ id: z.number().int(), reviewState: z.enum(["approved", "rejected", "stale"]), note: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => { await reviewPropertyWithAudit(input.id, input.reviewState, ctx.user.id, input.note); return { success: true }; }),
     uploadMedia: adminOnly
       .input(
         z.object({

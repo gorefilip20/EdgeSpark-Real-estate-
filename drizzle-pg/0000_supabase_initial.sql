@@ -185,7 +185,7 @@ ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "availabilityDate" timestamp;
 --> statement-breakpoint
 ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "contactPermission" integer NOT NULL DEFAULT 0;
 --> statement-breakpoint
-ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "reviewState" varchar(40) NOT NULL DEFAULT 'approved';
+ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "reviewState" varchar(40) NOT NULL DEFAULT 'needs_review';
 --> statement-breakpoint
 ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "submittedBy" integer;
 --> statement-breakpoint

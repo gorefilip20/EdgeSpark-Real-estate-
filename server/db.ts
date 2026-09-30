@@ -1,13 +1,15 @@
-import { and, desc, eq, like, or, gte, lte } from "drizzle-orm";
+import { and, desc, eq, like, or, gte, isNotNull, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users } from "../drizzle/schema";
+import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users, ownerProperties, ownerProfiles, ownerConsents, verificationAuditEvents } from "../drizzle/schema";
 import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
 import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
 import { ENV } from "./_core/env";
+import { validateMarketCodes, validatePriceRange } from "./marketValidation";
+import { fetchPublicHttps } from "./safeFetch";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _localAuthSchemaReady = false;
@@ -25,18 +27,24 @@ async function ensurePostgresSchema(db: any) {
   await ensureRequiredAuthSchema(db);
   if (_fullSchemaReady) return;
   try {
-    const candidates = [path.resolve(process.cwd(), "drizzle-pg/0000_supabase_initial.sql"), path.resolve(process.cwd(), "dist/drizzle-pg/0000_supabase_initial.sql")];
-    const migrationPath = candidates.find(candidate => { try { readFileSync(candidate); return true; } catch { return false; } });
-    if (!migrationPath) throw new Error("PostgreSQL migration file is missing from the deployment bundle");
-    const migration = readFileSync(migrationPath, "utf8");
-    const statements = migration.split(/--> statement-breakpoint/).map((statement: string) => statement.trim()).filter(Boolean);
-    for (const statement of statements) {
+    const roots = [path.resolve(process.cwd()), path.resolve(process.cwd(), "dist")];
+    const migrationPaths = ["drizzle-pg/0000_supabase_initial.sql", "drizzle-pg/0001_owner_verification_deals.sql", "drizzle-pg/0002_international_inventory_pipeline.sql"].map(file => roots.map(root => path.resolve(root, file)).find(candidate => { try { readFileSync(candidate); return true; } catch { return false; } })).filter(Boolean) as string[];
+    if (migrationPaths.length !== 3) throw new Error("Complete PostgreSQL migration chain is missing from the deployment bundle");
+    for (const migrationPath of migrationPaths) {
+      const migration = readFileSync(migrationPath, "utf8");
+      const statements = migration.split(/--> statement-breakpoint/).map((statement: string) => statement.trim()).filter(Boolean);
+      for (const statement of statements) {
       if (statement.startsWith("CREATE TYPE ")) {
         try { await db.execute(sql.raw(statement)); }
         catch (error) { const message = error instanceof Error ? error.message : String(error); if (!/already exists|duplicate object/i.test(message)) throw error; }
-      } else {
-        try { await db.execute(sql.raw(statement)); }
-        catch (error) { console.warn("[Database] Optional PostgreSQL migration statement skipped:", error instanceof Error ? error.message : error); }
+        } else {
+          try { await db.execute(sql.raw(statement)); }
+          catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            const isBaseline = migrationPath.endsWith("0000_supabase_initial.sql");
+            if (!isBaseline || !/already exists|duplicate object|duplicate key/i.test(message)) throw error;
+          }
+        }
       }
     }
   } catch (error) {
@@ -90,19 +98,28 @@ export async function ensureAuthTables(db: any) {
 
 export async function getUserByOpenId(openId: string) { const db = await getDb(); if (!db) return undefined; try { await ensureAuthTables(db); } catch { return undefined; } try { const result = await db.select({ id: users.id, openId: users.openId, name: users.name, email: users.email, loginMethod: users.loginMethod, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.openId, openId)).limit(1); if (result[0]) { const ownerEmail = ENV.ownerEmail?.trim().toLowerCase(); return { ...result[0], role: ownerEmail && result[0].email?.trim().toLowerCase() === ownerEmail ? "admin" : result[0].role } as any; } } catch (error) { console.warn("[Database] Legacy users lookup failed; using localUsers:", error instanceof Error ? error.message : error); } try { const localResult = await db.select().from(localUsers).where(eq(localUsers.openId, openId)).limit(1); return localResult[0] as any; } catch (error) { console.warn("[Database] No localUsers fallback available:", error instanceof Error ? error.message : error); return undefined; } }
 async function withMedia(rows: any[]) { const db = await getDb(); if (!db || !rows.length) return rows.map((row) => ({ ...row, media: [] })); const ids = rows.map((row) => row.id); const media = await db.select().from(propertyMedia); return rows.map((row) => ({ ...row, media: media.filter((item) => ids.includes(item.propertyId)) })); }
+export type PublicProperty = {
+  id: number; slug: string; title: string; description: string; status: string; propertyType: string; address: string; city: string; state: string; country: string; countryCode: string; currencyCode: string; neighborhood: string | null; price: number; bedrooms: number | null; bathrooms: number | null; areaSqm: number | null; featured: number; published: number; sourceLabel: string | null; sourceType: string; sellingConditions: string | null; buyerCosts: string | null; availabilityDate: Date | null; verificationStatus: string; reviewState: string; lastReviewedAt: Date | null; media: any[];
+};
+function toPublicProperty(row: any): PublicProperty { return { id: row.id, slug: row.slug, title: row.title, description: row.description, status: row.status, propertyType: row.propertyType, address: row.address, city: row.city, state: row.state, country: row.country, countryCode: row.countryCode, currencyCode: row.currencyCode, neighborhood: row.neighborhood, price: Number(row.price), bedrooms: row.bedrooms, bathrooms: row.bathrooms, areaSqm: row.areaSqm, featured: row.featured, published: row.published, sourceLabel: row.sourceLabel, sourceType: row.sourceType, sellingConditions: row.sellingConditions, buyerCosts: row.buyerCosts, availabilityDate: row.availabilityDate, verificationStatus: row.verificationStatus, reviewState: row.reviewState, lastReviewedAt: row.lastReviewedAt, media: row.media || [] }; }
 export async function listPublishedProperties(filters?: { search?: string; type?: string; status?: string; countryCode?: string; currencyCode?: string; minPrice?: number; maxPrice?: number }) {
   const db = await getDb(); if (!db) return [];
-  const conditions: any[] = [eq(properties.published, 1), eq(properties.reviewState, "approved"), eq(properties.status, "available")];
+  validatePriceRange(filters?.minPrice, filters?.maxPrice);
+  const conditions: any[] = [eq(properties.published, 1), eq(properties.reviewState, "approved"), eq(properties.status, "available"), isNotNull(properties.approvedBy), isNotNull(properties.lastReviewedAt)];
   if (filters?.type && filters.type !== "all") conditions.push(eq(properties.propertyType, filters.type as any));
   if (filters?.status && filters.status !== "all") conditions.push(eq(properties.status, filters.status as any));
-  if (filters?.countryCode && filters.countryCode !== "all") conditions.push(eq(properties.countryCode, filters.countryCode.toUpperCase()));
-  if (filters?.currencyCode && filters.currencyCode !== "all") conditions.push(eq(properties.currencyCode, filters.currencyCode.toUpperCase()));
+  if (filters?.countryCode && filters.countryCode !== "all") { const country = filters.countryCode.toUpperCase(); const currency = filters.currencyCode && filters.currencyCode !== "all" ? filters.currencyCode : undefined; if (currency) validateMarketCodes(country, currency); conditions.push(eq(properties.countryCode, country)); }
+  if (filters?.currencyCode && filters.currencyCode !== "all") { const currency = filters.currencyCode.toUpperCase(); if (!filters.countryCode || filters.countryCode === "all") { if (!/^[A-Z]{3}$/.test(currency)) throw new Error("Choose a supported ISO currency code."); } conditions.push(eq(properties.currencyCode, currency)); }
   if (typeof filters?.minPrice === "number") conditions.push(gte(properties.price, filters.minPrice));
   if (typeof filters?.maxPrice === "number") conditions.push(lte(properties.price, filters.maxPrice));
   if (filters?.search) conditions.push(or(like(properties.title, `%${filters.search}%`), like(properties.address, `%${filters.search}%`), like(properties.neighborhood, `%${filters.search}%`), like(properties.city, `%${filters.search}%`), like(properties.state, `%${filters.search}%`), like(properties.country, `%${filters.search}%`), like(properties.countryCode, `%${filters.search.toUpperCase()}%`), like(properties.propertyType, `%${filters.search}%`)) as any);
-  return withMedia(await db.select().from(properties).where(and(...conditions)).orderBy(desc(properties.featured), desc(properties.createdAt)));
+  return (await withMedia(await db.select().from(properties).where(and(...conditions)).orderBy(desc(properties.featured), desc(properties.createdAt)))).map(toPublicProperty);
 }
-export async function getPropertyBySlug(slug: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(properties).where(and(eq(properties.slug, slug), eq(properties.published, 1), eq(properties.reviewState, "approved"), eq(properties.status, "available"))).limit(1); const result = await withMedia(rows); return result[0]; }
+export async function getPropertyBySlug(slug: string) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(properties).where(and(eq(properties.slug, slug), eq(properties.published, 1), eq(properties.reviewState, "approved"), eq(properties.status, "available"), isNotNull(properties.approvedBy), isNotNull(properties.lastReviewedAt))).limit(1); const result = await withMedia(rows); return result[0] ? toPublicProperty(result[0]) : undefined; }
+export async function getAdminProperty(id: number) { const db = await getDb(); if (!db) return undefined; const [row] = await db.select().from(properties).where(eq(properties.id, id)).limit(1); return row; }
+export async function createPropertyWithAudit(input: any, actorId: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); return db.transaction(async (tx: any) => { const [created] = await tx.insert(properties).values(input).returning(); await tx.insert(verificationAuditEvents).values({ actorId, action: "property_created", entityType: "property", entityId: created.id, fromStatus: null, toStatus: created.reviewState, metadata: JSON.stringify({ published: created.published }) }); return created; }); }
+export async function updatePropertyWithAudit(id: number, input: any, actorId: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); return db.transaction(async (tx: any) => { const [current] = await tx.select().from(properties).where(eq(properties.id, id)).limit(1); if (!current) throw new Error("Property not found"); const [updated] = await tx.update(properties).set(input).where(eq(properties.id, id)).returning(); await tx.insert(verificationAuditEvents).values({ actorId, action: "property_updated", entityType: "property", entityId: id, fromStatus: current.reviewState, toStatus: updated.reviewState, metadata: JSON.stringify({ published: updated.published, previousPublished: current.published }) }); return updated; }); }
+export async function reviewPropertyWithAudit(id: number, reviewState: "approved" | "rejected" | "stale", actorId: number, note?: string) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); return db.transaction(async (tx: any) => { const [current] = await tx.select().from(properties).where(eq(properties.id, id)).limit(1); if (!current) throw new Error("Property not found"); const [updated] = await tx.update(properties).set({ reviewState, published: reviewState === "approved" ? 1 : 0, approvedBy: reviewState === "approved" ? actorId : null, approvedAt: reviewState === "approved" ? new Date() : null, lastReviewedAt: new Date() }).where(eq(properties.id, id)).returning(); await tx.insert(verificationAuditEvents).values({ actorId, action: "property_reviewed", entityType: "property", entityId: id, fromStatus: current.reviewState, toStatus: reviewState, metadata: JSON.stringify({ note, previousPublished: current.published }) }); return updated; }); }
 export async function listAdminProperties() { const db = await getDb(); if (!db) return []; return withMedia(await db.select().from(properties).orderBy(desc(properties.createdAt))); }
 export async function listFavoritesForUser(userId: number) { const db = await getDb(); if (!db) return []; const rows = await db.select({ favorite: favorites, property: properties }).from(favorites).innerJoin(properties, eq(favorites.propertyId, properties.id)).where(eq(favorites.userId, userId)).orderBy(desc(favorites.createdAt)); return rows.map(({ favorite, property }) => { const metadata = favorite as typeof favorites.$inferSelect & { notes?: string | null; tags?: string | null }; return { ...property, favoriteId: favorite.id, notes: metadata.notes, tags: metadata.tags }; }); }
 export async function saveFavorite(userId: number, propertyId: number) { const db = await getDb(); if (!db) return; const existing = await db.select().from(favorites).where(and(eq(favorites.userId, userId), eq(favorites.propertyId, propertyId))).limit(1); if (!existing.length) await db.insert(favorites).values({ userId, propertyId }); }
@@ -244,33 +261,18 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
 }
 
 function uniqueMatches(values: string[]) { return Array.from(new Set(values.map(value => value.trim()).filter(Boolean))); }
-function safePublicUrl(value: string) { try { const url = new URL(value); if (!['http:', 'https:'].includes(url.protocol)) return null; const host = url.hostname.toLowerCase(); if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local') || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return null; return url; } catch { return null; } }
+export function safePublicUrl(value: string) { try { return new URL(value); } catch { return null; } }
 export async function enrichPublicWebsite(website: string) {
-  const source = safePublicUrl(website);
-  if (!source) throw new Error("Only a public HTTPS website can be enriched.");
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7000);
-  try {
-    const response = await fetch(source, { signal: controller.signal, headers: { "User-Agent": "EdgePark-Estate-Partnership-Research/1.0" } });
-    if (!response.ok) throw new Error("The public website could not be reached.");
-    const html = (await response.text()).slice(0, 900_000);
-    const visibleText = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
-    const emails = uniqueMatches([
-      ...Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")),
-      ...Array.from(visibleText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi), match => match[0]),
-      ...Array.from(html.matchAll(/(?:email|e-mail|contact)[^<]{0,80}?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi), match => match[1]),
-    ].filter(email => /@/.test(email)));
-    const phones = uniqueMatches([
-      ...Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])),
-      ...Array.from(visibleText.matchAll(/(?:\+?\d[\d .()\-]{7,}\d)/g), match => match[0].trim()),
-      ...Array.from(html.matchAll(/(?:phone|telephone|mobile|whatsapp)[^<]{0,100}?((?:\+?\d[\d .()\-]{7,}\d))/gi), match => match[1].trim()),
-    ]);
-    const bookingUrls = uniqueMatches(Array.from(html.matchAll(/https?:\/\/[^\"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
-    const text = visibleText;
-    const contactRole = /(partnership|business development|strategic alliance)/i.test(text) ? "Partnerships / Business Development" : /(investor relations|investor)/i.test(text) ? "Investor Relations" : "Business Development / Partnerships team";
-    const contactPage = Array.from(html.matchAll(/href=[\"']([^\"']+)[\"']/gi), match => match[1]).map(href => { try { return new URL(href, source).toString(); } catch { return ""; } }).find(url => /(contact|about|team|leadership|partnership)/i.test(url));
-    return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: text.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
-  } finally { clearTimeout(timeout); }
+  const result = await fetchPublicHttps(website);
+  const source = result.url;
+  const html = result.body;
+  const visibleText = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+  const emails = uniqueMatches([...Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")), ...Array.from(visibleText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi), match => match[0])].filter(email => /@/.test(email)));
+  const phones = uniqueMatches([...Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])), ...Array.from(visibleText.matchAll(/(?:\+?\d[\d .()\-]{7,}\d)/g), match => match[0].trim())]);
+  const bookingUrls = uniqueMatches(Array.from(html.matchAll(/https?:\/\/[^\"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
+  const contactRole = /(partnership|business development|strategic alliance)/i.test(visibleText) ? "Partnerships / Business Development" : /(investor relations|investor)/i.test(visibleText) ? "Investor Relations" : "Business Development / Partnerships team";
+  const contactPage = Array.from(html.matchAll(/href=[\"']([^\"']+)[\"']/gi), match => { try { return new URL(match[1], source).toString(); } catch { return ""; } }).find(url => /(contact|about|team|leadership|partnership)/i.test(url));
+  return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: visibleText.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
 }
 export async function discoverPublicContacts(input: { businessName: string; country?: string; category?: string }) {
   const query = [input.businessName, input.category, input.country].filter(Boolean).join(" ").trim();
@@ -289,8 +291,10 @@ export async function discoverPublicContacts(input: { businessName: string; coun
   return best ? { ...best, searchedFor: query, sources: profiles.map(profile => profile.sourceUrl).filter(Boolean) } : { contactName: null, contactRole: "Business Development / Partnerships team", email: null, phone: null, website: null, bookingUrl: null, sourceUrl: null, publicSummary: null, additionalEmails: [], additionalPhones: [], searchedFor: query, sources: [] };
 }
 export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select({ prospect: internationalProspects, contact: internationalProspectContacts }).from(internationalProspects).leftJoin(internationalProspectContacts, eq(internationalProspects.id, internationalProspectContacts.prospectId)).orderBy(desc(internationalProspects.updatedAt)).then(rows => rows.map(({ prospect, contact }) => ({ ...prospect, contact }))); }
-export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; category?: string; website?: string; sourceType?: string; sourceUrl?: string; notes?: string; pitchAngle?: string; doNotContact?: boolean }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { doNotContact, ...rest } = input; await db.insert(internationalProspects).values({ ...rest, doNotContact: doNotContact ? 1 : 0 }).onConflictDoUpdate({ target: internationalProspects.placeId, set: { ...rest, doNotContact: doNotContact ? 1 : 0, updatedAt: new Date() } }); return db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1).then(rows => rows[0]); }
-export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; sourceType?: string; confidence?: string; doNotContact?: boolean; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, doNotContact, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values({ ...input, doNotContact: doNotContact ? 1 : 0 }).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: { ...contactUpdate, doNotContact: doNotContact ? 1 : 0, updatedAt: new Date() } }); return { success: true }; }
-export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string; nextStep?: string; nextStepAt?: Date; doNotContact?: boolean }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, doNotContact, ...changes } = input; await db.update(internationalProspects).set({ ...changes, ...(doNotContact === undefined ? {} : { doNotContact: doNotContact ? 1 : 0 }), updatedAt: new Date() }).where(eq(internationalProspects.id, id)); return { success: true }; }
+export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; category?: string; website?: string; sourceType?: string; sourceUrl?: string; notes?: string; pitchAngle?: string }, actorId?: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const existing = await db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1); const row = existing[0]; const changes: any = { ...input, updatedAt: new Date() }; if (row) { if (actorId) await db.insert(verificationAuditEvents).values({ actorId, action: "prospect_updated", entityType: "international_prospect", entityId: row.id, fromStatus: row.doNotContact ? "suppressed" : "active", toStatus: row.doNotContact ? "suppressed" : "active", metadata: JSON.stringify({ suppressionChanged: false }) }); await db.update(internationalProspects).set(changes).where(eq(internationalProspects.id, row.id)); return { ...row, ...changes }; } const [created] = await db.insert(internationalProspects).values({ ...input, doNotContact: 0 }).returning(); return created; }
+export async function saveInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; sourceUrl?: string; sourceType?: string; confidence?: string; meetingAt?: Date; meetingNotes?: string }, actorId?: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const existing = await db.select().from(internationalProspectContacts).where(eq(internationalProspectContacts.prospectId, input.prospectId)).limit(1); if (existing[0]) { await db.update(internationalProspectContacts).set({ ...input, updatedAt: new Date() }).where(eq(internationalProspectContacts.id, existing[0].id)); return { ...existing[0], ...input }; } const [created] = await db.insert(internationalProspectContacts).values({ ...input, doNotContact: 0 }).returning(); return created; }
+export async function getInternationalSuppressionByEmail(email: string) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [contact] = await db.select({ prospectId: internationalProspectContacts.prospectId, contactSuppressed: internationalProspectContacts.doNotContact, prospectSuppressed: internationalProspects.doNotContact }).from(internationalProspectContacts).innerJoin(internationalProspects, eq(internationalProspects.id, internationalProspectContacts.prospectId)).where(eq(internationalProspectContacts.email, email.trim().toLowerCase())).limit(1); return contact ? Boolean(contact.contactSuppressed || contact.prospectSuppressed) : false; }
+export async function setInternationalSuppression(input: { prospectId: number; doNotContact: boolean; reason: string; actorId: number }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); return db.transaction(async (tx: any) => { const [current] = await tx.select().from(internationalProspects).where(eq(internationalProspects.id, input.prospectId)).limit(1); if (!current) throw new Error("Prospect not found"); await tx.update(internationalProspects).set({ doNotContact: input.doNotContact ? 1 : 0, updatedAt: new Date() }).where(eq(internationalProspects.id, input.prospectId)); await tx.insert(verificationAuditEvents).values({ actorId: input.actorId, action: "prospect_suppression_changed", entityType: "international_prospect", entityId: input.prospectId, fromStatus: current.doNotContact ? "suppressed" : "active", toStatus: input.doNotContact ? "suppressed" : "active", metadata: JSON.stringify({ reason: input.reason }) }); return { success: true }; }); }
+export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string; nextStep?: string; nextStepAt?: Date }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, ...changes } = input; await db.update(internationalProspects).set({ ...changes, updatedAt: new Date() }).where(eq(internationalProspects.id, id)); return { success: true }; }
 export async function updateInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values(input).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: contactUpdate }); return { success: true }; }
 export { favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users };
