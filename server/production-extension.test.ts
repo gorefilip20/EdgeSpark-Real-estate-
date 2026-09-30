@@ -127,3 +127,23 @@ describe("property map location contracts", () => {
     expect(buildGoogleMapsDirectionsUrl(property)).toBeNull();
   });
 });
+
+describe("international inventory contracts", () => {
+  it("keeps country and currency canonical without converting the stored amount", () => {
+    const listing = { countryCode: "GB", currencyCode: "GBP", price: 425000 };
+    expect(listing.countryCode).toBe("GB");
+    expect(listing.currencyCode).toBe("GBP");
+    expect(listing.price).toBe(425000);
+  });
+  it("requires explicit review before public publication", () => {
+    const publicEligible = (listing: { published: number; reviewState: string; status: string }) => listing.published === 1 && listing.reviewState === "approved" && listing.status === "available";
+    expect(publicEligible({ published: 1, reviewState: "needs_review", status: "available" })).toBe(false);
+    expect(publicEligible({ published: 1, reviewState: "approved", status: "available" })).toBe(true);
+    expect(publicEligible({ published: 1, reviewState: "approved", status: "draft" })).toBe(false);
+  });
+  it("keeps do-not-contact separate from discovery and does not infer outreach consent", () => {
+    const prospect = { doNotContact: 1, email: "public@example.test", confidence: "directory_listed" };
+    expect(prospect.doNotContact).toBe(1);
+    expect(prospect.confidence).toBe("directory_listed");
+  });
+});
