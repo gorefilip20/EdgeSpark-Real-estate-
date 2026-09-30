@@ -23,8 +23,30 @@ async function ensureRequiredAuthSchema(db: any) {
   _localAuthSchemaReady = true;
 }
 
+async function ensureCriticalPropertySchema(db: any) {
+  const statements = [
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "countryCode" varchar(2) NOT NULL DEFAULT 'NG'`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "currencyCode" varchar(3) NOT NULL DEFAULT 'NGN'`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "sourceUrl" text`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "sourceType" varchar(60) NOT NULL DEFAULT 'owner_submission'`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "sellingConditions" text`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "buyerCosts" text`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "availabilityDate" timestamp`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "contactPermission" integer NOT NULL DEFAULT 0`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "reviewState" varchar(40) NOT NULL DEFAULT 'needs_review'`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "submittedBy" integer`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "approvedBy" integer`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "approvedAt" timestamp`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "lastReviewedAt" timestamp`,
+  ];
+  for (const statement of statements) {
+    try { await db.execute(sql.raw(statement)); }
+    catch (error) { console.warn("[Database] Critical property schema repair skipped:", error instanceof Error ? error.message : error); }
+  }
+}
 async function ensurePostgresSchema(db: any) {
   await ensureRequiredAuthSchema(db);
+  await ensureCriticalPropertySchema(db);
   if (_fullSchemaReady) return;
   try {
     const roots = [path.resolve(process.cwd()), path.resolve(process.cwd(), "dist")];
