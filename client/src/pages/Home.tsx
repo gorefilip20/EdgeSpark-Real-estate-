@@ -69,6 +69,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { COOKIE_NAME } from "@shared/const";
 import { toast } from "sonner";
+import RegistrationPage from "./Registration";
 const PUBLIC_GUIDES = [
   { title: "How to Make Money in Real Estate — EdgeSpark Estate", description: "Profit models, cash flow, financing, partnerships, and responsible investment decisions.", href: "/downloads/how-to-make-money-real-estate-edgespark-estate.pdf" },
   { title: "How to Source a Good Property and Verify Ownership — EdgeSpark Estate", description: "A practical checklist for title, seller identity, surveys, approvals, inspections, and documents.", href: "/downloads/how-to-source-verify-property-edgespark-estate.pdf" },
@@ -183,7 +184,7 @@ function BrandMark({ light = false }: { light?: boolean }) {
     </div>
   );
 }
-function Header({ dark = false }: { dark?: boolean }) {
+export function Header({ dark = false }: { dark?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <header
@@ -198,6 +199,7 @@ function Header({ dark = false }: { dark?: boolean }) {
           <Link href="/about">About us</Link>
           <Link href="/calculator">Deal analyzer</Link>
           <Link href="/partner">Partner with us</Link>
+          <Link href="/registration">Register in Nigeria</Link>
           <Link href="/owner/onboard">List a property</Link>
           <Link href="/account">Account</Link>
           <Link href="/shortlist">Shortlist</Link>
@@ -227,6 +229,7 @@ function Header({ dark = false }: { dark?: boolean }) {
             <Link href="/about">About us</Link>
             <Link href="/calculator">Deal analyzer</Link>
             <Link href="/partner">Partner with us</Link>
+            <Link href="/registration">Register in Nigeria</Link>
             <Link href="/owner/onboard">List a property</Link>
             <Link href="/account">Account</Link>
             <Link href="/shortlist">Shortlist</Link>
@@ -236,7 +239,7 @@ function Header({ dark = false }: { dark?: boolean }) {
     </header>
   );
 }
-function Footer() {
+export function Footer() {
   return (
     <footer className="border-t border-[#deded5] bg-[#f1f0ea] py-12">
       <div className="container grid gap-10 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
@@ -252,6 +255,7 @@ function Footer() {
           <div className="mt-4 grid gap-3 text-sm">
             <Link href="/properties">Properties</Link>
             <Link href="/calculator">Deal analyzer</Link>
+            <Link href="/registration">Register in Nigeria</Link>
             <a href="#guides">Download guides</a>
           </div>
         </div>
@@ -3336,6 +3340,7 @@ export default function Home() {
       <Route path="/property/:slug" component={PropertyPage} />
       <Route path="/calculator" component={CalculatorPage} />
       <Route path="/partner" component={PartnerPage} />
+      <Route path="/registration" component={RegistrationPage} />
       <Route path="/admin" component={AdminPage} />
       <Route component={HomePage} />
     </Switch>
