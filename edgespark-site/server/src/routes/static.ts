@@ -1826,6 +1826,9 @@ document.getElementById('partnerForm')?.addEventListener('submit', async e => {
 </html>
 `);
 
+// Registration pricing is maintained as a static page so Hostinger can serve it directly.
+staticRoutes.get("/registration", (c) => c.redirect("/registration.html"));
+
 // Catch-all route handler
 staticRoutes.get("/:page", (c) => {
   const page = c.req.param("page");

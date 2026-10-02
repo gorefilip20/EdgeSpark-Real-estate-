@@ -1,0 +1,38 @@
+{
+  "currency": "NGN",
+  "lastReviewed": "2026-10-02",
+  "officialFeeNotice": "CAC AI service charges shown here are based on the CAC public notice dated 2 April 2026. Statutory filing fees and stamp duty are confirmed against the official CAC portal before an application is submitted.",
+  "packages": {
+    "businessName": {
+      "name": "Business name registration",
+      "eyebrow": "For sole traders and partnerships",
+      "serviceFee": 25000,
+      "cacAiFees": 700,
+      "statutoryFees": null,
+      "startingTotal": 25700,
+      "priceLabel": "From ₦25,700 + statutory CAC fees",
+      "includes": [
+        "Name availability and reservation guidance",
+        "Application preparation and submission support",
+        "CAC document collection support",
+        "Itemised quote before submission"
+      ]
+    },
+    "privateCompany": {
+      "name": "Private limited company",
+      "eyebrow": "For incorporated businesses",
+      "serviceFee": 75000,
+      "cacAiFees": 200,
+      "statutoryFees": null,
+      "startingTotal": 75200,
+      "priceLabel": "From ₦75,200 + statutory CAC fees and stamp duty",
+      "includes": [
+        "Name reservation guidance",
+        "Incorporation application support",
+        "Director/shareholder information checklist",
+        "Itemised quote based on share capital"
+      ]
+    }
+  },
+  "disclaimer": "Government charges can change. Final cost depends on the registration type, share capital, directors/shareholders, regulated activities, stamp duty and any optional services. EdgeSpark is a private service provider and is not the Corporate Affairs Commission."
+}
