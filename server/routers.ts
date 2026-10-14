@@ -217,7 +217,7 @@ export const appRouter = router({
         return fallback();
       }
     }),
-    sendEmail: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
+    sendEmail: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), to: z.string().email().max(320), cc: z.string().max(2000).optional(), bcc: z.string().max(2000).optional(), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
       if (await getInternationalSuppressionByEmail(input.to)) { throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This recipient is suppressed and cannot receive outreach." }); }
       try { const result = await sendEdgeParkEmail(input); await recordInternationalOutbound({ placeId: input.placeId, recipientEmail: input.to, subject: input.subject, bodyText: `${input.greeting}\n\n${input.body}\n\n${input.callToAction}`, actorId: ctx.user.id }); return result; } catch (error) { throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "Email could not be sent" }); }
     }),
