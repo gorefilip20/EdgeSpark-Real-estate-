@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, internationalProspectOutreach, internationalProspectMessages, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users, ownerProperties, ownerProfiles, ownerConsents, verificationAuditEvents } from "../drizzle/schema";
-import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
+import { getInternationalMarket } from "@shared/internationalMarkets";
 import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
 import { ENV } from "./_core/env";
 import { validateMarketCodes, validatePriceRange } from "./marketValidation";
@@ -150,9 +150,11 @@ export async function updateFavoriteMetadata(userId: number, propertyId: number,
 export async function listUsers() { const db = await getDb(); if (!db) return []; try { return await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, loginMethod: users.loginMethod, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).orderBy(desc(users.lastSignedIn)); } catch { return db.select({ id: localUsers.id, name: localUsers.name, email: localUsers.email, role: localUsers.role, loginMethod: localUsers.loginMethod, createdAt: localUsers.createdAt, lastSignedIn: localUsers.lastSignedIn }).from(localUsers).orderBy(desc(localUsers.lastSignedIn)); } }
 export async function listLeads() { const db = await getDb(); if (!db) return { inquiries: [], partnerships: [] }; const [inquiryRows, partnershipRows] = await Promise.all([db.select().from(inquiries).orderBy(desc(inquiries.createdAt)), db.select().from(partnershipApplications).orderBy(desc(partnershipApplications.createdAt))]); return { inquiries: inquiryRows, partnerships: partnershipRows }; }
 
-export async function searchInternationalBusinesses(query: string, countryCode: string, category = "real estate developer") {
-  const market = getInternationalMarket(countryCode.toUpperCase());
-  if (!market || !INTERNATIONAL_MARKET_CODES.has(market.code)) throw new Error("Choose a supported country from Europe, Asia, the Americas, or Africa.");
+export async function searchInternationalBusinesses(query: string, countryCode: string, category = "real estate developer", countryName?: string) {
+  const normalizedCode = countryCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalizedCode)) throw new Error("Enter a valid two-letter ISO country code.");
+  const knownMarket = getInternationalMarket(normalizedCode);
+  const market = knownMarket || { code: normalizedCode, name: countryName?.trim() || normalizedCode, region: "Other" as const };
   const normalizedCategory = category.trim() || "real estate developer";
   // Text search is deliberately used without a fixed Places `type`. The fixed
   // real_estate_agency type silently excluded portfolio managers, investors,

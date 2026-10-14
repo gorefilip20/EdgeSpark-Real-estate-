@@ -111,3 +111,9 @@ To receive replies in the admin pipeline, configure the mailbox provider's inbou
 ```
 
 Set `INTERNATIONAL_INBOUND_WEBHOOK_SECRET` to a protected random value. The endpoint is rejected unless that header matches. The provider must pass the prospect's saved `placeId` (for example by storing it in outbound metadata or mapping the recipient/thread in the provider). Replies are stored as inbound messages and move the prospect to the meeting/review stage. EdgeSpark does not auto-send a reply merely because an email arrived.
+
+## Worldwide location search
+
+The admin search supports the predefined country list and an **Other country** path. For a country not in the list, enter its two-letter ISO code and country name, then enter the state/province and city/community. Those location fields are included in the provider search query, OpenStreetMap fallback, public website contact discovery, and the saved prospect record. Search results can expose public email addresses only when the business or its public website actually publishes them; the system never guarantees an email or invents one.
+
+The repository build and tests can be verified locally, but a successful Hostinger deployment cannot be asserted from GitHub alone. Hostinger must run the build command, start `dist/index.js`, apply the bundled PostgreSQL migrations, and have the server variables above configured. Confirm the deployment in Hostinger Runtime Logs and test one admin search plus one approved SMTP test email before treating production as live.

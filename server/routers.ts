@@ -190,9 +190,9 @@ export const appRouter = router({
       }),
   }),
   international: router({
-    search: adminOnly.input(z.object({ query: z.string().min(2).max(120), countryCode: z.string().length(2), category: z.string().min(2).max(120).default("real estate developer") })).query(async ({ input }) => {
+    search: adminOnly.input(z.object({ query: z.string().min(2).max(180), countryCode: z.string().length(2), countryName: z.string().max(120).optional(), category: z.string().min(2).max(120).default("real estate developer") })).query(async ({ input }) => {
       try {
-        return await searchInternationalBusinesses(input.query.trim(), input.countryCode.toUpperCase(), input.category.trim());
+        return await searchInternationalBusinesses(input.query.trim(), input.countryCode.toUpperCase(), input.category.trim(), input.countryName?.trim());
       } catch (error) {
         throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "International business search is unavailable" });
       }
