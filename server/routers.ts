@@ -26,6 +26,8 @@ import {
   searchInternationalBusinesses,
   updateInternationalProspect,
   updateInternationalProspectContact,
+  recordInternationalOutbound,
+  listInternationalMessages,
   createPropertyWithAudit,
   updatePropertyWithAudit,
   reviewPropertyWithAudit,
@@ -196,6 +198,7 @@ export const appRouter = router({
       }
     }),
     saved: adminOnly.query(() => listInternationalProspects()),
+    messages: adminOnly.input(z.object({ prospectId: z.number().int() })).query(({ input }) => listInternationalMessages(input.prospectId)),
     enrichWebsite: adminOnly.input(z.object({ website: z.string().url().max(1000) })).mutation(({ input }) => enrichPublicWebsite(input.website)),
     discoverContacts: adminOnly.input(z.object({ businessName: z.string().min(2).max(200), country: z.string().max(120).optional(), category: z.string().max(160).optional() })).mutation(({ input }) => discoverPublicContacts(input)),
     generateDraft: adminOnly.input(z.object({ businessName: z.string().min(2).max(200), address: z.string().max(400).optional(), website: z.string().url().max(1000).optional(), phone: z.string().max(100).optional(), contactName: z.string().max(180).optional(), contactRole: z.string().max(180).optional(), websiteSummary: z.string().max(6000).optional(), sector: z.string().max(300).optional(), objective: z.enum(["strategic partnership", "bring customers", "list the business online", "real estate development", "property management", "solar and energy partnership", "other"]), offer: z.string().min(10).max(1200), tone: z.enum(["professional", "warm", "direct"]).default("professional") })).mutation(async ({ input }) => {
@@ -213,9 +216,9 @@ export const appRouter = router({
         return fallback();
       }
     }),
-    sendEmail: adminOnly.input(z.object({ to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
+    sendEmail: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), to: z.string().email().max(320), companyName: z.string().min(2).max(200), subject: z.string().min(2).max(240), greeting: z.string().max(500), body: z.string().min(10).max(12000), callToAction: z.string().max(2000), proposalAngle: z.string().max(4000).optional() })).mutation(async ({ ctx, input }) => {
       if (await getInternationalSuppressionByEmail(input.to)) { throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This recipient is suppressed and cannot receive outreach." }); }
-      try { return await sendEdgeParkEmail(input); } catch (error) { throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "Email could not be sent" }); }
+      try { const result = await sendEdgeParkEmail(input); await recordInternationalOutbound({ placeId: input.placeId, recipientEmail: input.to, subject: input.subject, bodyText: `${input.greeting}\n\n${input.body}\n\n${input.callToAction}`, actorId: ctx.user.id }); return result; } catch (error) { throw new TRPCError({ code: "BAD_GATEWAY", message: error instanceof Error ? error.message : "Email could not be sent" }); }
     }),
     setSuppression: adminOnly.input(z.object({ prospectId: z.number().int(), doNotContact: z.boolean(), reason: z.string().min(3).max(1000) })).mutation(({ ctx, input }) => setInternationalSuppression({ ...input, actorId: ctx.user.id })),
     save: adminOnly.input(z.object({ placeId: z.string().min(3).max(180), region: z.string().min(2).max(32), countryCode: z.string().length(2), category: z.string().max(120).optional(), website: z.string().url().max(1000).optional(), sourceType: z.string().max(80).optional(), sourceUrl: z.string().url().max(1000).optional(), notes: z.string().max(4000).optional(), pitchAngle: z.string().max(4000).optional() })).mutation(({ ctx, input }) => saveInternationalProspect({ ...input, countryCode: input.countryCode.toUpperCase() }, ctx.user.id)),

@@ -92,3 +92,22 @@ When an admin changes a check from one status to another, EdgeSparkEstate sends 
 - A prompt to sign in or contact the review team.
 
 Email delivery is intentionally non-blocking: if SMTP is unavailable, the verification status remains saved and the server logs a delivery error for follow-up.
+
+## International outreach and replies
+
+The admin international-prospecting workspace sends only after an administrator clicks **Send EdgePark email**. Successful sends are recorded against the saved prospect in `internationalProspectOutreach` and `internationalProspectMessages`; suppressed recipients are checked again immediately before sending.
+
+To receive replies in the admin pipeline, configure the mailbox provider's inbound webhook to `POST /api/email/inbound` with this JSON shape and the header `x-edgespark-inbound-secret`:
+
+```json
+{
+  "placeId": "the-saved-prospect-place-id",
+  "fromEmail": "partnerships@example.com",
+  "toEmail": "edgesparkbusiness@gmail.com",
+  "subject": "Re: Partnership conversation",
+  "text": "Thanks for reaching out...",
+  "messageId": "provider-message-id"
+}
+```
+
+Set `INTERNATIONAL_INBOUND_WEBHOOK_SECRET` to a protected random value. The endpoint is rejected unless that header matches. The provider must pass the prospect's saved `placeId` (for example by storing it in outbound metadata or mapping the recipient/thread in the provider). Replies are stored as inbound messages and move the prospect to the meeting/review stage. EdgeSpark does not auto-send a reply merely because an email arrived.

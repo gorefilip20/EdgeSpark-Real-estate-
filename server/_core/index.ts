@@ -8,6 +8,8 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { recordInternationalInbound } from "../db";
+import { invokeLLM } from "./llm";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -34,6 +36,37 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.post("/api/email/inbound", async (req, res) => {
+    const configuredSecret = process.env.INTERNATIONAL_INBOUND_WEBHOOK_SECRET;
+    if (!configuredSecret || req.header("x-edgespark-inbound-secret") !== configuredSecret) {
+      res.status(401).json({ error: "Inbound webhook is not authorized" });
+      return;
+    }
+    const { placeId, fromEmail, toEmail, subject, text, bodyText, messageId, aiSummary, aiSuggestedReply } = req.body || {};
+    if (typeof placeId !== "string" || typeof (text || bodyText) !== "string") {
+      res.status(400).json({ error: "placeId and text are required" });
+      return;
+    }
+    try {
+      let generatedSummary = aiSummary;
+      let generatedReply = aiSuggestedReply;
+      if (!generatedSummary || !generatedReply) {
+        try {
+          const response = await invokeLLM({ messages: [{ role: "system", content: "Summarize this inbound partnership email and draft a concise, human-review-only reply for EdgeSpark Estate. Do not invent facts, prices, commitments, people, or meeting times. Return JSON with summary and reply." }, { role: "user", content: String(text || bodyText).slice(0, 12000) }], maxTokens: 500 });
+          const content = response.choices[0]?.message?.content;
+          if (typeof content === "string") {
+            const parsed = JSON.parse(content) as { summary?: string; reply?: string };
+            generatedSummary ||= parsed.summary;
+            generatedReply ||= parsed.reply;
+          }
+        } catch { /* Reply ingestion remains available when AI is unavailable. */ }
+      }
+      const message = await recordInternationalInbound({ placeId, fromEmail, toEmail, subject, bodyText: text || bodyText, providerMessageId: messageId, aiSummary: generatedSummary, aiSuggestedReply: generatedReply });
+      res.status(201).json({ success: true, messageId: message.id });
+    } catch (error) {
+      res.status(422).json({ error: error instanceof Error ? error.message : "Inbound message could not be stored" });
+    }
+  });
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   // tRPC API
