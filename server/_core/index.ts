@@ -50,7 +50,7 @@ async function startServer() {
     try {
       let generatedSummary = aiSummary;
       let generatedReply = aiSuggestedReply;
-      if (!generatedSummary || !generatedReply) {
+      if ((!generatedSummary || !generatedReply) && process.env.BUILT_IN_FORGE_API_KEY?.trim()) {
         try {
           const response = await invokeLLM({ messages: [{ role: "system", content: "Summarize this inbound partnership email and draft a concise, human-review-only reply for EdgeSpark Estate. Do not invent facts, prices, commitments, people, or meeting times. Return JSON with summary and reply." }, { role: "user", content: String(text || bodyText).slice(0, 12000) }], maxTokens: 500 });
           const content = response.choices[0]?.message?.content;
@@ -61,6 +61,8 @@ async function startServer() {
           }
         } catch { /* Reply ingestion remains available when AI is unavailable. */ }
       }
+      generatedSummary ||= "A partner reply was received. Review the sender's request, timeline, decision process, and proposed next step before responding.";
+      generatedReply ||= "Thank you for getting back to EdgePark Estate. We appreciate the response and would be glad to understand your priorities, the right contact for this conversation, and a suitable next step. We will review the details and follow up with a focused proposal for your consideration.";
       const message = await recordInternationalInbound({ placeId, fromEmail, toEmail, subject, bodyText: text || bodyText, providerMessageId: messageId, aiSummary: generatedSummary, aiSuggestedReply: generatedReply });
       res.status(201).json({ success: true, messageId: message.id });
     } catch (error) {
