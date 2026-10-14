@@ -69,6 +69,7 @@ import {
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { COOKIE_NAME } from "@shared/const";
+import { PartnerGrowthSuite } from "@/components/admin/PartnerGrowthSuite";
 import { toast } from "sonner";
 const PUBLIC_GUIDES = [
   { title: "How to Make Money in Real Estate — EdgeSpark Estate", description: "Profit models, cash flow, financing, partnerships, and responsible investment decisions.", href: "/downloads/how-to-make-money-real-estate-edgespark-estate.pdf" },
@@ -2755,6 +2756,7 @@ function AdminPage() {
           </div>
         </div>
         <InternationalProspectingPanel />
+        <PartnerGrowthSuite />
         <section className="mt-8 rounded-[1.4rem] border border-[#deded5] bg-white p-6">
           <div className="eyebrow">Account directory</div>
           <h2 className="mt-2 font-display text-2xl text-[#173b46]">
