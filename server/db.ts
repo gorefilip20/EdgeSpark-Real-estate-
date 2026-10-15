@@ -185,11 +185,9 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   if (!candidates.length) {
     type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string; extratags?: Record<string, string> };
     const osmQueries = Array.from(new Set([
-      `${normalizedCategory}, ${market.name}`,
       `${requested}, ${market.name}`,
-      `${normalizedCategory} in ${market.name}`,
+      `${normalizedCategory}, ${market.name}`,
       `real estate, ${market.name}`,
-      `business, ${market.name}`,
     ]));
     const osmPlaces = new Map<string, OsmPlace>();
     for (const osmText of osmQueries) {
@@ -198,13 +196,18 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       if (!response.ok) continue;
       const found = await response.json() as OsmPlace[];
       for (const place of found) {
+        const searchable = `${place.display_name} ${place.type || ""} ${place.category || ""}`.toLowerCase();
+        const isExcluded = /(embassy|government|national assembly|central bank|airport|airways|university|school|hospital|healthcare|administration|library|museum|police|church|mosque)/i.test(searchable);
+        const isPropertyRelevant = /(real estate|property|developer|construction|housing|interior|architect|estate agent|broker|letting|land|investment)/i.test(searchable);
+        if (isExcluded || !isPropertyRelevant) continue;
         const key = `${place.osm_type || "place"}-${place.place_id}`;
         if (!osmPlaces.has(key)) osmPlaces.set(key, place);
         if (osmPlaces.size >= 12) break;
       }
       if (osmPlaces.size >= 12) break;
     }
-    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory], phone: place.extratags?.phone || place.extratags?.contact_phone, website: place.extratags?.website || place.extratags?.contact_website, email: place.extratags?.email || place.extratags?.contact_email, contact_name: place.extratags?.contact_name, contact_role: place.extratags?.contact_role }));
+    const cleanPublicValue = (value?: string) => value?.replace(/&nbsp;/gi, " ").trim() || undefined;
+    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory], phone: cleanPublicValue(place.extratags?.phone || place.extratags?.contact_phone), website: cleanPublicValue(place.extratags?.website || place.extratags?.contact_website), email: cleanPublicValue(place.extratags?.email || place.extratags?.contact_email), contact_name: cleanPublicValue(place.extratags?.contact_name), contact_role: cleanPublicValue(place.extratags?.contact_role) }));
   }
   if (!candidates.length) {
     type WikiSearch = { pageid: number; title: string };
@@ -216,6 +219,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       if (!response.ok) continue;
       const payload = await response.json() as { query?: { search?: WikiSearch[] } };
       for (const item of payload.query?.search || []) {
+        if (!/(real estate|realty|property|housing|construction|developer|development|residential|land|estate)/i.test(item.title)) continue;
         if (item.pageid && !wikiPlaces.has(item.pageid)) wikiPlaces.set(item.pageid, item);
         if (wikiPlaces.size >= 8) break;
       }
@@ -236,7 +240,8 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
     if (String(place.place_id).startsWith("wiki-")) {
       const title = encodeURIComponent(place.name);
       const researchQuery = encodeURIComponent(`${place.name} ${market.name}`);
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, researchUrl: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://en.wikipedia.org/w/index.php?search=${title}`, rating: undefined, userRatings: undefined, businessStatus: "Public research lead — verify company details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+      const discovered = await discoverPublicContacts({ businessName: place.name, country: market.name, category: normalizedCategory }).catch(() => null);
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: discovered?.phone, email: discovered?.email, website: discovered?.website, contactName: discovered?.contactName, contactRole: discovered?.contactRole, sourceUrl: discovered?.sourceUrl, researchUrl: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://en.wikipedia.org/w/index.php?search=${title}`, rating: undefined, userRatings: undefined, businessStatus: discovered?.email || discovered?.website ? "Public website contact discovered — verify before outreach" : "Public research lead — verify company details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
     if (String(place.place_id).startsWith("research-")) {
       const researchQuery = encodeURIComponent(`${normalizedCategory} ${market.name}`);
