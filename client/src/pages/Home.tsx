@@ -198,6 +198,7 @@ function Header({ dark = false }: { dark?: boolean }) {
         <nav className="hidden items-center gap-8 text-sm font-medium lg:flex">
           <Link href="/properties">Explore properties</Link>
           <Link href="/about">About us</Link>
+          <a href="/#collaboration-proof">Collaboration proof</a>
           <Link href="/calculator">Deal analyzer</Link>
           <Link href="/partner">Partner with us</Link>
           <Link href="/owner/onboard">List a property</Link>
@@ -227,6 +228,7 @@ function Header({ dark = false }: { dark?: boolean }) {
             <Link href="/">Home</Link>
             <Link href="/properties">Explore properties</Link>
             <Link href="/about">About us</Link>
+            <a href="/#collaboration-proof" onClick={() => setOpen(false)}>Collaboration proof</a>
             <Link href="/calculator">Deal analyzer</Link>
             <Link href="/partner">Partner with us</Link>
             <Link href="/owner/onboard">List a property</Link>
@@ -254,6 +256,7 @@ function Footer() {
           <div className="mt-4 grid gap-3 text-sm">
             <Link href="/properties">Properties</Link>
             <Link href="/calculator">Deal analyzer</Link>
+            <a href="/#collaboration-proof">Collaboration proof</a>
             <a href="#guides">Download guides</a>
           </div>
         </div>
@@ -1174,6 +1177,95 @@ function FounderSection() {
     </section>
   );
 }
+function CollaborationProofSection() {
+  const media = [
+    {
+      src: "/social-proof/engel-volkers-meeting-01.jpg",
+      alt: "Property meeting with an ENGEL & VÖLKERS investment-event brochure on the table",
+      title: "A focused investment conversation",
+      caption: "Meeting moment · Lagos, Nigeria",
+    },
+    {
+      src: "/social-proof/engel-volkers-meeting-02.jpg",
+      alt: "EdgePark Estate representatives with an ENGEL & VÖLKERS backdrop",
+      title: "Relationships in the room",
+      caption: "UAE-focused property dialogue",
+    },
+    {
+      src: "/social-proof/engel-volkers-meeting-03.jpg",
+      alt: "EdgePark Estate representatives standing with an ENGEL & VÖLKERS backdrop",
+      title: "Cross-border perspective",
+      caption: "International collaboration conversation",
+    },
+  ];
+
+  return (
+    <section id="collaboration-proof" className="scroll-mt-8 bg-[#f1f0ea] py-24">
+      <div className="container">
+        <div className="grid gap-10 lg:grid-cols-[.78fr_1.22fr] lg:items-end">
+          <div>
+            <div className="eyebrow text-[#bd7b4b]">Social proof · international collaboration</div>
+            <h2 className="mt-4 font-display text-4xl leading-tight text-[#173b46] md:text-5xl">
+              Relationships that extend beyond borders.
+            </h2>
+            <p className="mt-5 max-w-xl text-base leading-8 text-[#6c7776]">
+              EdgePark Estate met with representatives connected to ENGEL&amp;VÖLKERS during a UAE-focused property investment conversation. It is the kind of relationship-building we value: bringing Nigerian market opportunity into thoughtful conversations with international property networks.
+            </p>
+            <div className="mt-7 rounded-2xl border border-[#deded5] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-[.14em] text-[#173b46]">
+                <Globe2 className="h-5 w-5 text-[#bd7b4b]" />
+                UAE market dialogue
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#6c7776]">
+                Dubai, United Arab Emirates · meeting documentation supplied by EdgePark Estate.
+              </p>
+            </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/partner" className="inline-flex items-center rounded-full bg-[#173b46] px-5 py-3 text-sm font-semibold text-white hover:bg-[#102d36]">
+                Discuss a partnership <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+              <Link href="/about" className="inline-flex items-center rounded-full border border-[#173b46]/15 px-5 py-3 text-sm font-semibold text-[#173b46] hover:bg-white">
+                Learn about EdgePark <ArrowUpRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <figure className="overflow-hidden rounded-[1.5rem] bg-[#173b46] shadow-sm sm:col-span-2">
+              <video
+                className="aspect-[16/9] w-full bg-[#0f2f38] object-contain"
+                controls
+                playsInline
+                preload="metadata"
+                poster="/social-proof/engel-volkers-meeting-02.jpg"
+                aria-label="Short ENGEL & VÖLKERS meeting video"
+              >
+                <source src="/social-proof/engel-volkers-meeting.mp4" type="video/mp4" />
+                Your browser does not support embedded video.
+              </video>
+              <figcaption className="p-5 text-white">
+                <div className="text-xs font-bold uppercase tracking-[.16em] text-[#d59462]">Meeting footage</div>
+                <div className="mt-2 font-display text-2xl">A real conversation, captured.</div>
+                <p className="mt-2 text-sm leading-6 text-white/65">A short visual record of the property investment conversation and the people behind it.</p>
+              </figcaption>
+            </figure>
+            {media.map(item => (
+              <figure key={item.src} className="overflow-hidden rounded-[1.4rem] border border-[#deded5] bg-white shadow-sm">
+                <img src={item.src} alt={item.alt} className="aspect-[4/5] w-full object-cover" loading="lazy" />
+                <figcaption className="p-4">
+                  <div className="font-semibold text-[#173b46]">{item.title}</div>
+                  <div className="mt-1 text-xs uppercase tracking-[.12em] text-[#bd7b4b]">{item.caption}</div>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+        <div className="mt-10 border-t border-[#deded5] pt-5 text-xs leading-6 text-[#6c7776]">
+          <strong className="text-[#173b46]">Proof note:</strong> These images and video document an EdgePark Estate meeting and collaboration conversation. They are not presented as a public endorsement, agency appointment, or binding partnership announcement unless separately confirmed in writing by the relevant parties.
+        </div>
+      </div>
+    </section>
+  );
+}
 const PHONE_COUNTRIES = [
   ["NG", "Nigeria", "+234"], ["US", "United States", "+1"], ["AE", "United Arab Emirates", "+971"], ["GB", "United Kingdom", "+44"], ["CA", "Canada", "+1"], ["AU", "Australia", "+61"], ["ZA", "South Africa", "+27"], ["GH", "Ghana", "+233"], ["KE", "Kenya", "+254"], ["TZ", "Tanzania", "+255"], ["UG", "Uganda", "+256"], ["RW", "Rwanda", "+250"], ["EG", "Egypt", "+20"], ["MA", "Morocco", "+212"], ["SA", "Saudi Arabia", "+966"], ["QA", "Qatar", "+974"], ["KW", "Kuwait", "+965"], ["BH", "Bahrain", "+973"], ["IN", "India", "+91"], ["PK", "Pakistan", "+92"], ["BD", "Bangladesh", "+880"], ["CN", "China", "+86"], ["JP", "Japan", "+81"], ["SG", "Singapore", "+65"], ["MY", "Malaysia", "+60"], ["DE", "Germany", "+49"], ["FR", "France", "+33"], ["IT", "Italy", "+39"], ["ES", "Spain", "+34"], ["NL", "Netherlands", "+31"], ["CH", "Switzerland", "+41"], ["SE", "Sweden", "+46"], ["NO", "Norway", "+47"], ["BR", "Brazil", "+55"], ["MX", "Mexico", "+52"], ["AR", "Argentina", "+54"], ["CL", "Chile", "+56"], ["TR", "Türkiye", "+90"], ["IL", "Israel", "+972"], ["KR", "South Korea", "+82"], ["NZ", "New Zealand", "+64"], ["Other", "Other country", "+"] as const,
 ];
@@ -1529,6 +1621,7 @@ function HomePage() {
         </div>
       </section>
       <FounderSection />
+      <CollaborationProofSection />
       <BookingSection />
       <section className="bg-[#bd7b4b] py-20 text-white">
         <div className="container flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
