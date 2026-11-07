@@ -1217,7 +1217,7 @@ function CollaborationProofSection() {
                 UAE market dialogue
               </div>
               <p className="mt-3 text-sm leading-6 text-[#6c7776]">
-                Dubai, United Arab Emirates · meeting documentation supplied by EdgePark Estate.
+                UAE market focus · engagement connected to Dubai, United Arab Emirates; meeting documentation supplied by EdgePark Estate.
               </p>
             </div>
             <div className="mt-7 flex flex-wrap gap-3">
