@@ -1224,13 +1224,26 @@ function CollaborationProofSection() {
                 UAE market focus · engagement connected to Dubai, United Arab Emirates; meeting documentation supplied by EdgePark Estate.
               </p>
             </div>
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: ShieldCheck, label: "Documented meeting", detail: "Real media from a property conversation" },
+                { icon: Globe2, label: "Cross-border lens", detail: "Nigeria opportunity with UAE context" },
+                { icon: TrendingUp, label: "Clear next step", detail: "Move from interest to a practical call" },
+              ].map(({ icon: Icon, label, detail }) => (
+                <div key={label} className="rounded-2xl border border-[#deded5] bg-white p-4 shadow-sm">
+                  <Icon className="h-5 w-5 text-[#bd7b4b]" />
+                  <div className="mt-3 text-sm font-bold text-[#173b46]">{label}</div>
+                  <p className="mt-1 text-xs leading-5 text-[#6c7776]">{detail}</p>
+                </div>
+              ))}
+            </div>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/partner" className="inline-flex items-center rounded-full bg-[#173b46] px-5 py-3 text-sm font-semibold text-white hover:bg-[#102d36]">
-                Discuss a partnership <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-              <Link href="/about" className="inline-flex items-center rounded-full border border-[#173b46]/15 px-5 py-3 text-sm font-semibold text-[#173b46] hover:bg-white">
-                Learn about EdgePark <ArrowUpRight className="ml-2 h-4 w-4" />
-              </Link>
+              <a href="#booking" className="inline-flex items-center rounded-full bg-[#173b46] px-5 py-3 text-sm font-semibold text-white hover:bg-[#102d36]">
+                Book an investor conversation <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+              <a href="#guides" className="inline-flex items-center rounded-full border border-[#173b46]/15 px-5 py-3 text-sm font-semibold text-[#173b46] hover:bg-white">
+                Explore investor guides <ArrowUpRight className="ml-2 h-4 w-4" />
+              </a>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1261,6 +1274,29 @@ function CollaborationProofSection() {
                 </figcaption>
               </figure>
             ))}
+          </div>
+        </div>
+        <div className="mt-12 grid gap-5 rounded-[1.5rem] bg-[#173b46] p-6 text-white md:grid-cols-[1.15fr_.85fr] md:p-8">
+          <div>
+            <div className="eyebrow text-[#d59462]">Why this matters to investors</div>
+            <h3 className="mt-3 max-w-xl font-display text-3xl leading-tight md:text-4xl">
+              A relationship is valuable when it creates a clearer next move.
+            </h3>
+            <div className="mt-5 grid gap-3 text-sm leading-6 text-white/70 sm:grid-cols-3 md:grid-cols-1">
+              <div className="flex gap-3"><Check className="mt-1 h-4 w-4 shrink-0 text-[#d59462]" /><span>Open conversations with international property networks.</span></div>
+              <div className="flex gap-3"><Check className="mt-1 h-4 w-4 shrink-0 text-[#d59462]" /><span>Bring local Nigerian sourcing and market context to the table.</span></div>
+              <div className="flex gap-3"><Check className="mt-1 h-4 w-4 shrink-0 text-[#d59462]" /><span>Turn the first conversation into a scoped investor or partnership brief.</span></div>
+            </div>
+          </div>
+          <div className="flex flex-col justify-between rounded-2xl border border-white/15 bg-white/10 p-5">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[.16em] text-[#d59462]">Documented partner context</div>
+              <div className="mt-4 font-display text-3xl tracking-tight">ENGEL&amp;VÖLKERS</div>
+              <p className="mt-2 text-sm leading-6 text-white/65">Meeting documentation from an UAE-focused property investment conversation. Formal endorsement or appointment is not implied.</p>
+            </div>
+            <a href="#booking" className="mt-6 inline-flex w-fit items-center rounded-full bg-[#d59462] px-4 py-2.5 text-sm font-semibold text-[#173b46] hover:bg-[#e2a674]">
+              Start the next conversation <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
           </div>
         </div>
         <div className="mt-10 border-t border-[#deded5] pt-5 text-xs leading-6 text-[#6c7776]">
