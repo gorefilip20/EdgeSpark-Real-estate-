@@ -91,6 +91,39 @@ export const internationalProspectContacts = pgTable("internationalProspectConta
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
+export const internationalProspectOutreach = pgTable("internationalProspectOutreach", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospectId").notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  subject: varchar("subject", { length: 240 }).notNull(),
+  bodyText: text("bodyText").notNull(),
+  providerMessageId: varchar("providerMessageId", { length: 320 }),
+  status: varchar("status", { length: 32 }).default("sent").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  followUpAt: timestamp("followUpAt"),
+  followUpCount: integer("followUpCount").default(0).notNull(),
+  lastError: text("lastError"),
+  createdBy: integer("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export const internationalProspectMessages = pgTable("internationalProspectMessages", {
+  id: serial("id").primaryKey(),
+  prospectId: integer("prospectId").notNull(),
+  outreachId: integer("outreachId"),
+  direction: varchar("direction", { length: 16 }).notNull(),
+  fromEmail: varchar("fromEmail", { length: 320 }),
+  toEmail: varchar("toEmail", { length: 320 }),
+  subject: varchar("subject", { length: 240 }),
+  bodyText: text("bodyText").notNull(),
+  providerMessageId: varchar("providerMessageId", { length: 320 }),
+  aiSummary: text("aiSummary"),
+  aiSuggestedReply: text("aiSuggestedReply"),
+  receivedAt: timestamp("receivedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const properties = pgTable("properties", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 180 }).notNull(),
@@ -243,6 +276,8 @@ export type InsertUser = typeof users.$inferInsert;
 export type Favorite = typeof favorites.$inferSelect;
 export type InternationalProspect = typeof internationalProspects.$inferSelect;
 export type InternationalProspectContact = typeof internationalProspectContacts.$inferSelect;
+export type InternationalProspectOutreach = typeof internationalProspectOutreach.$inferSelect;
+export type InternationalProspectMessage = typeof internationalProspectMessages.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type PropertyMedia = typeof propertyMedia.$inferSelect;
 export type Inquiry = typeof inquiries.$inferSelect;

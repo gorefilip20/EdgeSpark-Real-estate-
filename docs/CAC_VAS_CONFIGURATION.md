@@ -92,3 +92,34 @@ When an admin changes a check from one status to another, EdgeSparkEstate sends 
 - A prompt to sign in or contact the review team.
 
 Email delivery is intentionally non-blocking: if SMTP is unavailable, the verification status remains saved and the server logs a delivery error for follow-up.
+
+## International outreach and replies
+
+The admin international-prospecting workspace sends only after an administrator clicks **Send EdgePark email**. Successful sends are recorded against the saved prospect in `internationalProspectOutreach` and `internationalProspectMessages`; suppressed recipients are checked again immediately before sending.
+
+To receive replies in the admin pipeline, configure the mailbox provider's inbound webhook to `POST /api/email/inbound` with this JSON shape and the header `x-edgespark-inbound-secret`:
+
+```json
+{
+  "placeId": "the-saved-prospect-place-id",
+  "fromEmail": "partnerships@example.com",
+  "toEmail": "edgesparkbusiness@gmail.com",
+  "subject": "Re: Partnership conversation",
+  "text": "Thanks for reaching out...",
+  "messageId": "provider-message-id"
+}
+```
+
+Set `INTERNATIONAL_INBOUND_WEBHOOK_SECRET` to a protected random value. The endpoint is rejected unless that header matches. The provider must pass the prospect's saved `placeId` (for example by storing it in outbound metadata or mapping the recipient/thread in the provider). Replies are stored as inbound messages and move the prospect to the meeting/review stage. EdgeSpark does not auto-send a reply merely because an email arrived.
+
+## Worldwide location search
+
+The admin search supports the predefined country list and an **Other country** path. For a country not in the list, enter its two-letter ISO code and country name, then enter the state/province and city/community. Those location fields are included in the provider search query, OpenStreetMap fallback, public website contact discovery, and the saved prospect record. Search results can expose public email addresses only when the business or its public website actually publishes them; the system never guarantees an email or invents one.
+
+The repository build and tests can be verified locally, but a successful Hostinger deployment cannot be asserted from GitHub alone. Hostinger must run the build command, start `dist/index.js`, apply the bundled PostgreSQL migrations, and have the server variables above configured. Confirm the deployment in Hostinger Runtime Logs and test one admin search plus one approved SMTP test email before treating production as live.
+
+The admin location form now provides country-aware state/province dropdowns for every listed country with published administrative subdivisions, including Slovenia and Rwanda across the European and African market groups. Other countries or territories show a manual state/province option so worldwide searches remain possible. The selected state and city/community are included in the search query.
+
+Public contact enrichment checks the official website homepage plus published contact, about, team, leadership, partnership, business-development, and investor pages. It can return a public contact person, role, multiple public emails, phone numbers, booking links, the official website, and the exact page where the information was found. Generic Google or Wikipedia research links are no longer labelled as official websites or contact sources. Private, gated, scraped personal, or non-public data is not accessed.
+
+The admin email composer supports comma-separated public addresses in **CC** and **BCC**. Duplicate copies of the primary recipient are removed, invalid addresses are rejected, and the editable `mailto:` fallback carries the same CC/BCC values. SMTP delivery still requires valid mailbox credentials.

@@ -4,8 +4,8 @@ import { Pool } from "pg";
 import { sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users, ownerProperties, ownerProfiles, ownerConsents, verificationAuditEvents } from "../drizzle/schema";
-import { getInternationalMarket, INTERNATIONAL_MARKET_CODES } from "@shared/internationalMarkets";
+import { InsertUser, favorites, inquiries, internationalProspects, internationalProspectContacts, internationalProspectOutreach, internationalProspectMessages, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users, ownerProperties, ownerProfiles, ownerConsents, verificationAuditEvents } from "../drizzle/schema";
+import { getInternationalMarket } from "@shared/internationalMarkets";
 import { makeRequest, PlaceDetailsResult, PlacesSearchResult } from "./_core/map";
 import { ENV } from "./_core/env";
 import { validateMarketCodes, validatePriceRange } from "./marketValidation";
@@ -50,8 +50,8 @@ async function ensurePostgresSchema(db: any) {
   if (_fullSchemaReady) return;
   try {
     const roots = [path.resolve(process.cwd()), path.resolve(process.cwd(), "dist")];
-    const migrationPaths = ["drizzle-pg/0000_supabase_initial.sql", "drizzle-pg/0001_owner_verification_deals.sql", "drizzle-pg/0002_international_inventory_pipeline.sql"].map(file => roots.map(root => path.resolve(root, file)).find(candidate => { try { readFileSync(candidate); return true; } catch { return false; } })).filter(Boolean) as string[];
-    if (migrationPaths.length !== 3) throw new Error("Complete PostgreSQL migration chain is missing from the deployment bundle");
+    const migrationPaths = ["drizzle-pg/0000_supabase_initial.sql", "drizzle-pg/0001_owner_verification_deals.sql", "drizzle-pg/0002_international_inventory_pipeline.sql", "drizzle-pg/0003_international_outreach_messages.sql"].map(file => roots.map(root => path.resolve(root, file)).find(candidate => { try { readFileSync(candidate); return true; } catch { return false; } })).filter(Boolean) as string[];
+    if (migrationPaths.length !== 4) throw new Error("Complete PostgreSQL migration chain is missing from the deployment bundle");
     for (const migrationPath of migrationPaths) {
       const migration = readFileSync(migrationPath, "utf8");
       const statements = migration.split(/--> statement-breakpoint/).map((statement: string) => statement.trim()).filter(Boolean);
@@ -150,9 +150,11 @@ export async function updateFavoriteMetadata(userId: number, propertyId: number,
 export async function listUsers() { const db = await getDb(); if (!db) return []; try { return await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, loginMethod: users.loginMethod, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn }).from(users).orderBy(desc(users.lastSignedIn)); } catch { return db.select({ id: localUsers.id, name: localUsers.name, email: localUsers.email, role: localUsers.role, loginMethod: localUsers.loginMethod, createdAt: localUsers.createdAt, lastSignedIn: localUsers.lastSignedIn }).from(localUsers).orderBy(desc(localUsers.lastSignedIn)); } }
 export async function listLeads() { const db = await getDb(); if (!db) return { inquiries: [], partnerships: [] }; const [inquiryRows, partnershipRows] = await Promise.all([db.select().from(inquiries).orderBy(desc(inquiries.createdAt)), db.select().from(partnershipApplications).orderBy(desc(partnershipApplications.createdAt))]); return { inquiries: inquiryRows, partnerships: partnershipRows }; }
 
-export async function searchInternationalBusinesses(query: string, countryCode: string, category = "real estate developer") {
-  const market = getInternationalMarket(countryCode.toUpperCase());
-  if (!market || !INTERNATIONAL_MARKET_CODES.has(market.code)) throw new Error("Choose a supported country from Europe, Asia, the Americas, or Africa.");
+export async function searchInternationalBusinesses(query: string, countryCode: string, category = "real estate developer", countryName?: string) {
+  const normalizedCode = countryCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalizedCode)) throw new Error("Enter a valid two-letter ISO country code.");
+  const knownMarket = getInternationalMarket(normalizedCode);
+  const market = knownMarket || { code: normalizedCode, name: countryName?.trim() || normalizedCode, region: "Other" as const };
   const normalizedCategory = category.trim() || "real estate developer";
   // Text search is deliberately used without a fixed Places `type`. The fixed
   // real_estate_agency type silently excluded portfolio managers, investors,
@@ -183,11 +185,9 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
   if (!candidates.length) {
     type OsmPlace = { place_id: number; display_name: string; lat: string; lon: string; type?: string; category?: string; osm_type?: string; extratags?: Record<string, string> };
     const osmQueries = Array.from(new Set([
-      `${normalizedCategory}, ${market.name}`,
       `${requested}, ${market.name}`,
-      `${normalizedCategory} in ${market.name}`,
+      `${normalizedCategory}, ${market.name}`,
       `real estate, ${market.name}`,
-      `business, ${market.name}`,
     ]));
     const osmPlaces = new Map<string, OsmPlace>();
     for (const osmText of osmQueries) {
@@ -196,13 +196,18 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       if (!response.ok) continue;
       const found = await response.json() as OsmPlace[];
       for (const place of found) {
+        const searchable = `${place.display_name} ${place.type || ""} ${place.category || ""}`.toLowerCase();
+        const isExcluded = /(embassy|government|national assembly|central bank|airport|airways|university|school|hospital|healthcare|administration|library|museum|police|church|mosque)/i.test(searchable);
+        const isPropertyRelevant = /(real estate|property|developer|construction|housing|interior|architect|estate agent|broker|letting|land|investment)/i.test(searchable);
+        if (isExcluded || !isPropertyRelevant) continue;
         const key = `${place.osm_type || "place"}-${place.place_id}`;
         if (!osmPlaces.has(key)) osmPlaces.set(key, place);
         if (osmPlaces.size >= 12) break;
       }
       if (osmPlaces.size >= 12) break;
     }
-    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory], phone: place.extratags?.phone || place.extratags?.contact_phone, website: place.extratags?.website || place.extratags?.contact_website, email: place.extratags?.email || place.extratags?.contact_email, contact_name: place.extratags?.contact_name, contact_role: place.extratags?.contact_role }));
+    const cleanPublicValue = (value?: string) => value?.replace(/&nbsp;/gi, " ").trim() || undefined;
+    candidates = Array.from(osmPlaces.values()).map(place => ({ place_id: `osm-${place.osm_type || "place"}-${place.place_id}`, name: place.display_name.split(",")[0] || place.display_name, formatted_address: place.display_name, geometry: { location: { lat: Number(place.lat), lng: Number(place.lon) } }, types: [place.type || place.category || normalizedCategory], phone: cleanPublicValue(place.extratags?.phone || place.extratags?.contact_phone), website: cleanPublicValue(place.extratags?.website || place.extratags?.contact_website), email: cleanPublicValue(place.extratags?.email || place.extratags?.contact_email), contact_name: cleanPublicValue(place.extratags?.contact_name), contact_role: cleanPublicValue(place.extratags?.contact_role) }));
   }
   if (!candidates.length) {
     type WikiSearch = { pageid: number; title: string };
@@ -214,6 +219,7 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
       if (!response.ok) continue;
       const payload = await response.json() as { query?: { search?: WikiSearch[] } };
       for (const item of payload.query?.search || []) {
+        if (!/(real estate|realty|property|housing|construction|developer|development|residential|land|estate)/i.test(item.title)) continue;
         if (item.pageid && !wikiPlaces.has(item.pageid)) wikiPlaces.set(item.pageid, item);
         if (wikiPlaces.size >= 8) break;
       }
@@ -234,11 +240,12 @@ export async function searchInternationalBusinesses(query: string, countryCode: 
     if (String(place.place_id).startsWith("wiki-")) {
       const title = encodeURIComponent(place.name);
       const researchQuery = encodeURIComponent(`${place.name} ${market.name}`);
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://en.wikipedia.org/w/index.php?search=${title}`, rating: undefined, userRatings: undefined, businessStatus: "Public research lead — verify company details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+      const discovered = await discoverPublicContacts({ businessName: place.name, country: market.name, category: normalizedCategory }).catch(() => null);
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: discovered?.phone, email: discovered?.email, website: discovered?.website, contactName: discovered?.contactName, contactRole: discovered?.contactRole, sourceUrl: discovered?.sourceUrl, researchUrl: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://en.wikipedia.org/w/index.php?search=${title}`, rating: undefined, userRatings: undefined, businessStatus: discovered?.email || discovered?.website ? "Public website contact discovered — verify before outreach" : "Public research lead — verify company details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
     if (String(place.place_id).startsWith("research-")) {
       const researchQuery = encodeURIComponent(`${normalizedCategory} ${market.name}`);
-      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${researchQuery}`, rating: undefined, userRatings: undefined, businessStatus: "Research lead — verify publicly", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
+      return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: undefined, website: undefined, researchUrl: `https://www.google.com/search?q=${researchQuery}`, mapsUrl: `https://www.google.com/maps/search/?api=1&query=${researchQuery}`, rating: undefined, userRatings: undefined, businessStatus: "Research lead — verify publicly", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
     }
     if (String(place.place_id).startsWith("osm-")) {
       return { placeId: place.place_id, name: place.name, address: place.formatted_address, phone: (place as any).phone, email: (place as any).email, contactName: (place as any).contact_name || null, contactRole: (place as any).contact_role || "Business Development / Partnerships team", website: (place as any).website, mapsUrl: `https://www.openstreetmap.org/${String(place.place_id).replace(/^osm-/, "").replace(/-/, "/")}`, rating: undefined, userRatings: undefined, businessStatus: "Listed on OpenStreetMap — verify details", types: place.types, category: normalizedCategory, source: candidatesSource, region: market.region, countryCode: market.code };
@@ -287,15 +294,23 @@ export function safePublicUrl(value: string) { try { return new URL(value); } ca
 export async function enrichPublicWebsite(website: string) {
   const result = await fetchPublicHttps(website);
   const source = result.url;
-  const html = result.body;
-  const visibleText = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
-  const emails = uniqueMatches([...Array.from(html.matchAll(/mailto:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")), ...Array.from(visibleText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi), match => match[0])].filter(email => /@/.test(email)));
-  const phones = uniqueMatches([...Array.from(html.matchAll(/tel:([^\"'?#>\s]+)/gi), match => decodeURIComponent(match[1])), ...Array.from(visibleText.matchAll(/(?:\+?\d[\d .()\-]{7,}\d)/g), match => match[0].trim())]);
-  const bookingUrls = uniqueMatches(Array.from(html.matchAll(/https?:\/\/[^\"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
+  const pages = [{ source, html: result.body }];
+  const discoveredLinks = Array.from(result.body.matchAll(/href=["']([^"']+)["']/gi), match => { try { return new URL(match[1], source).toString(); } catch { return ""; } }).filter(Boolean);
+  const contactPages = Array.from(new Set(discoveredLinks.filter(url => /(contact|about|team|leadership|partnership|business-development|investor)/i.test(url)))).slice(0, 4);
+  for (const pageUrl of contactPages) {
+    try { const page = await fetchPublicHttps(pageUrl); pages.push({ source: page.url, html: page.body }); } catch { /* A blocked subpage must not discard the homepage. */ }
+  }
+  const allHtml = pages.map(page => page.html).join("\n");
+  const visibleText = allHtml.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+  const emails = uniqueMatches([...Array.from(allHtml.matchAll(/mailto:([^"'?#>\s]+)/gi), match => decodeURIComponent(match[1]).replace(/\?.*$/, "")), ...Array.from(visibleText.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi), match => match[0])].filter(email => !/example\.(com|org|net)$/i.test(email)));
+  const phones = uniqueMatches([...Array.from(allHtml.matchAll(/tel:([^"'?#>\s]+)/gi), match => decodeURIComponent(match[1])), ...Array.from(visibleText.matchAll(/(?:\+?\d[\d .()\-]{7,}\d)/g), match => match[0].trim())]);
+  const bookingUrls = uniqueMatches(Array.from(allHtml.matchAll(/https?:\/\/[^"'<>\s]+/gi), match => match[0]).filter(url => /(calendly|cal\.com|hubspot.*meeting|booking|schedule|appointment)/i.test(url)));
   const contactRole = /(partnership|business development|strategic alliance)/i.test(visibleText) ? "Partnerships / Business Development" : /(investor relations|investor)/i.test(visibleText) ? "Investor Relations" : "Business Development / Partnerships team";
-  const contactPage = Array.from(html.matchAll(/href=[\"']([^\"']+)[\"']/gi), match => { try { return new URL(match[1], source).toString(); } catch { return ""; } }).find(url => /(contact|about|team|leadership|partnership)/i.test(url));
-  return { contactName: null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage || source.toString(), publicSummary: visibleText.slice(0, 4500), additionalEmails: emails.slice(1, 4), additionalPhones: phones.slice(1, 4) };
+  const contactPage = pages.slice(1).find(page => /(contact|about|team|leadership|partnership|investor)/i.test(page.source.toString()))?.source.toString() || contactPages[0] || source.toString();
+  const contactMatch = visibleText.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s*[,\-–|]\s*(?:CEO|CFO|COO|CTO|Founder|Co-Founder|Director|Managing Director|Partner|Head of [A-Za-z &]+|Business Development)/);
+  return { contactName: contactMatch?.[1] || null, contactRole, email: emails[0] || null, phone: phones[0] || null, website: source.toString(), bookingUrl: bookingUrls[0] || null, sourceUrl: contactPage, publicSummary: visibleText.slice(0, 4500), additionalEmails: emails.slice(1, 8), additionalPhones: phones.slice(1, 8) };
 }
+
 export async function discoverPublicContacts(input: { businessName: string; country?: string; category?: string }) {
   const query = [input.businessName, input.category, input.country].filter(Boolean).join(" ").trim();
   if (!query) throw new Error("A business name is required to discover public contacts.");
@@ -305,12 +320,14 @@ export async function discoverPublicContacts(input: { businessName: string; coun
   const html = (await response.text()).slice(0, 500_000);
   const links = uniqueMatches(Array.from(html.matchAll(/uddg=([^&\"']+)/gi), match => { try { return decodeURIComponent(match[1]); } catch { return ""; } }).map(link => link.replace(/&amp;/g, "&"))).map(link => safePublicUrl(link)).filter((url): url is URL => Boolean(url)).filter(url => !/(duckduckgo|google|bing|yahoo|wikipedia|openstreetmap)\./i.test(url.hostname));
   const profiles = [];
-  for (const url of links.slice(0, 5)) {
+  for (const url of links.slice(0, 8)) {
     try { profiles.push(await enrichPublicWebsite(url.toString())); } catch { /* Continue to the next public result. */ }
-    if (profiles.some(profile => profile.email || profile.phone)) break;
   }
   const best = profiles.sort((a, b) => Number(Boolean(b.email)) + Number(Boolean(b.phone)) - Number(Boolean(a.email)) - Number(Boolean(a.phone)))[0];
-  return best ? { ...best, searchedFor: query, sources: profiles.map(profile => profile.sourceUrl).filter(Boolean) } : { contactName: null, contactRole: "Business Development / Partnerships team", email: null, phone: null, website: null, bookingUrl: null, sourceUrl: null, publicSummary: null, additionalEmails: [], additionalPhones: [], searchedFor: query, sources: [] };
+  if (!best) return { contactName: null, contactRole: "Business Development / Partnerships team", email: null, phone: null, website: null, bookingUrl: null, sourceUrl: null, publicSummary: null, additionalEmails: [], additionalPhones: [], searchedFor: query, sources: [] };
+  const extraEmails = uniqueMatches(profiles.flatMap(profile => [profile.email || "", ...(profile.additionalEmails || [])])).filter(email => email !== best.email).slice(0, 10);
+  const extraPhones = uniqueMatches(profiles.flatMap(profile => [profile.phone || "", ...(profile.additionalPhones || [])])).filter(phone => phone !== best.phone).slice(0, 10);
+  return { ...best, additionalEmails: uniqueMatches([...(best.additionalEmails || []), ...extraEmails]).slice(0, 10), additionalPhones: uniqueMatches([...(best.additionalPhones || []), ...extraPhones]).slice(0, 10), searchedFor: query, sources: profiles.map(profile => profile.sourceUrl).filter(Boolean) };
 }
 export async function listInternationalProspects() { const db = await getDb(); if (!db) return []; return db.select({ prospect: internationalProspects, contact: internationalProspectContacts }).from(internationalProspects).leftJoin(internationalProspectContacts, eq(internationalProspects.id, internationalProspectContacts.prospectId)).orderBy(desc(internationalProspects.updatedAt)).then(rows => rows.map(({ prospect, contact }) => ({ ...prospect, contact }))); }
 export async function saveInternationalProspect(input: { placeId: string; region: string; countryCode: string; category?: string; website?: string; sourceType?: string; sourceUrl?: string; notes?: string; pitchAngle?: string }, actorId?: number) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const existing = await db.select().from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1); const row = existing[0]; const changes: any = { ...input, updatedAt: new Date() }; if (row) { if (actorId) await db.insert(verificationAuditEvents).values({ actorId, action: "prospect_updated", entityType: "international_prospect", entityId: row.id, fromStatus: row.doNotContact ? "suppressed" : "active", toStatus: row.doNotContact ? "suppressed" : "active", metadata: JSON.stringify({ suppressionChanged: false }) }); await db.update(internationalProspects).set(changes).where(eq(internationalProspects.id, row.id)); return { ...row, ...changes }; } const [created] = await db.insert(internationalProspects).values({ ...input, doNotContact: 0 }).returning(); return created; }
@@ -319,4 +336,7 @@ export async function getInternationalSuppressionByEmail(email: string) { const 
 export async function setInternationalSuppression(input: { prospectId: number; doNotContact: boolean; reason: string; actorId: number }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); return db.transaction(async (tx: any) => { const [current] = await tx.select().from(internationalProspects).where(eq(internationalProspects.id, input.prospectId)).limit(1); if (!current) throw new Error("Prospect not found"); await tx.update(internationalProspects).set({ doNotContact: input.doNotContact ? 1 : 0, updatedAt: new Date() }).where(eq(internationalProspects.id, input.prospectId)); await tx.insert(verificationAuditEvents).values({ actorId: input.actorId, action: "prospect_suppression_changed", entityType: "international_prospect", entityId: input.prospectId, fromStatus: current.doNotContact ? "suppressed" : "active", toStatus: input.doNotContact ? "suppressed" : "active", metadata: JSON.stringify({ reason: input.reason }) }); return { success: true }; }); }
 export async function updateInternationalProspect(input: { id: number; status?: "new" | "researching" | "contacted" | "meeting" | "won" | "archived"; notes?: string; pitchAngle?: string; nextStep?: string; nextStepAt?: Date }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { id, ...changes } = input; await db.update(internationalProspects).set({ ...changes, updatedAt: new Date() }).where(eq(internationalProspects.id, id)); return { success: true }; }
 export async function updateInternationalProspectContact(input: { prospectId: number; contactName?: string; contactRole?: string; email?: string; phone?: string; website?: string; bookingUrl?: string; meetingAt?: Date; meetingNotes?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const { prospectId: _prospectId, ...contactUpdate } = input; await db.insert(internationalProspectContacts).values(input).onConflictDoUpdate({ target: internationalProspectContacts.prospectId, set: contactUpdate }); return { success: true }; }
-export { favorites, inquiries, internationalProspects, internationalProspectContacts, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users };
+export async function recordInternationalOutbound(input: { placeId: string; recipientEmail: string; subject: string; bodyText: string; actorId: number; providerMessageId?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [prospect] = await db.select({ id: internationalProspects.id }).from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1); if (!prospect) throw new Error("Save this prospect to the pipeline before sending outreach."); const [outreach] = await db.insert(internationalProspectOutreach).values({ prospectId: prospect.id, recipientEmail: input.recipientEmail.trim().toLowerCase(), subject: input.subject, bodyText: input.bodyText, providerMessageId: input.providerMessageId, createdBy: input.actorId }).returning(); await db.insert(internationalProspectMessages).values({ prospectId: prospect.id, outreachId: outreach.id, direction: "outbound", fromEmail: process.env.SMTP_USER || process.env.EMAIL_FROM || null, toEmail: input.recipientEmail.trim().toLowerCase(), subject: input.subject, bodyText: input.bodyText, providerMessageId: input.providerMessageId }); await db.update(internationalProspects).set({ status: "contacted", nextStep: "Review reply and follow up", updatedAt: new Date() }).where(eq(internationalProspects.id, prospect.id)); return outreach; }
+export async function recordInternationalInbound(input: { placeId: string; fromEmail?: string; toEmail?: string; subject?: string; bodyText: string; providerMessageId?: string; aiSummary?: string; aiSuggestedReply?: string }) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [prospect] = await db.select({ id: internationalProspects.id }).from(internationalProspects).where(eq(internationalProspects.placeId, input.placeId)).limit(1); if (!prospect) throw new Error("Prospect not found for inbound message."); const [message] = await db.insert(internationalProspectMessages).values({ prospectId: prospect.id, direction: "inbound", fromEmail: input.fromEmail?.trim().toLowerCase(), toEmail: input.toEmail?.trim().toLowerCase(), subject: input.subject, bodyText: input.bodyText, providerMessageId: input.providerMessageId, aiSummary: input.aiSummary, aiSuggestedReply: input.aiSuggestedReply }).returning(); await db.update(internationalProspects).set({ status: "meeting", nextStep: "Respond to inbound message", updatedAt: new Date() }).where(eq(internationalProspects.id, prospect.id)); return message; }
+export async function listInternationalMessages(prospectId: number) { const db = await getDb(); if (!db) return []; return db.select().from(internationalProspectMessages).where(eq(internationalProspectMessages.prospectId, prospectId)).orderBy(desc(internationalProspectMessages.receivedAt)); }
+export { favorites, inquiries, internationalProspects, internationalProspectContacts, internationalProspectOutreach, internationalProspectMessages, localAccounts, localUsers, partnershipApplications, properties, propertyMedia, users };

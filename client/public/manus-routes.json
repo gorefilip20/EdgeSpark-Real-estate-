@@ -1,0 +1,1 @@
+{"routes":[{"path":"/","title":"EdgePark Estate"},{"path":"/admin/login","title":"Admin login"},{"path":"/properties","title":"Worldwide property discovery"},{"path":"/owner/onboard","title":"Owner onboarding"},{"path":"/admin/verification","title":"Admin verification"},{"path":"/property/:slug","title":"Property detail"}]}
